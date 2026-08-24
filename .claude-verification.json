@@ -1,0 +1,22 @@
+{
+  "ambiguityScore": {
+    "timestamp": "2026-08-24T03:53:29Z",
+    "result": "pass",
+    "composite": 0.8650,
+    "threshold": 0.8,
+    "floor": 0.6,
+    "round": 2,
+    "maxRounds": 3,
+    "greenfield": false,
+    "weakest": {
+      "dimension": "SuccessCriteria",
+      "score": 0.8500
+    },
+    "dimensions": {
+      "goal": 0.90,
+      "successCriteria": 0.85,
+      "constraints": 0.85,
+      "context": 0.85
+    }
+  }
+}

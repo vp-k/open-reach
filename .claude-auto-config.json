@@ -1,0 +1,15 @@
+{
+  "quality": {
+    "stubThreshold": 5,
+    "assertionRatio": 0.7,
+    "skipRatio": 0.2
+  },
+  "smoke": {
+    "timeout": 15,
+    "maxRetries": 3,
+    "backoffSeconds": 5
+  },
+  "docs": {
+    "maxSizeKB": 30
+  }
+}

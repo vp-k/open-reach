@@ -1,0 +1,4 @@
+{"ts":"2026-08-24T03:36:55Z","event":"gate.result","gate":"ambiguity-score","phase":"unknown","result":"continue"}
+{"ts":"2026-08-24T03:36:55Z","event":"gate.ambiguity","result":"continue","composite":0.6175,"round":1}
+{"ts":"2026-08-24T03:53:30Z","event":"gate.result","gate":"ambiguity-score","phase":"unknown","result":"pass"}
+{"ts":"2026-08-24T03:53:31Z","event":"gate.ambiguity","result":"pass","composite":0.8650,"round":2}
