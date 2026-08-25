@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# 런타임 상태 (OPENREACH_STATE_DIR 기본 위치)
+.open-reach/
+
+# 로컬 벤치 산출물
+bench-out/

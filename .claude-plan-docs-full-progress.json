@@ -10,24 +10,24 @@
   "lastCompactAt": 0,
   "dod": {
     "user_story": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
     },
     "data_model": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
     },
     "api_contract": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
     },
     "error_scenarios": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
     },
     "no_definition_conflict": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "definition-conflict SOFT PASS with WARN (505 potential match(es) — manual review recorded under nonGoalsAudit) (definition-conflict at 2026-08-25T08:42:49Z)"
     },
     "pm_approved": {
       "checked": true,
@@ -35,55 +35,55 @@
     },
     "assumptions_documented": {
       "checked": true,
-      "evidence": "docs/overview.md 핵심 가정 A0~A8 (9건, 분류·위험도·검증방법·검증시점·상태)"
+      "evidence": "overview.md 핵심 가정 A0~A8 (9건, 분류·위험도·검증방법·검증시점·상태)"
     },
     "premortem_done": {
       "checked": true,
       "evidence": "docs/premortem.md — Tiger 14건(자체 8 + codex 5 + stealth-browser 대조 1), 전건 해소 조건 명시, Phase 1 SPEC 체크리스트 21항"
     },
     "all_docs_complete": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "overview.md + docs/SPEC.md + docs/premortem.md + docs/policy-boundaries.md + docs/test-plan.md + docs/adr/ADR-001~006 — doc-completeness PASS"
     },
     "spec_md_generated": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "docs/SPEC.md (US-B-001~008 + AC-B-* + Data Model + CLI 계약 + Constraints + E2E)"
     },
     "smoke_scripts_generated": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "tests/lib-smoke.sh (CLI/import 스모크) + tests/acceptance/run.sh + us-b-001~008 8종"
     },
     "spec_completeness_passed": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh spec-completeness PASS (CRITICAL 0 / MAJOR 0 / MINOR 0, 4차원 all ok)"
     },
     "doc_completeness_passed": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh doc-completeness PASS"
     },
     "provenance_recorded": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "provenance-gate PASS at 2026-08-25T08:38:50Z (sections: 7)"
     },
     "doc_consistency_passed": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh doc-consistency PASS (0 issues; 단위 스프레드는 INFO)"
     },
     "definition_conflict_resolved": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "505 matches reviewed — 전량 금지·강제 서술 문맥, nonGoalsAudit 기록"
     },
     "spec_to_tests_passed": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh spec-to-tests PASS (library/CLI lib-smoke present)"
     },
     "acceptance_frozen": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh acceptance-freeze PASS — 11 files + docs/SPEC.md 해시 동결, tests/acceptance/.manifest.json"
     },
     "clarification_resolved": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "shared-gate.sh clarification-gate PASS (NEEDS-CLARIFICATION 0)"
     }
   },
   "handoff": {
@@ -114,7 +114,7 @@
           "note": "library/CLI plugin — no UI, no HTTP server"
         },
         "docs": [
-          "docs/overview.md",
+          "overview.md",
           "docs/premortem.md",
           "docs/reviews/2026-08-24-codex-phase0.md",
           "docs/adr/ADR-001-measure-before-engine.md",
@@ -149,6 +149,19 @@
           "tigers": 14,
           "unresolved": 0,
           "record": "docs/premortem.md"
+        }
+      }
+    },
+    "phase_1": {
+      "outputs": {
+        "nonGoalsAudit": {
+          "gate": "definition-conflict",
+          "result": "warn",
+          "matches": 505,
+          "decision": "(a) intentional — 전량 금지·강제 서술 문맥",
+          "rationale": "Non-Goals 키워드가 SPEC/policy-boundaries/test-plan/premortem 에 등장하는 이유는 NG-1~NG-13 을 강제하는 규칙·판정 사유·테스트·실패 시나리오를 명시하기 때문이다. 키워드별 수동 확인 결과 금지 행위를 수행·허용·계획하는 서술은 0건. 대표 확인: docs/SPEC.md:22,103 은 로그인월/페이월에서 우회를 하지 않고 즉시 통보하는 Job/User Story, docs/test-plan.md:73 은 CAPTCHA 해결 시도가 없음을 검증하는 인수 테스트, docs/premortem.md:102,150,159 는 위험 시나리오와 방어책 서술.",
+          "exceptions": [],
+          "audited_at": "2026-08-25T08:43:30Z"
         }
       }
     }

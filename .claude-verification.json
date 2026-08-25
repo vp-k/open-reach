@@ -18,5 +18,49 @@
       "constraints": 0.85,
       "context": 0.85
     }
+  },
+  "specCompleteness": {
+    "timestamp": "2026-08-25T08:38:34Z",
+    "result": "pass",
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "dimensions": {
+      "goal": "ok",
+      "successCriteria": "ok",
+      "constraints": "ok",
+      "context": "ok"
+    }
+  },
+  "provenanceGate": {
+    "timestamp": "2026-08-25T08:38:49Z",
+    "result": "pass",
+    "missing": 0,
+    "blockers": 0,
+    "unsafeAssumptions": 0
+  },
+  "docCompleteness": {
+    "timestamp": "2026-08-25T08:38:51Z",
+    "result": "pass",
+    "blocking": 0
+  },
+  "docConsistency": {
+    "timestamp": "2026-08-25T08:48:05Z",
+    "result": "pass",
+    "issues": 0
+  },
+  "specToTests": {
+    "timestamp": "2026-08-25T09:01:00Z",
+    "result": "pass"
+  },
+  "clarificationGate": {
+    "timestamp": "2026-08-25T09:01:03Z",
+    "result": "pass",
+    "remaining": 0
+  },
+  "acceptanceFreeze": {
+    "timestamp": "2026-08-25T09:01:17Z",
+    "result": "pass",
+    "files": 11
   }
 }

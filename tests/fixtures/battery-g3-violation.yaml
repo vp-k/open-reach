@@ -1,0 +1,25 @@
+# G-3 위반 픽스처 — Tier-1 에 음성 케이스(로그인월/페이월/챌린지)가 하나도 없다.
+role: fixture
+entries:
+  - id: positive-only-1
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    added_reason: G-3 위반 재현 (음성 케이스 부재)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+  - id: positive-only-2
+    url: __FIXTURE_BASE__/redir/public
+    tier: 1
+    waf_expected: none
+    added_reason: G-3 위반 재현 (음성 케이스 부재)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null

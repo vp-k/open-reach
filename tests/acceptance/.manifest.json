@@ -1,0 +1,23 @@
+{
+  "frozenAt": "2026-08-25T09:01:17Z",
+  "gitHead": "4e096c3c27d4454d2676185c996fd39d933d4929",
+  "hashAlgo": "sha256sum",
+  "files": {
+    "tests/acceptance/_lib.sh": "6a1a608a6d9c72759abec3bd23179d653320096b7512523db42d2bb6a543964c",
+    "tests/acceptance/fixture_server.py": "862b4b490aefd4dbb8357104e22230a6be1ac385d9cead87bd900da59d4c3ced",
+    "tests/acceptance/run.sh": "5cfd61b90ddf8e736e5d356eb0d2c320b39f04c5cfbc530c1e7ac258ed395fa4",
+    "tests/acceptance/us-b-001-public-fetch.sh": "9660cd9c8409f04dca8b3f4da57720cbba93c96a7117641e98ba12fa471a419e",
+    "tests/acceptance/us-b-002-failure-classification.sh": "5cd7aad40268d9fe29c0bff8ff25ca195db4ac1cf01fc84da6dee4939434c819",
+    "tests/acceptance/us-b-003-boundary-stop.sh": "ecd32603cc2102c8e12b001735a85ff08604b7a0bb73cf2eb8d548e5ae52ef1a",
+    "tests/acceptance/us-b-004-bench-rate.sh": "d674d016f34016ed082074522f9e64bea6109e3e9e57e77ce57aff8f457682ef",
+    "tests/acceptance/us-b-005-compare-evidence.sh": "64013f398b8516d46a95c2c2fe80f596c75b29201efe2f6e848bead89d23e1a1",
+    "tests/acceptance/us-b-006-observation.sh": "86c35be40860a587d3e46bf463572d04a9360aac2d719bc4b748560dfc0e59fd",
+    "tests/acceptance/us-b-007-refresh.sh": "b84039d83e102e6a1d5a57735815a14241ece8c14aba096413e61446adfa496e",
+    "tests/acceptance/us-b-008-response-validation.sh": "6eb0ec35302d70a69e37d83b487bef8b30a5476942efd50a8d4c76d5663ee5f1"
+  },
+  "specFile": {
+    "path": "docs/SPEC.md",
+    "hash": "4dbd105402820c51799b091c2547fec527e052b0109f2b220b99b4d55ea624ce"
+  },
+  "refreezeHistory": []
+}

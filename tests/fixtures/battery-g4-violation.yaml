@@ -1,0 +1,15 @@
+# G-4 위반 픽스처 — added_reason 과 expected 가 없는 항목이 섞여 있다.
+role: fixture
+entries:
+  - id: missing-fields
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    negative_case: null
+  - id: wall-negative
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: G-3 은 충족시켜 G-4 만 단독으로 위반시킨다
+    negative_case: auth_wall
+    expected: null

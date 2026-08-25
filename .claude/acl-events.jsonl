@@ -2,3 +2,15 @@
 {"ts":"2026-08-24T03:36:55Z","event":"gate.ambiguity","result":"continue","composite":0.6175,"round":1}
 {"ts":"2026-08-24T03:53:30Z","event":"gate.result","gate":"ambiguity-score","phase":"unknown","result":"pass"}
 {"ts":"2026-08-24T03:53:31Z","event":"gate.ambiguity","result":"pass","composite":0.8650,"round":2}
+{"ts":"2026-08-25T08:37:43Z","event":"gate.result","gate":"spec-completeness","phase":"unknown","result":"warn"}
+{"ts":"2026-08-25T08:38:33Z","event":"gate.result","gate":"spec-completeness","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T08:38:49Z","event":"gate.result","gate":"provenance-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T08:38:51Z","event":"gate.result","gate":"doc-completeness","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T08:41:42Z","event":"gate.result","gate":"doc-consistency","phase":"unknown","result":"warn"}
+{"ts":"2026-08-25T08:41:43Z","event":"gate.result","gate":"definition-conflict","phase":"unknown","result":"skip"}
+{"ts":"2026-08-25T08:42:49Z","event":"gate.result","gate":"definition-conflict","phase":"unknown","result":"warn"}
+{"ts":"2026-08-25T08:43:43Z","event":"gate.result","gate":"doc-consistency","phase":"unknown","result":"warn"}
+{"ts":"2026-08-25T08:48:04Z","event":"gate.result","gate":"doc-consistency","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T09:01:00Z","event":"gate.result","gate":"spec-to-tests","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T09:01:03Z","event":"gate.result","gate":"clarification-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T09:01:18Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}

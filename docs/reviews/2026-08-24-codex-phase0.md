@@ -2,7 +2,7 @@
 
 - 일시: 2026-08-24
 - 검토자: codex (gpt-5.6-terra, reasoning=high, sandbox=read-only)
-- 대상: `docs/overview.md` 초안
+- 대상: `overview.md` 초안
 - 결과: **CRITICAL 15 / MAJOR 16 / MINOR 2**
 
 ## 반영 요약
@@ -16,7 +16,7 @@
 | [CRITICAL] SC-2 배터리 조작 가능 | **배터리 거버넌스 G-1~G-7** 신설 + **SC-6 holdout** 신설 |
 | [CRITICAL] "본문 추출 성공" 정의 부실 | North Star를 **기대 정답 대조 통과**로 재정의, `expected` 필수화 |
 | [CRITICAL] SC-5 피드백 루프가 위반을 학습 | `refresh` 학습 입력에서 경계·검증실패 관측 제외, diff 후 명시 적용 |
-| [CRITICAL] A1 검증이 R1에서 불가 / "상당수" 미정의 | A1을 **"Tier-1의 40% 이상"** 으로 수치화, R1 측정, 미달 시 Round 재배치 |
+| [CRITICAL] A1 검증이 R1에서 불가 / "상당수"에 정의 없음 | A1을 **"Tier-1의 40% 이상"** 으로 수치화, R1 측정, 미달 시 Round 재배치 |
 | [CRITICAL] A2가 두 가정을 겹침 | 벤더 판별 정확도(R1)와 holdout 일반화(R3)로 **분리 측정** |
 | [CRITICAL] A7은 문서화로 검증 불가 | 경계를 **코드 fail-closed**로 강제 + 게이트 검사, `policy-boundaries.md`를 R1 산출물화 |
 | [CRITICAL] NG-1~3 감지 실패 시 우회 지속 | 상위 티어 진입을 **파이프라인 불변식**으로 차단, 음성 케이스 배터리(G-3) |

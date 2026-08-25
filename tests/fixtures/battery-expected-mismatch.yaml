@@ -1,0 +1,22 @@
+# expected 대조 실패 픽스처 — 응답은 200 정상이지만 정답 대조에 실패한다.
+# by_reason 에 validation_failed 가 계상되어야 한다 (AC-B-008-4).
+role: fixture
+entries:
+  - id: wrong-expectation
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    added_reason: expected 대조 실패가 validation_failed 로 분류되는지
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: THIS-STRING-IS-NOT-IN-THE-FIXTURE
+      min_chars: null
+      normalized_hash: null
+  - id: wall-negative
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: G-3 충족용 음성 케이스
+    negative_case: auth_wall
+    expected: null

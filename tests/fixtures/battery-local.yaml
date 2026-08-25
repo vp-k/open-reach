@@ -1,0 +1,66 @@
+# 인수 테스트용 픽스처 배터리 — 로컬 픽스처 서버만 대상으로 한다.
+# __FIXTURE_BASE__ 는 run.sh 가 할당한 포트를 포함하는 base URL 로 치환된다.
+#
+# role: fixture — 벤더 커버리지(G-1)는 출하 배터리의 요건이므로 여기에는 적용되지 않는다.
+# G-3(음성 케이스 존재) / G-4(필수 필드) / G-6(규모 상한)은 그대로 적용된다.
+role: fixture
+entries:
+  - id: public-article
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    added_reason: 본문 추출과 잡음 제거의 기준선
+    negative_case: null
+    expected:
+      title_contains: 공개 기술 문서
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: redirect-public
+    url: __FIXTURE_BASE__/redir/public
+    tier: 1
+    waf_expected: none
+    added_reason: 공개→공개 리디렉션 추종이 성공으로 계상되는지
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: forbidden-but-real
+    url: __FIXTURE_BASE__/waf/forbidden-but-real
+    tier: 1
+    waf_expected: unknown_challenge
+    added_reason: 403이지만 정상 본문 — 상태 코드 단독 판정 금지의 반례
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: login-wall
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: 음성 케이스 — 로그인월을 success 로 계상하면 벤치 전체가 fail (G-3)
+    negative_case: auth_wall
+    expected: null
+
+  - id: paywall
+    url: __FIXTURE_BASE__/wall/paywall
+    tier: 1
+    waf_expected: none
+    added_reason: 음성 케이스 — 페이월 판정
+    negative_case: paywall
+    expected: null
+
+  - id: waf-challenge
+    url: __FIXTURE_BASE__/waf/challenge
+    tier: 1
+    waf_expected: unknown_challenge
+    added_reason: 음성 케이스 — 200이지만 챌린지 페이지
+    negative_case: waf_challenge
+    expected: null

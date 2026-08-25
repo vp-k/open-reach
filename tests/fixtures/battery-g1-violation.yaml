@@ -1,0 +1,33 @@
+# G-1 위반 픽스처 — role: production 인데 WAF 벤더 9종 커버리지가 미달이다.
+# bench 는 측정 전에 exit 3 으로 중단해야 한다.
+role: production
+entries:
+  - id: only-vendor-a-1
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: G-1 위반 재현 (벤더 커버리지 미달)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+  - id: only-vendor-a-2
+    url: __FIXTURE_BASE__/redir/public
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: G-1 위반 재현 (벤더 커버리지 미달)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+  - id: wall-negative
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: G-3 은 충족시켜 G-1 만 단독으로 위반시킨다
+    negative_case: auth_wall
+    expected: null
