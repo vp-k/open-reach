@@ -30,8 +30,8 @@
       "evidence": null
     },
     "pm_approved": {
-      "checked": false,
-      "evidence": null
+      "checked": true,
+      "evidence": "사용자 승인 2026-08-25 — A0 중단 조건(리서치 fetch 실패율 <10% 시 프로젝트 중단) 및 A8 브라우저 정당화 게이트 동의. 플러그인명 open-reach 확정"
     },
     "assumptions_documented": {
       "checked": true,
@@ -39,7 +39,7 @@
     },
     "premortem_done": {
       "checked": true,
-      "evidence": "docs/premortem.md — Tiger 13건(자체 8 + codex 5), 전건 해소 조건 명시, Phase 1 SPEC 체크리스트 18항"
+      "evidence": "docs/premortem.md — Tiger 14건(자체 8 + codex 5 + stealth-browser 대조 1), 전건 해소 조건 명시, Phase 1 SPEC 체크리스트 21항"
     },
     "all_docs_complete": {
       "checked": false,
@@ -95,11 +95,14 @@
       "배포: devncat 공개 플러그인 (vp-k/open-reach 서브모듈)",
       "브라우저 폴백: 전 단계 허용 (curl_cffi → patchright → Playwright real Chrome)",
       "MIT 시드: 원본 waf_profiles.yaml의 TLS 후보 리스트를 초기 시드로 사용 + 출처 명시",
-      "repo-fact: Python 3.13.3 / curl_cffi 0.16.1 win_amd64 사전빌드 휠 / yt-dlp·pytest 기설치 / codex CLI 사용 가능"
+      "repo-fact: Python 3.13.3 / curl_cffi 0.16.1 win_amd64 사전빌드 휠 / yt-dlp·pytest 기설치 / codex CLI 사용 가능",
+      "플러그인명 확정: open-reach (stealth-* 계열은 A8·NG-13과 충돌해 배제)",
+      "A8 판정 기준 4항 확정 (ADR-006): 지속 신원·행동 흉내·자격증명 취급·회피도 지표 중 하나라도 해당 시 브라우저 티어 삭제",
+      "stealth-browser 참조 범위: 차단 휴리스틱·CAPTCHA 감지·백오프·GracefulShutdown·원자적 락·측정 격리 교훈만 편입. cookie-bridge·warmup·fingerprint·humanize·proxy·detect-score 전면 배제"
     ],
     "warnings": "",
     "currentApproach": "",
-    "nextStep": "Step 0-10 pm_approved (사용자 승인 대기) → Phase 1 문서 작성"
+    "nextStep": "Phase 1 — docs/SPEC.md + policy-boundaries.md + tests/lib-smoke.sh + tests/acceptance/ + 7게이트"
   },
   "phases": {
     "phase_0": {
@@ -118,7 +121,8 @@
           "docs/adr/ADR-002-waf-vendor-generalization.md",
           "docs/adr/ADR-003-mit-seed-attribution.md",
           "docs/adr/ADR-004-browser-fallback-tiers.md",
-          "docs/adr/ADR-005-build-vs-depend.md"
+          "docs/adr/ADR-005-build-vs-depend.md",
+          "docs/adr/ADR-006-stealth-browser-reference-scope.md"
         ],
         "northStar": "배터리 돌파율 = 본문 추출 성공 URL / 배터리 총 URL",
         "successCriteria": [
@@ -142,7 +146,7 @@
           "status": "reflected"
         },
         "premortem": {
-          "tigers": 13,
+          "tigers": 14,
           "unresolved": 0,
           "record": "docs/premortem.md"
         }
