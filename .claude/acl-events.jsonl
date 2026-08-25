@@ -14,3 +14,8 @@
 {"ts":"2026-08-25T09:01:00Z","event":"gate.result","gate":"spec-to-tests","phase":"unknown","result":"pass"}
 {"ts":"2026-08-25T09:01:03Z","event":"gate.result","gate":"clarification-gate","phase":"unknown","result":"pass"}
 {"ts":"2026-08-25T09:01:18Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T12:25:55Z","event":"gate.result","gate":"doc-consistency","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T12:26:08Z","event":"gate.result","gate":"spec-completeness","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T12:26:13Z","event":"gate.result","gate":"provenance-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T12:26:27Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
+{"ts":"2026-08-25T12:27:32Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"fail"}

@@ -11,19 +11,19 @@
   "dod": {
     "user_story": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
     },
     "data_model": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
     },
     "api_contract": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
     },
     "error_scenarios": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T08:38:34Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
     },
     "no_definition_conflict": {
       "checked": true,
@@ -63,7 +63,7 @@
     },
     "provenance_recorded": {
       "checked": true,
-      "evidence": "provenance-gate PASS at 2026-08-25T08:38:50Z (sections: 7)"
+      "evidence": "provenance-gate PASS at 2026-08-25T12:26:13Z (sections: 7)"
     },
     "doc_consistency_passed": {
       "checked": true,
@@ -162,7 +162,22 @@
           "rationale": "Non-Goals 키워드가 SPEC/policy-boundaries/test-plan/premortem 에 등장하는 이유는 NG-1~NG-13 을 강제하는 규칙·판정 사유·테스트·실패 시나리오를 명시하기 때문이다. 키워드별 수동 확인 결과 금지 행위를 수행·허용·계획하는 서술은 0건. 대표 확인: docs/SPEC.md:22,103 은 로그인월/페이월에서 우회를 하지 않고 즉시 통보하는 Job/User Story, docs/test-plan.md:73 은 CAPTCHA 해결 시도가 없음을 검증하는 인수 테스트, docs/premortem.md:102,150,159 는 위험 시나리오와 방어책 서술.",
           "exceptions": [],
           "audited_at": "2026-08-25T08:43:30Z"
-        }
+        },
+        "specAmendments": [
+          {
+            "at": "2026-08-25T12:26:26Z",
+            "approvedByUser": true,
+            "trigger": "frozen acceptance tests vs SPEC contradiction (loopback fixture origin)",
+            "changes": [
+              "SPEC Constraints/보안: OPENREACH_FIXTURE_BASE 오리진 1개 예외 명문화 (오리진 완전 일치·매 홉 적용·메타데이터 우선·자격증명 무관)",
+              "SPEC AC-B-003-4: 예외 교차 참조 추가",
+              "SPEC 보안 SSRF: DNS 조회 실패는 policy_blocked 아닌 network 분류 명확화 (AC-B-002-3 정합)",
+              "policy-boundaries.md 3단계/NG-11 행/판정불가 문구 동기화"
+            ],
+            "note": "사용자 승인 미리보기의 \"리디렉션 홉 검사에는 적용하지 않는다\" 조항은 us-b-001 정상 리디렉션(/redir/public 상대 경로, 동일 오리진)을 영구 red로 만들어 채택 불가. 매 홉 검사는 유지하되 홉 오리진이 픽스처 오리진과 완전 일치할 때만 예외 적용으로 대체 — /redir/private(포트 1)은 계속 차단되어 AC-B-003-5 불변.",
+            "refrozen": true
+          }
+        ]
       }
     }
   }

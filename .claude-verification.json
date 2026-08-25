@@ -20,7 +20,7 @@
     }
   },
   "specCompleteness": {
-    "timestamp": "2026-08-25T08:38:34Z",
+    "timestamp": "2026-08-25T12:26:08Z",
     "result": "pass",
     "critical": 0,
     "major": 0,
@@ -33,7 +33,7 @@
     }
   },
   "provenanceGate": {
-    "timestamp": "2026-08-25T08:38:49Z",
+    "timestamp": "2026-08-25T12:26:13Z",
     "result": "pass",
     "missing": 0,
     "blockers": 0,
@@ -45,7 +45,7 @@
     "blocking": 0
   },
   "docConsistency": {
-    "timestamp": "2026-08-25T08:48:05Z",
+    "timestamp": "2026-08-25T12:25:55Z",
     "result": "pass",
     "issues": 0
   },
@@ -59,8 +59,16 @@
     "remaining": 0
   },
   "acceptanceFreeze": {
-    "timestamp": "2026-08-25T09:01:17Z",
+    "timestamp": "2026-08-25T12:26:26Z",
     "result": "pass",
     "files": 11
+  },
+  "acceptanceTests": {
+    "timestamp": "2026-08-25T12:27:31Z",
+    "result": "fail",
+    "total": 8,
+    "passed": 0,
+    "failed": 8,
+    "reason": "8 acceptance test(s) failed"
   }
 }
