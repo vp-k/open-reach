@@ -492,7 +492,16 @@ def compare(
         raise UsageError(f"출력 파일이 이미 있다 — 덮어쓰지 않는다: {out_path}")
 
     battery = load_battery(battery_path)
-    check_governance(battery, shipped=False)
+    # 거버넌스 검사는 여기서도 반드시 한다 — G-3 을 위반한 배터리(음성 케이스 0건)로
+    # 잰 숫자는 증적이 될 수 없다. 다만 **분류**는 bench 와 다르다: bench 는 관문이라
+    # 거버넌스 위반이 게이트 위반(exit 3, AC-B-004-2)이지만, compare 의 계약은
+    # Response 0/4 만 두고 Response 3 을 두지 않는다. 깨진 배터리는 compare 입장에서
+    # "파일이 없다"(exit 4)와 같은 부류의 **입력 문제**이므로 사용 오류로 옮긴다.
+    # 위반 규칙 ID 는 메시지에 그대로 실어 진단력을 잃지 않는다.
+    try:
+        check_governance(battery, shipped=False)
+    except GovernanceError as exc:
+        raise UsageError("배터리 거버넌스 위반 — " + "; ".join(exc.violations)) from exc
 
     ours = run_battery(
         battery,

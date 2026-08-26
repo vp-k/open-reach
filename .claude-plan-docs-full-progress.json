@@ -691,6 +691,18 @@
           "resolution": "compare 는 게이트가 아니라 증적 명령이다 — SPEC 서브커맨드 계약이 bench 에만 `Response 3`(거버넌스 위반 또는 음성 케이스 오분류)을 두고 compare 에는 Response 0/4 만 두었으며, AC-B-005-2 는 원본 미측정 시 exit 0 을 예외 없이 요구한다. EXIT_GATE 분기를 제거하고 stderr 진단만 남긴다. 다만 종료 코드를 되돌리면 오분류가 증적에서 사라지므로, **같은 근본 원인의 세 번째 결함**을 함께 고친다 — 음성 오분류가 있는 rate 는 '못 잰 값'이 아니라 '부풀려진 값'이라 R5 는 그것으로 status=measured 와 유리한 delta 를 만들고 있었다. 오분류를 measurement 와 동일하게 comparable 판정에서 배제해 unmeasurable + delta=None + regression=incomparable 로 무효화하고 사유를 reason 에 남긴다. Response 0 의 5개 필드 구성은 그대로다",
           "evidence": "수정 전 원본 정상 측정 + 음성 오분류: status='measured' + delta 산출 · cmd_compare exit 3. 수정 후 status='unmeasurable' · delta=None · regression='incomparable' · reason 에 '음성 케이스 오분류' 기록 · exit 0. 원본 미측정 + 오분류 동시(codex 지적 원형)도 exit 0. bench 는 오분류·측정 불가 양쪽 모두 EXIT_GATE(3) 유지 — AC-B-004-3 회귀 없음",
           "scope": "delta 안 — R5-02 가 새로 넣은 분기다. 세 번째 결함(부풀려진 delta)은 같은 함수의 comparable 계산이며 exit 코드를 되돌리는 이상 함께 고치지 않으면 fail-open 이 남는다"
+        },
+        {
+          "id": "SPEC-MEDIUM-52",
+          "severity": "MEDIUM",
+          "source": "codex+claude",
+          "file": "skills/open-reach/open_reach/bench.py:495, engine.py:263",
+          "title": "compare 의 거버넌스 예외가 전역 핸들러를 통해 여전히 exit 3 으로 샌다",
+          "status": "fixed",
+          "round": 7,
+          "novelty": "R6-02 는 cmd_compare 안의 EXIT_GATE 분기만 제거했다. compare() 가 호출하는 check_governance 의 GovernanceError 는 main() 의 전역 핸들러에서 EXIT_GATE 로 변환되므로, 'compare 는 어떤 경로로도 exit 3 을 내지 않는다' 는 R6-02 의 목표 자체가 미달성이었다 — R6 수정이 남긴 문제",
+          "resolution": "거버넌스 검사는 그대로 둔다 — G-3 을 위반한 배터리(음성 케이스 0건)로 잰 숫자는 증적이 될 수 없다. 분류만 바꾼다: compare 안에서 GovernanceError 를 UsageError 로 옮겨 exit 4 로 낸다. 깨진 배터리는 compare 입장에서 '배터리 파일이 없다'(SPEC Response 4)와 같은 부류의 입력 문제다. 위반 규칙 ID 는 메시지에 그대로 실어 진단력을 잃지 않는다. bench 는 관문이므로 AC-B-004-2 대로 exit 3 을 유지한다",
+          "evidence": "수정 전 G-3 위반 배터리로 compare 실행 시 rc=3 (양측 독립 재현). 수정 후 compare rc=4 · bench rc=3. G-3·G-4 두 위반 유형 모두 확인. 규칙 ID 가 UsageError 메시지에 보존됨. AC-B-005-3 파일 선점이 여전히 거버넌스보다 먼저(선점 exit 4 + 기존 파일 불변). 정상 배터리 compare rc=0 + 증적 파일 생성. compare 종료 코드 전수 확인 결과 3 이 나오는 경로 없음(거버넌스 2종·정상·배터리 부재·인자 범위 밖)"
         }
       ],
       "roundResults": [
@@ -960,6 +972,42 @@
             "확인점 1 zero-width 분할 — `if seg` 필터가 빈 조각을 전부 걸러냄 (양측 독립 확인)"
           ],
           "note": "라운드 5 수정본에 대한 확인 라운드. 수렴하지 않았다 — 회귀 2건 확인. 래칫 규칙 유지. codex 2건 · Claude 1건, 교집합 1건으로 합집합 2건. 교집합(CODE-MEDIUM-50): 약어 경계 — 내가 r6 프롬프트 확인점 1 로 물었고 양측이 같은 정규식에 독립 도달. codex 단독(SPEC-MEDIUM-51): compare 의 exit 3 이 SPEC 계약 위반. 내 R5 판단('대조 명령이라고 통과시키면 게이트가 우회된다')이 틀렸다 — compare 는 게이트가 아니고 게이트는 bench 다. 다만 codex 가 제안한 '원본 미측정일 때만 exit 0' 은 범위가 좁아 그대로 받지 않았다: compare 계약에는 Response 3 이 아예 없으므로 조건 없이 제거하고, 대신 오분류가 증적에서 사라지지 않도록 payload 무효화를 함께 넣었다. 그 과정에서 R5 가 남긴 세 번째 결함(부풀려진 rate 로 status=measured + delta 생성)을 발견해 같이 고쳤다. 수정 후 동결 인수 테스트 green + 라운드 6 검증 48종 PASS + 라운드 2~5 검증 재실행 전부 PASS. verify_r5 의 단언 1건은 계약 오독이었으므로 정정했다(회귀 아님)."
+        },
+        {
+          "round": 7,
+          "at": "2026-08-26T00:00:00Z",
+          "sourceHash": "b0209d1238b7658b06065cb922e4189572c4964f-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — 수렴 시도 라운드",
+          "findings": {
+            "total": 1,
+            "bySeverity": {
+              "CRITICAL": 0,
+              "HIGH": 0,
+              "MEDIUM": 1,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 1,
+              "claude": 1,
+              "overlap": 1
+            }
+          },
+          "fixed": [
+            "SPEC-MEDIUM-52"
+          ],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "확인점 1 _SEGMENTS 두 규칙 상호작용 — 문제 없음. re.split 대안 순서 충돌 없음. paywallV2Promo·paywallXBanner·paywallIOSPromo·paywallCTABanner·paywallSignupCTA 등 판매 표기는 비벽, paywall2FAContent·PAYWALLContent·paywallA·paywallV2 는 벽 유지. 14종 경계 케이스 (양측 독립)",
+            "확인점 3 payload 무효화 정상 경로 — 문제 없음. 음성이 정상 분류된 배터리는 status=measured·delta 산출·regression 정상. invalid 가 비면 truncated 값이 R5 와 동일",
+            "확인점 4 reason 결합 — 문제 없음. 원본 실패 사유 + 측정 불가 + 음성 오분류 3종 동시 발생 시 '; ' 로 전부 보존. 오분류 접두사는 한 번만 붙고 빈 문자열을 만들지 않음",
+            "확인점 5 소비처 전수 — 문제 없음. run_battery 의 두 목록을 읽는 곳은 cmd_bench 와 compare 뿐이며 모두 갱신됨. compare 반환 tuple 의 두 번째 값은 cmd_compare 의 stderr G-3 진단에 쓰이므로 죽은 값이 아님"
+          ],
+          "note": "라운드 6 수정본에 대한 확인 라운드. 수렴하지 않았다 — 회귀 1건 확인. 래칫 규칙 유지. codex 1건 · Claude 1건, 교집합 1건으로 합집합 1건. 내가 r7 프롬프트 확인점 2 에 'cmd_compare 밖(main 의 GovernanceError 핸들러)에서 exit 3 이 새는가' 를 명시적으로 심었고 codex 가 그 경로를 재현했다 — R6-02 의 목표가 미달성이었으므로 delta 안이다. codex 제안은 'exit 4 로 처리하거나 거버넌스 게이트를 적용하지 않는다' 양자택일이었는데 후자는 받지 않았다: G-3 위반 배터리로 잰 숫자는 증적이 될 수 없으므로 검사는 남기고 분류만 옮겼다. 확인점 1·3·4·5 는 양측 모두 문제 없음. 수정 후 동결 인수 테스트 8/8 green + 라운드 7 검증 16종 PASS + 라운드 2~6 검증 재실행 전부 PASS(회귀 없음)."
         }
       ]
     }
