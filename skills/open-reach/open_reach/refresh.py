@@ -100,7 +100,8 @@ def run(*, dry_run: bool) -> tuple[int, str]:
     if not isinstance(current, dict):
         return 4, "지문표 최상위가 매핑이 아니다"
 
-    after = leading_comments(before) + yamlio.dumps(plan_update(current, records))
+    planned = plan_update(current, records)
+    after = leading_comments(before) + yamlio.dumps(planned)
     diff = list(
         difflib.unified_diff(
             before.splitlines(),
@@ -118,6 +119,15 @@ def run(*, dry_run: bool) -> tuple[int, str]:
     body = diff if diff else ["(변경 없음 — 관측이 기존 순서를 그대로 지지한다)"]
 
     if not dry_run and diff:
+        # 우리가 쓴 것을 우리가 되읽을 수 있는지 **쓰기 전에** 확인한다.
+        # 지문표가 깨지면 이후 모든 fetch 가 ProfilesError 로 죽고 복구는 수동이다 —
+        # 원자적 교체는 반쯤 쓰인 파일만 막을 뿐, 온전히 쓰인 잘못된 파일은 막지 못한다.
+        try:
+            reparsed = yamlio.loads(after)
+        except yamlio.YamlError as exc:
+            return 1, f"생성한 지문표를 되읽을 수 없어 쓰기를 중단했다: {exc}"
+        if reparsed != planned:
+            return 1, "생성한 지문표가 원본 데이터와 일치하지 않아 쓰기를 중단했다"
         observe.atomic_write(path, after)
 
     return 0, "\n".join(header + body)

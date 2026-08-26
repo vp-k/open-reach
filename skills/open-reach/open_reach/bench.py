@@ -200,6 +200,25 @@ def run_battery(
     truncated = False
     attempted = 0
 
+    # 음성 케이스는 돌파율의 분모가 아니라 정확도의 **관문**이다 (AC-B-004-3).
+    # 그래서 양성 실행보다 먼저 돌린다 — 벽시계 상한에 걸렸다는 이유로 관문을 건너뛰면
+    # "검증하지 않음"이 "통과"가 되고, 이 프로젝트에서 판정 불가는 통과가 아니다.
+    # 음성셋은 경계 확인용 소수이므로 예산에서 차지하는 몫도 작다.
+    negatives_checked = 0
+    for entry in negatives:
+        if time.monotonic() >= deadline:
+            negative_violations.append(f"{entry.get('id')}: 벽시계 상한으로 판정 불가")
+            continue
+        result = _fetch_entry(entry, timeout=timeout, max_attempts=max_attempts)
+        negatives_checked += 1
+        want = str(entry.get("negative_case"))
+        if result.ok:
+            negative_violations.append(f"{entry.get('id')}: success 로 분류됨 (기대 {want})")
+        elif result.failure_reason != want:
+            negative_violations.append(
+                f"{entry.get('id')}: {result.failure_reason} 로 분류됨 (기대 {want})"
+            )
+
     for run_index in range(runs):
         if time.monotonic() >= deadline:
             truncated = True
@@ -244,19 +263,6 @@ def run_battery(
         if truncated:
             break
 
-    # 음성 케이스는 돌파율의 분모가 아니라 정확도의 관문이다 (AC-B-004-3)
-    for entry in negatives:
-        if truncated:
-            break
-        result = _fetch_entry(entry, timeout=timeout, max_attempts=max_attempts)
-        want = str(entry.get("negative_case"))
-        if result.ok:
-            negative_violations.append(f"{entry.get('id')}: success 로 분류됨 (기대 {want})")
-        elif result.failure_reason != want:
-            negative_violations.append(
-                f"{entry.get('id')}: {result.failure_reason} 로 분류됨 (기대 {want})"
-            )
-
     total = attempted if truncated else len(positives) * runs
     return {
         "tier": tier,
@@ -268,7 +274,7 @@ def run_battery(
         "by_vendor": by_vendor,
         "by_route": by_route,
         "by_reason": by_reason,
-        "negatives_checked": 0 if truncated else len(negatives),
+        "negatives_checked": negatives_checked,
         "negative_violations": negative_violations,
         "truncated": truncated,
     }

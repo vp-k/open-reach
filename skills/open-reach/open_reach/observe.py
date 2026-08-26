@@ -191,12 +191,28 @@ def iter_recent(path: Path):
 
 
 def last_success_for(url: str) -> dict | None:
-    """같은 host+path 의 가장 최근 성공 경로 (AC-B-006-4)."""
+    """같은 host+path 의 가장 최근 성공 경로 (AC-B-006-4).
+
+    끝에서부터 좁은 창으로 훑되, 못 찾으면 창을 넓혀 파일 전체까지 간다.
+    창을 고정하면 흔한 경우가 빨라지는 대신 "직전 성공 경로가 `attempts[0]` 에 온다"는
+    계약이 관측이 쌓였다는 이유만으로 조용히 깨진다 — 빠른 경로는 최적화이지
+    계약의 예외가 아니다. 확대 비용은 **못 찾을 때만** 든다.
+    """
     host, path = normalize_url(url)
-    for record in _iter_tail_records(observations_path()):
-        if record.get("host") == host and record.get("path") == path:
-            return record
-    return None
+    target = observations_path()
+    try:
+        size = target.stat().st_size
+    except OSError:
+        return None
+
+    scan = _TAIL_SCAN_BYTES
+    while True:
+        for record in _iter_tail_records(target, scan_bytes=scan):
+            if record.get("host") == host and record.get("path") == path:
+                return record
+        if scan >= size:
+            return None
+        scan = min(size, scan * 8)
 
 
 def atomic_write(path: Path, text: str) -> None:

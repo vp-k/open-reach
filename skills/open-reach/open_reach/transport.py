@@ -234,21 +234,44 @@ def _send_stdlib(
 def _send_curl_cffi(
     url: str, timeout: float, headers: dict[str, str], impersonate: str
 ) -> tuple[int, dict[str, str], bytes, bool]:
+    """libcurl 경로. 이름 해석을 **정책이 검증한 주소로 고정**한 뒤 요청한다.
+
+    libcurl 은 응답 헤더를 받은 뒤에야 `primary_ip` 를 알려준다 — 그때 확인하는 것은
+    이미 요청이 상대에게 도달한 뒤다. 사설 서버에 GET 이 한 번 닿는 것 자체가 SSRF 이므로,
+    검증을 요청 뒤로 미루지 않고 **연결할 주소를 우리가 고정한다**.
+    고정할 수단이 없는 버전이라면 이 경로는 통제 불가이므로 쓰지 않는다 (fail-closed).
+    """
     from curl_cffi import requests as cffi_requests  # 지연 임포트 — 없어도 동작해야 한다
 
-    resp = cffi_requests.get(
-        url,
-        headers=headers,
-        timeout=timeout,
-        impersonate=impersonate,
-        allow_redirects=False,
-        stream=True,
-    )
+    from . import policy  # 순환 임포트 회피 (전송 -> 정책)
+
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
+    port = parts.port or (443 if parts.scheme == "https" else 80)
+    address = policy.resolved_targets(url)[0]
+
+    try:
+        resp = cffi_requests.get(
+            url,
+            headers=headers,
+            timeout=timeout,
+            impersonate=impersonate,
+            allow_redirects=False,
+            stream=True,
+            resolve=[f"{host}:{port}:{address}"],
+        )
+    except TypeError as exc:
+        raise PolicyBlocked(
+            "private_range",
+            "설치된 curl_cffi 가 이름 해석 고정(resolve)을 지원하지 않아 "
+            f"연결 주소를 통제할 수 없다 — 이 경로를 쓰지 않는다 ({exc})",
+        ) from exc
+
     try:
         got = _merge_headers(
             getattr(resp.headers, "multi_items", resp.headers.items)()
         )
-        # curl 은 헤더 수신 후에야 상대 주소를 알려준다 — 본문을 읽기 전에 검증한다
+        # 고정한 주소로 실제로 붙었는지 확인한다 — 고정이 무시됐다면 여기서 걸린다
         _verify_peer(url, getattr(resp, "primary_ip", None))
         body, truncated = _drain_capped(resp.iter_content(chunk_size=_CHUNK_BYTES))
         return resp.status_code, got, body, truncated

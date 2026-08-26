@@ -22,7 +22,15 @@ _PAYWALL_WORDS = re.compile(
     r"(subscribe to (continue|read)|구독.{0,6}(하시면|해야)|members? only|paywall|유료 (기사|콘텐츠))",
     re.I,
 )
-_TRUNCATION = re.compile(r"(\[\s?\.\.\.\s?\]|…\s*<|class=\"truncated\")", re.I)
+# 발행자가 본문을 **잘랐다는 구조적 표시**만 센다. `…<` 같은 표기는 정상 기사 요약에도
+# 흔해서 신호가 아니라 잡음이고, 잡음을 근거로 삼으면 공개 기사를 페이월로 버리게 된다.
+_TRUNCATION = re.compile(
+    r"""(\[\s?\.\.\.\s?\]"""
+    r"""|class\s*=\s*["'][^"']*(?:truncated|paywall|locked-content)"""
+    r"""|data-paywall"""
+    r"""|id\s*=\s*["'][^"']*paywall)""",
+    re.I,
+)
 
 _CAPTCHA_SIGNALS = (
     ("captcha-widget", "captcha_widget_markup"),
@@ -64,16 +72,24 @@ def detect_wall(html: str, extracted: str = "") -> ContentVerdict | None:
     """로그인월·페이월을 판정한다. 판정되면 즉시 중단이며 상위 티어로 올리지 않는다.
 
     JSON-LD 의 `isAccessibleForFree:false` 는 발행자가 스스로 선언한 것이므로 본문
-    유무와 무관하게 권위 있는 근거다. 반면 "로그인"·"구독" 같은 **문구 휴리스틱**은
-    본문이 실제로 없을 때만 쓴다 — 공개 기사 상단에 로그인 폼이 붙어 있다는 이유로
-    읽히는 본문을 auth_wall(exit 2)로 버리면 돌파율이 그 자리에서 깎인다.
+    유무와 무관하게 권위 있는 근거다.
+
+    페이월은 **구독 문구 + 구조적 잘림 표시**가 함께 있을 때 판정하며 본문 길이를 보지
+    않는다. 미리보기를 200자 넘게 주는 페이월이 흔한데 길이로 거르면 그런 페이지가
+    전부 success 가 되고, SC-3 의 "wall/paywall 을 success 로 판정 0건"이 깨진다.
+    두 신호를 함께 요구하는 것으로 거짓 양성을 막는다.
+
+    반면 로그인월의 **문구 휴리스틱**("로그인"·"sign in")은 본문이 실제로 없을 때만
+    쓴다 — 공개 기사 상단에 로그인 폼이 붙어 있다는 이유로 읽히는 본문을
+    auth_wall(exit 2)로 버리면 돌파율이 그 자리에서 깎인다.
     """
     if _PAYWALL_JSONLD.search(html):
         return ContentVerdict("paywall", "wall", ("paywall_metadata",), True)
 
-    thin = len(extracted) < MIN_ARTICLE_CHARS
-    if thin and _PAYWALL_WORDS.search(html) and _TRUNCATION.search(html):
+    if _PAYWALL_WORDS.search(html) and _TRUNCATION.search(html):
         return ContentVerdict("paywall", "wall", ("paywall_copy_truncated",), True)
+
+    thin = len(extracted) < MIN_ARTICLE_CHARS
     if thin and _AUTH_FORM.search(html) and _AUTH_WORDS.search(html):
         return ContentVerdict("auth_wall", "wall", ("login_form",), True)
     return None

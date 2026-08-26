@@ -11,6 +11,7 @@ import ipaddress
 import os
 import re
 import socket
+import sys
 from urllib.parse import urlsplit
 
 from .models import PolicyVerdict
@@ -67,10 +68,42 @@ def origin_of(url: str) -> str | None:
     return f"{parts.scheme}://{parts.hostname.lower()}:{port}"
 
 
+def _is_loopback_literal(address: str) -> bool:
+    """주소가 **IP 리터럴이며 루프백**인가. 이름은 이름일 뿐 주소가 아니다."""
+    try:
+        return ipaddress.ip_address(address.strip("[]")).is_loopback
+    except ValueError:
+        return False
+
+
+_warned_fixture_rejected = False
+
+
 def fixture_origin() -> str | None:
-    """인수 테스트 전용 예외 오리진. 변수가 없으면 예외는 존재하지 않는다."""
+    """인수 테스트 전용 예외 오리진. 변수가 없으면 예외는 존재하지 않는다.
+
+    호스트가 **루프백 IP 리터럴**일 때만 예외를 인정한다. SPEC 이 이 예외의 용도를
+    "로컬 픽스처 서버(`127.0.0.1:<임의 포트>`)"로 못박고 있는데 DNS 이름을 허용하면,
+    그 이름이 사설 주소로 재바인딩되는 순간 예외 자체가 SSRF 통로가 된다 — 이름은
+    해석 시점마다 달라질 수 있지만 리터럴은 달라지지 않는다.
+    """
+    global _warned_fixture_rejected
+
     raw = os.environ.get("OPENREACH_FIXTURE_BASE", "").strip()
-    return origin_of(raw) if raw else None
+    if not raw:
+        return None
+    origin = origin_of(raw)
+    if origin is None:
+        return None
+    if not _is_loopback_literal(urlsplit(raw).hostname or ""):
+        if not _warned_fixture_rejected:
+            _warned_fixture_rejected = True
+            sys.stderr.write(
+                f"[open-reach] OPENREACH_FIXTURE_BASE 를 무시한다 ({raw}) — "
+                "픽스처 예외는 루프백 IP 리터럴 오리진에만 적용된다\n"
+            )
+        return None
+    return origin
 
 
 def _resolve(host: str, port: int) -> list[str]:
@@ -155,12 +188,59 @@ def check_peer(url: str, address: str) -> PolicyVerdict:
     port = parts.port or _default_port(parts.scheme)
     exempt = fixture_origin()
     if exempt is not None and f"{parts.scheme}://{host}:{port}" == exempt:
-        return PolicyVerdict(True, None, f"테스트 픽스처 오리진 예외: {address}")
+        # 오리진이 예외라도 **연결된 주소**가 루프백을 벗어나면 예외가 아니다.
+        # `fixture_origin` 이 이미 리터럴만 통과시키지만, 예외의 경계는 두 곳에서
+        # 각각 성립해야 한 곳의 실수가 통로가 되지 않는다.
+        if _is_loopback_literal(address):
+            return PolicyVerdict(True, None, f"테스트 픽스처 오리진 예외: {address}")
+        return PolicyVerdict(
+            False, "private_range", f"픽스처 오리진이 루프백 밖 주소로 연결됐다: {address}"
+        )
 
     reason = _blocked_band(address)
     if reason is not None:
         return PolicyVerdict(False, "private_range", reason)
     return PolicyVerdict(True, None, f"연결 주소 {address} 는 공개 대역이다")
+
+
+def resolved_targets(url: str) -> list[str]:
+    """정책을 통과한 연결 대상 주소 목록. 차단이면 transport.PolicyBlocked 를 던진다.
+
+    커널이 실제로 붙은 주소를 **요청을 보내기 전에** 볼 수 없는 전송(libcurl)에서는
+    이 목록으로 이름 해석을 고정한다. 검사한 주소와 연결하는 주소가 같아야 TOCTOU 가
+    닫히기 때문이다 — 응답을 받은 뒤에 확인하는 것은 이미 요청이 도달한 뒤다.
+    판정 기준은 `check_url` 과 같다 (하나라도 차단 대역이면 전체 차단).
+    """
+    from . import transport  # 순환 임포트 회피 (정책 -> 전송)
+
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
+    port = parts.port or _default_port(parts.scheme)
+    if host in METADATA_HOSTS:
+        raise transport.PolicyBlocked("private_range", f"클라우드 메타데이터 주소: {host}")
+
+    exempt = fixture_origin()
+    exempted = exempt is not None and f"{parts.scheme}://{host}:{port}" == exempt
+
+    allowed: list[str] = []
+    for address in _resolve(host, port):
+        if address in METADATA_HOSTS:
+            raise transport.PolicyBlocked("private_range", f"클라우드 메타데이터 주소: {address}")
+        if exempted:
+            if not _is_loopback_literal(address):
+                raise transport.PolicyBlocked(
+                    "private_range", f"픽스처 오리진이 루프백 밖 주소로 해석됐다: {address}"
+                )
+            allowed.append(address)
+            continue
+        reason = _blocked_band(address)
+        if reason is not None:
+            raise transport.PolicyBlocked("private_range", reason)
+        allowed.append(address)
+
+    if not allowed:
+        raise transport.PolicyBlocked("private_range", f"{host} 의 연결 가능한 주소가 없다")
+    return allowed
 
 
 def hop_guard(next_url: str) -> None:
