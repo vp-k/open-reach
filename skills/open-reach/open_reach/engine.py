@@ -202,14 +202,16 @@ def cmd_compare(args: argparse.Namespace) -> int:
         max_attempts=bench_mod.DEFAULT_MAX_ATTEMPTS,
     )
     _emit(payload)
-    # 음성 오분류는 bench 와 같은 관문이다 — 대조 명령이라고 통과시키면 같은 결함이
-    # 명령 하나 바꾸는 것만으로 우회된다. 측정 불가는 여기서 막지 않는다:
-    # AC-B-005-2 가 "측정 불가는 기록해야 할 사실" 로 정했고 payload 의
-    # status="unmeasurable" 과 reason 이 그 기록이다.
-    if violations:
-        for violation in violations:
-            sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
-        return EXIT_GATE
+    # compare 는 **게이트가 아니라 증적 명령**이다. SPEC 의 서브커맨드 계약이 bench 에만
+    # `Response 3`(거버넌스 위반 또는 음성 케이스 오분류)을 두고 compare 에는 Response
+    # 0 과 4 만 두었으며, AC-B-005-2 는 원본을 못 재면 exit 0 을 요구한다 — 예외는 없다.
+    # 음성 오분류를 여기서 exit 3 으로 만들면 그 계약을 깬다.
+    #
+    # 그렇다고 오분류가 사라지지는 않는다. bench(AC-B-004-3)가 여전히 exit 3 으로 막고,
+    # compare 쪽에서는 payload 의 status="unmeasurable" 과 reason 이 "이 숫자는 쓸 수
+    # 없다" 를 증적 파일에 남긴다 — 종료 코드가 아니라 기록으로 막는 자리다.
+    for violation in violations:
+        sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
     return EXIT_OK
 
 

@@ -483,8 +483,10 @@ def compare(
 ) -> tuple[dict[str, Any], list[str]]:
     """증적 payload 와 **정확도 관문 위반**을 함께 돌려준다.
 
-    위반을 payload 안에 넣지 않는 이유는 SPEC Response 0 의 필드 구성을 바꾸지 않기
-    위해서다. 종료 코드는 다른 명령과 마찬가지로 engine 층이 정한다.
+    위반 목록을 payload 밖으로 빼는 이유는 SPEC `compare` Response 0 의 필드 구성
+    (`{status, open_reach, original, evidence, reason}`) 을 바꾸지 않기 위해서다.
+    위반이 있었다는 **사실 자체**는 `reason` 과 `status` 로 payload 안에 남고,
+    목록은 stderr 진단용으로만 돌려준다.
     """
     if out_path.exists():
         raise UsageError(f"출력 파일이 이미 있다 — 덮어쓰지 않는다: {out_path}")
@@ -508,10 +510,17 @@ def compare(
     # 쪽에 대해 정한 원칙("측정 불가는 실패가 아니라 기록해야 할 사실")을 우리 쪽에도
     # 그대로 적용해 unmeasurable 로 남긴다 — 사유는 기존 reason 필드에 잇는다
     # (Response 0 의 필드 구성을 바꾸지 않기 위해).
+    #
+    # 음성 오분류도 같은 이유로 비교를 무효로 만든다 — 다만 성격이 하나 더 나쁘다.
+    # 페이월을 success 로 계상한 rate 는 "재지 못한 값"이 아니라 **부풀려진 값**이라,
+    # 그대로 두면 `status="measured"` 와 실제보다 유리한 delta 가 SC-1 증적으로 남는다.
+    # 재지 못한 것보다 틀리게 잰 것이 더 위험하므로 똑같이 unmeasurable 로 떨어뜨린다.
     unmeasured = ours["measurement_violations"]
-    if unmeasured:
-        reason = "; ".join([r for r in [reason] if r] + unmeasured)
-    comparable = original_rate is not None and not unmeasured
+    misclassified = ours["negative_violations"]
+    invalid = list(unmeasured) + [f"음성 케이스 오분류: {v}" for v in misclassified]
+    if invalid:
+        reason = "; ".join([r for r in [reason] if r] + invalid)
+    comparable = original_rate is not None and not invalid
 
     payload = {
         "status": "measured" if comparable else "unmeasurable",
@@ -527,7 +536,7 @@ def compare(
         "regression": classify_regression(
             ours["rate_median"],
             original_rate,
-            truncated=bool(ours.get("truncated")) or bool(unmeasured),
+            truncated=bool(ours.get("truncated")) or bool(invalid),
         ),
         "by_vendor": ours["by_vendor"],
         "by_route": ours["by_route"],
@@ -537,7 +546,7 @@ def compare(
     # 관문 위반이 있어도 파일은 남긴다 — 실패했다는 사실 자체가 증적이고,
     # 파일을 안 남기면 무엇이 왜 틀렸는지 사후에 확인할 방법이 사라진다.
     observe.atomic_write(out_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    return payload, list(ours["negative_violations"])
+    return payload, list(misclassified)
 
 
 # ── 실패율 기준선 ───────────────────────────────────────────────────────
