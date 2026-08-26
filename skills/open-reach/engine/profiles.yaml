@@ -1,0 +1,351 @@
+# open-reach WAF 지문표 — 규칙의 단위는 사이트가 아니라 WAF 벤더다 (ADR-002).
+#
+# NG-9: detectors[].pattern 에 호스트명·도메인 리터럴을 넣지 않는다.
+#       벤더 제품이 남기는 산출물(쿠키명·헤더명·벤더 문자열)만 쓴다.
+#
+# 시드 출처 (ADR-003):
+#   fivetaku/insane-search (MIT) 의 skills/insane-search/engine/waf_profiles.yaml
+#   commit d74ffff9830ba11b485ba948c198e3b5177d4308
+#   이식한 것은 공개된 측정 결과 값(TLS 후보·회피 목록)뿐이며 엔진 코드는 자체 구현이다.
+#   원문은 "Refresh quarterly" 를 명시한다 — 이 값들은 분기 단위로 낡는다.
+#   `refresh` 가 자체 관측으로 갱신하면 seeded_from 표기는 자연히 소멸한다.
+#   전문은 NOTICE 참조.
+attribution:
+  seed_source: fivetaku/insane-search
+  seed_commit: d74ffff9830ba11b485ba948c198e3b5177d4308
+  seed_license: MIT
+  seed_url: https://github.com/fivetaku/insane-search
+  ported: TLS 임퍼소네이션 후보·회피 목록 (측정값). 엔진 코드는 이식하지 않았다.
+schema_version: 1
+profiles:
+  - vendor: cloudflare
+    detectors:
+      - id: cf-ray-header
+        kind: header
+        pattern: cf-ray
+        weight: 1.0
+      - id: cf-clearance-cookie
+        kind: cookie
+        pattern: cf_clearance
+        weight: 1.0
+      - id: cf-bm-cookie
+        kind: cookie
+        pattern: __cf_bm
+        weight: 1.0
+      - id: cf-chl-body
+        kind: body
+        pattern: cf-chl
+        weight: 1.0
+      - id: cf-server
+        kind: header
+        pattern: 'server: cloudflare'
+        weight: 0.6
+      - id: cf-interstitial
+        kind: body
+        pattern: just a moment
+        weight: 0.6
+    impersonate_candidates:
+      - chrome
+      - chrome_android
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: akamai
+    detectors:
+      - id: abck-cookie
+        kind: cookie
+        pattern: _abck
+        weight: 1.0
+      - id: bmsz-cookie
+        kind: cookie
+        pattern: bm_sz
+        weight: 1.0
+      - id: akbmsc-cookie
+        kind: cookie
+        pattern: ak_bmsc
+        weight: 1.0
+      - id: akamai-header
+        kind: header
+        pattern: x-akamai-
+        weight: 0.6
+      - id: akamai-ghost
+        kind: header
+        pattern: akamaighost
+        weight: 1.0
+      - id: akamai-cpt-container
+        kind: body
+        pattern: sec-if-cpt-container
+        weight: 1.0
+      - id: akamai-banner
+        kind: body
+        pattern: powered and protected by akamai
+        weight: 1.0
+    impersonate_candidates:
+      - safari
+      - safari15_3
+      - safari15_5
+      - safari17_0
+      - safari260
+      - safari_ios
+      - safari17_2_ios
+      - safari260_ios
+      - chrome131
+      - chrome133a
+      - chrome136
+      - chrome145
+      - chrome146
+      - chrome_android
+      - chrome131_android
+      - edge101
+    impersonate_avoid:
+      - safari18_0
+      - chrome107
+      - chrome120
+      - chrome123
+      - firefox
+      - firefox133
+      - firefox135
+    transform_order:
+      - original
+      - mobile
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: datadome
+    detectors:
+      - id: datadome-cookie
+        kind: cookie
+        pattern: datadome
+        weight: 1.0
+      - id: datadome-body
+        kind: body
+        pattern: datadome
+        weight: 0.6
+    impersonate_candidates:
+      - safari
+      - chrome
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: perimeterx
+    detectors:
+      - id: px3-cookie
+        kind: cookie
+        pattern: _px3
+        weight: 1.0
+      - id: pxhd-cookie
+        kind: cookie
+        pattern: _pxhd
+        weight: 1.0
+      - id: pxcts-cookie
+        kind: cookie
+        pattern: pxcts
+        weight: 1.0
+      - id: px-captcha-body
+        kind: body
+        pattern: px-captcha
+        weight: 1.0
+      - id: px-press-hold
+        kind: body
+        pattern: press & hold to confirm
+        weight: 1.0
+    impersonate_candidates:
+      - safari
+      - chrome
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: imperva
+    detectors:
+      - id: incap-session-cookie
+        kind: cookie
+        pattern: incap_ses_
+        weight: 1.0
+      - id: visid-incap-cookie
+        kind: cookie
+        pattern: visid_incap_
+        weight: 1.0
+      - id: iinfo-header
+        kind: header
+        pattern: x-iinfo
+        weight: 1.0
+      - id: incapsula-incident
+        kind: body
+        pattern: incapsula incident id
+        weight: 1.0
+      - id: incapsula-resource
+        kind: body
+        pattern: _incapsula_resource
+        weight: 1.0
+    impersonate_candidates:
+      - chrome
+      - chrome131
+      - chrome136
+      - safari
+      - safari260
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: f5
+    detectors:
+      - id: bigip-cookie
+        kind: cookie
+        pattern: bigipserver
+        weight: 1.0
+      - id: f5-rejected-body
+        kind: body
+        pattern: the requested url was rejected
+        weight: 1.0
+      - id: f5-support-id
+        kind: body
+        pattern: 'support id is:'
+        weight: 0.6
+      - id: f5-ts-cookie
+        kind: cookie
+        pattern: ts01
+        weight: 0.6
+    impersonate_candidates:
+      - safari
+      - chrome
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: aws_waf
+    detectors:
+      - id: aws-waf-token-cookie
+        kind: cookie
+        pattern: aws-waf-token
+        weight: 1.0
+      - id: amzn-waf-header
+        kind: header
+        pattern: x-amzn-waf-
+        weight: 1.0
+      - id: amzn-errortype-header
+        kind: header
+        pattern: x-amzn-errortype
+        weight: 0.6
+    impersonate_candidates:
+      - chrome
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: kasada
+    detectors:
+      - id: kpsdk-header
+        kind: header
+        pattern: x-kpsdk-
+        weight: 1.0
+      - id: kpsdk-body
+        kind: body
+        pattern: kpsdk-v
+        weight: 1.0
+      - id: kasada-banner
+        kind: body
+        pattern: kasada
+        weight: 0.6
+    impersonate_candidates:
+      - chrome
+      - chrome131
+      - chrome133a
+      - chrome136
+      - chrome145
+      - chrome146
+      - safari
+      - safari260
+      - safari2601
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: fastly
+    detectors:
+      - id: fastly-served-by
+        kind: header
+        pattern: x-served-by
+        weight: 0.6
+      - id: fastly-header
+        kind: header
+        pattern: fastly
+        weight: 0.6
+      - id: fastly-error-body
+        kind: body
+        pattern: fastly error
+        weight: 1.0
+    impersonate_candidates:
+      - chrome
+      - safari
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-08-25
+    seeded_from: null
+  - vendor: unknown_challenge
+    detectors: []
+    impersonate_candidates:
+      - safari
+      - chrome
+      - firefox
+      - safari_ios
+      - chrome_android
+    impersonate_avoid: []
+    transform_order:
+      - original
+      - mobile
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-07-20
+    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
+  - vendor: none
+    detectors: []
+    impersonate_candidates:
+      - chrome
+      - safari
+      - firefox
+    impersonate_avoid: []
+    transform_order:
+      - original
+    fallback_order:
+      - http
+      - browser
+    last_reviewed: 2026-08-25
+    seeded_from: null

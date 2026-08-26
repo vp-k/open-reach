@@ -1,0 +1,44 @@
+open-reach
+Copyright (c) 2026 vp-k
+
+이 소프트웨어의 엔진 코드는 전부 자체 구현이다. 다만 WAF 지문표
+(`skills/open-reach/engine/profiles.yaml`)의 **초기 시드 값** — 벤더별 TLS 임퍼소네이션
+후보 목록과 회피 목록 — 은 아래 MIT 라이선스 프로젝트의 공개된 측정 결과에서 가져왔다
+(ADR-003).
+
+--------------------------------------------------------------------------------
+fivetaku/insane-search
+https://github.com/fivetaku/insane-search
+commit d74ffff9830ba11b485ba948c198e3b5177d4308
+파일: skills/insane-search/engine/waf_profiles.yaml
+
+MIT License
+
+Copyright (c) 2026 fivetaku
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+--------------------------------------------------------------------------------
+
+이식하지 않은 것:
+- 엔진 코드(플래너·전송·판별·추출·벤치) 전부 (NG-7)
+- 사이트별 예외 규칙 (NG-9 — 우리 지문표의 단위는 사이트가 아니라 WAF 벤더다)
+
+시드 값은 원문이 "Refresh quarterly" 로 명시하듯 분기 단위로 낡는다.
+`open-reach refresh` 가 자체 관측으로 후보 순서를 갱신하면 각 프로파일의
+`seeded_from` 표기는 자연히 의미를 잃는다 (ADR-003 결과 항목).

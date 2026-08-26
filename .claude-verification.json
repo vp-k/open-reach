@@ -64,11 +64,10 @@
     "files": 11
   },
   "acceptanceTests": {
-    "timestamp": "2026-08-25T12:27:31Z",
-    "result": "fail",
+    "timestamp": "2026-08-26T07:52:42Z",
+    "result": "pass",
     "total": 8,
-    "passed": 0,
-    "failed": 8,
-    "reason": "8 acceptance test(s) failed"
+    "passed": 8,
+    "failed": 0
   }
 }

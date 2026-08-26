@@ -4,8 +4,14 @@ __pycache__/
 .venv/
 venv/
 
-# 런타임 상태 (OPENREACH_STATE_DIR 기본 위치)
+# 런타임 상태 (OPENREACH_STATE_DIR 기본값은 저장소 루트다 — 실행만 해도 여기 쌓인다)
 .open-reach/
+observations.jsonl
+observations.1.jsonl
+observations.jsonl.lock
+bench/history.jsonl
+bench/history.jsonl.lock
+bench/compare-*.json
 
 # 로컬 벤치 산출물
 bench-out/

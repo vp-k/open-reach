@@ -19,3 +19,5 @@
 {"ts":"2026-08-25T12:26:13Z","event":"gate.result","gate":"provenance-gate","phase":"unknown","result":"pass"}
 {"ts":"2026-08-25T12:26:27Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
 {"ts":"2026-08-25T12:27:32Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"fail"}
+{"ts":"2026-08-25T13:00:31Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-08-26T07:52:43Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"pass"}
