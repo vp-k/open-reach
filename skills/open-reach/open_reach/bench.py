@@ -195,7 +195,14 @@ def run_battery(
     per_run_rates: list[float] = []
     passed = 0
     failed = 0
+    # 위반은 성격이 둘이고 처분도 달라야 한다.
+    #   negative_violations   — 음성을 **틀리게 분류**했다. 엔진 정확도의 관문(G-3).
+    #   measurement_violations — 아예 **재지 못했다**. 측정 불가.
+    # bench 는 둘 다 막지만, compare 는 다르다 — SPEC AC-B-005-2 가 "측정 불가는
+    # 실패가 아니라 기록해야 할 사실"이라고 정해 두었으므로 후자는 status 로 남긴다.
+    # 한 목록에 섞으면 이 구분을 소비자 쪽에서 문자열로 되짚어야 한다.
     negative_violations: list[str] = []
+    measurement_violations: list[str] = []
     deadline = time.monotonic() + WALL_CLOCK_CAP_S
     truncated = False
     attempted = 0
@@ -207,7 +214,7 @@ def run_battery(
     negatives_checked = 0
     for entry in negatives:
         if time.monotonic() >= deadline:
-            negative_violations.append(f"{entry.get('id')}: 벽시계 상한으로 판정 불가")
+            measurement_violations.append(f"{entry.get('id')}: 벽시계 상한으로 판정 불가")
             continue
         result = _fetch_entry(entry, timeout=timeout, max_attempts=max_attempts)
         negatives_checked += 1
@@ -272,7 +279,7 @@ def run_battery(
     # 구성이냐만 다를 뿐 소비자가 받는 것은 똑같이 "근거 없는 rate=0.000 · exit 0" 이고,
     # 오히려 이쪽이 더 위험하다 — tier 오타 하나로 관문 전체가 조용히 무력해진다.
     if attempted == 0:
-        negative_violations.append(
+        measurement_violations.append(
             "양성 케이스를 한 건도 실행하지 못했다 — 벽시계 상한으로 측정 불가"
             if positives
             else f"tier={tier} 에 해당하는 양성 케이스가 배터리에 없다 — 측정 불가"
@@ -291,6 +298,7 @@ def run_battery(
         "by_reason": by_reason,
         "negatives_checked": negatives_checked,
         "negative_violations": negative_violations,
+        "measurement_violations": measurement_violations,
         "truncated": truncated,
     }
 
@@ -472,7 +480,12 @@ def compare(
     runs: int,
     timeout: float,
     max_attempts: int,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], list[str]]:
+    """증적 payload 와 **정확도 관문 위반**을 함께 돌려준다.
+
+    위반을 payload 안에 넣지 않는 이유는 SPEC Response 0 의 필드 구성을 바꾸지 않기
+    위해서다. 종료 코드는 다른 명령과 마찬가지로 engine 층이 정한다.
+    """
     if out_path.exists():
         raise UsageError(f"출력 파일이 이미 있다 — 덮어쓰지 않는다: {out_path}")
 
@@ -489,8 +502,19 @@ def compare(
     )
     original_rate, reason = _run_original(original_cmd or "", battery_path)
 
+    # 우리 쪽을 재지 못했으면 원본이 멀쩡해도 그것은 **비교가 아니다**. 0/0 을 rate 0.0
+    # 으로 흘려보내면 `status="measured"` 와 `delta=-0.77` 이 근거 없이 만들어져,
+    # 합격 기준의 근거 문서(SC-1 증적)가 측정 없이 생성된다. SPEC AC-B-005-2 가 원본
+    # 쪽에 대해 정한 원칙("측정 불가는 실패가 아니라 기록해야 할 사실")을 우리 쪽에도
+    # 그대로 적용해 unmeasurable 로 남긴다 — 사유는 기존 reason 필드에 잇는다
+    # (Response 0 의 필드 구성을 바꾸지 않기 위해).
+    unmeasured = ours["measurement_violations"]
+    if unmeasured:
+        reason = "; ".join([r for r in [reason] if r] + unmeasured)
+    comparable = original_rate is not None and not unmeasured
+
     payload = {
-        "status": "measured" if original_rate is not None else "unmeasurable",
+        "status": "measured" if comparable else "unmeasurable",
         "reason": reason,
         "open_reach": {
             "rate": ours["rate_median"],
@@ -499,19 +523,21 @@ def compare(
             "failed": ours["failed"],
         },
         "original": {"rate": original_rate},
-        "delta": None if original_rate is None else round(ours["rate_median"] - original_rate, 3),
+        "delta": round(ours["rate_median"] - original_rate, 3) if comparable else None,
         "regression": classify_regression(
             ours["rate_median"],
             original_rate,
-            truncated=bool(ours.get("truncated")),
+            truncated=bool(ours.get("truncated")) or bool(unmeasured),
         ),
         "by_vendor": ours["by_vendor"],
         "by_route": ours["by_route"],
         "by_reason": ours["by_reason"],
         "evidence": _evidence(battery_path, original_cmd),
     }
+    # 관문 위반이 있어도 파일은 남긴다 — 실패했다는 사실 자체가 증적이고,
+    # 파일을 안 남기면 무엇이 왜 틀렸는지 사후에 확인할 방법이 사라진다.
     observe.atomic_write(out_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    return payload
+    return payload, list(ours["negative_violations"])
 
 
 # ── 실패율 기준선 ───────────────────────────────────────────────────────

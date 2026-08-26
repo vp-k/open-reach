@@ -39,7 +39,10 @@ _DATA_PAYWALL = re.compile(
 )
 
 _CLASS_OR_ID = re.compile(r"""(?:class|id)\s*=\s*["']([^"']*)["']""", re.I)
-_SEGMENTS = re.compile(r"[-_]+")
+# 세그먼트 경계는 `-`·`_` 만이 아니다. `paywallPromo` 처럼 camelCase 로 붙여 쓰는
+# 이름이 흔한데, 구분자만 보고 자르면 통째로 한 조각이 되어 아래 배제 목록을
+# 그냥 지나친다 — 대소문자 경계도 같은 경계로 취급한다.
+_SEGMENTS = re.compile(r"[-_]+|(?<=[a-z0-9])(?=[A-Z])")
 # 이름이 **벽이 아니라 벽을 파는 배너**임을 드러내는 조각들. 여기 없는 이름은 벽으로
 # 본다 — 방향을 이렇게 잡는 이유는 두 오류의 값이 다르기 때문이다. 거짓 음성(진짜
 # 페이월을 success 로 계상)은 SC-3 의 "0건"을 깨는 hard fail 이고, 거짓 양성은 돌파율
@@ -56,16 +59,21 @@ _SELLING_SEGMENTS = frozenset({
 
 
 def _names_a_wall(token: str) -> bool:
-    """class/id 토큰 하나가 **벽 자체**를 가리키는 이름인가."""
-    token = token.lower()
+    """class/id 토큰 하나가 **벽 자체**를 가리키는 이름인가.
+
+    세그먼트를 자르기 **전에** 소문자로 바꾸면 camelCase 경계가 지워져 `paywallPromo`
+    가 한 조각으로 남는다 — 자른 뒤에 각 조각을 소문자로 바꾼다.
+    """
+    lowered = token.lower()
     stems = (
-        "paywall" in token
-        or "truncated" in token
-        or ("locked" in token and "content" in token)
+        "paywall" in lowered
+        or "truncated" in lowered
+        or ("locked" in lowered and "content" in lowered)
     )
     if not stems:
         return False
-    return not any(seg in _SELLING_SEGMENTS for seg in _SEGMENTS.split(token))
+    segments = [seg.lower() for seg in _SEGMENTS.split(token) if seg]
+    return not any(seg in _SELLING_SEGMENTS for seg in segments)
 
 
 def has_truncation_markup(html: str) -> bool:

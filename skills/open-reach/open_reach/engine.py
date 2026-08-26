@@ -174,9 +174,12 @@ def cmd_bench(args: argparse.Namespace) -> int:
         timeout=args.timeout,
         max_attempts=bench_mod.DEFAULT_MAX_ATTEMPTS,
     )
-    if report["negative_violations"]:
-        for violation in report["negative_violations"]:
-            sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
+    # bench 는 두 성격을 모두 막는다 — 틀리게 잰 것도, 아예 못 잰 것도 통과가 아니다.
+    for violation in report["negative_violations"]:
+        sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
+    for violation in report["measurement_violations"]:
+        sys.stderr.write(f"[open-reach] G-3: 측정 불가 — {violation}\n")
+    if report["negative_violations"] or report["measurement_violations"]:
         return EXIT_GATE
 
     bench_mod.record_run(report, battery_path=path)
@@ -187,7 +190,7 @@ def cmd_bench(args: argparse.Namespace) -> int:
 def cmd_compare(args: argparse.Namespace) -> int:
     path, _ = _battery_path(args)
     out_path = Path(args.out) if args.out else _default_compare_out()
-    payload = bench_mod.compare(
+    payload, violations = bench_mod.compare(
         battery_path=path,
         out_path=out_path,
         original_cmd=args.original_cmd,
@@ -199,6 +202,14 @@ def cmd_compare(args: argparse.Namespace) -> int:
         max_attempts=bench_mod.DEFAULT_MAX_ATTEMPTS,
     )
     _emit(payload)
+    # 음성 오분류는 bench 와 같은 관문이다 — 대조 명령이라고 통과시키면 같은 결함이
+    # 명령 하나 바꾸는 것만으로 우회된다. 측정 불가는 여기서 막지 않는다:
+    # AC-B-005-2 가 "측정 불가는 기록해야 할 사실" 로 정했고 payload 의
+    # status="unmeasurable" 과 reason 이 그 기록이다.
+    if violations:
+        for violation in violations:
+            sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
+        return EXIT_GATE
     return EXIT_OK
 
 

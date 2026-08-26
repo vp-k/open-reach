@@ -641,6 +641,31 @@
           "resolution": "attempted==0 이면 원인과 무관하게 위반으로 계상하고 사유만 갈라 적는다 (예산 소진 / tier 에 양성 없음). 소비자가 받는 것은 어느 쪽이든 똑같이 '근거 없는 rate=0.000 · exit 0' 이고, 오히려 tier 오타 하나로 관문 전체가 조용히 무력해지는 구성 경로가 더 위험하다",
           "evidence": "tier=2 에 양성 0건인 배터리: 수정 전 violations=0 · exit 0 -> 수정 후 violations 계상 · cmd_bench 가 EXIT_GATE(3) 반환 · record_run 미호출(오염된 baseline 이 이력에 남지 않음). 양성이 있는 tier 는 위반 없음(정상 경로 무회귀)",
           "note": "codex 는 확인점 5 를 '문제 없음 — R3 의도와 일치' 로 판정했으나 동의하지 않는다. R3-05 가 세운 원칙은 '측정 못 한 것과 측정해서 0%인 것을 구분한다' 이고, 양성 0건 배터리는 정확히 전자다. 의도와의 일치가 아니라 의도의 미적용이다"
+        },
+        {
+          "id": "CODE-MEDIUM-48",
+          "severity": "MEDIUM",
+          "source": "codex",
+          "file": "skills/open-reach/open_reach/detect.py:58",
+          "title": "camelCase 판매 배너(paywallPromo)가 세그먼트로 분리되지 않아 거짓 양성이 재발한다",
+          "status": "fixed",
+          "round": 5,
+          "novelty": "R4-01 이 화이트리스트를 '판매 조각 배제' 로 반전하면서 세그먼트 경계를 `[-_]+` 로만 잡았다. R3-03 의 정규식은 `(?![\\w-])` 때문에 paywallPromo 를 벽 이름으로 매치하지 않았으므로, 수정본에서 실제로 재발한 R3-03 계열 거짓 양성",
+          "resolution": "세그먼트 경계에 대소문자 경계를 추가하고(`[-_]+|(?<=[a-z0-9])(?=[A-Z])`), 자르기 **전에** 소문자로 바꾸던 순서를 뒤집어 자른 뒤 각 조각을 소문자로 바꾼다 — 먼저 소문자화하면 경계 자체가 지워진다",
+          "evidence": "수정 전 paywallPromo·paywallRelatedAd·paywallNewsletter 등 9종이 paywall 판정 -> 수정 후 전부 None. 벽 이름의 camelCase 표기(paywallContent·paywallOverlay·paywallAdaptive 등 5종)는 paywall 유지. 라운드 4 판정 11종 전부 불변"
+        },
+        {
+          "id": "GATE-MEDIUM-49",
+          "severity": "MEDIUM",
+          "source": "codex+claude",
+          "file": "skills/open-reach/open_reach/bench.py:492, engine.py:187",
+          "title": "compare 가 run_battery 의 위반을 읽지 않아 0건 측정으로 status=measured 증적을 만든다",
+          "status": "fixed",
+          "round": 5,
+          "novelty": "R4-02 가 포착한 '측정 불가' 신호를 run_battery 에만 넣고 같은 함수를 소비하는 compare 경로에는 전파하지 않았다. 합격 기준이 '원본 대조' 인데 그 대조 문서가 측정 없이 생성된다",
+          "resolution": "위반을 성격별로 두 목록으로 분리 — negative_violations(음성 오분류, 정확도 관문) 와 measurement_violations(재지 못함). bench 는 둘 다 EXIT_GATE 로 막고, compare 는 SPEC AC-B-005-2('측정 불가는 실패가 아니라 기록해야 할 사실')에 따라 측정 불가를 status=unmeasurable + reason 으로 남기고 delta 를 만들지 않으며(regression=incomparable), 음성 오분류는 bench 와 동일하게 EXIT_GATE 로 막는다. 위반 목록은 payload 가 아니라 반환값으로 넘겨 SPEC Response 0 의 필드 구성을 건드리지 않는다",
+          "evidence": "수정 전 compare(tier=2, 양성 0건): status='measured' · total=0 · delta=-0.77 · regression='regressed' · cmd_compare exit 0 (양측 독립 재현). 수정 후 status='unmeasurable' · delta=None · regression='incomparable' · 사유 기록 · 증적 파일은 유지 · Response 0 5개 필드 불변. 음성 오분류 배터리는 cmd_compare 가 EXIT_GATE(3) 반환",
+          "scope": "엄밀히는 delta 밖(compare 는 R4 가 건드리지 않았다). 다만 확인점 4 가 R4-02 의 영향 범위를 물어 드러난 것이고 양측이 독립으로 같은 결함에 도달했으며, 합격 기준의 근거 문서가 근거 없이 만들어지는 fail-open 이므로 계상한다"
         }
       ],
       "roundResults": [
@@ -834,6 +859,45 @@
             }
           ],
           "note": "라운드 3 수정본에 대한 확인 라운드. 래칫 규칙 유지. 재개설 0건. codex 1건(HIGH) · Claude 1건(MEDIUM), 교집합 0건. codex 가 남긴 유일한 지적은 R3-03 의 새 경계가 만든 거짓 음성이고, 제안(접미사 content 추가) 대신 열거 방향 자체를 반전해 같은 부류를 함께 막았다. 수정 후 동결 인수 테스트 8/8 green + 라운드 4 검증 40종 PASS + 라운드 3 검증 15종 · 라운드 2 검증 16종 재실행 PASS. 라운드 2 검증문 1건은 위반 '개수' 를 세고 있어 R4-02 로 거짓 실패했고, 판정 기준을 해당 위반의 '존재' 로 고쳤다 (코드 회귀 아님)."
+        },
+        {
+          "round": 5,
+          "at": "2026-08-26T00:00:00Z",
+          "sourceHash": "e7c15483641e6f132a25f6b99f3a2f5ef9e83df9-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — 수렴 시도 라운드",
+          "findings": {
+            "total": 2,
+            "bySeverity": {
+              "CRITICAL": 0,
+              "HIGH": 0,
+              "MEDIUM": 2,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 2,
+              "claude": 1,
+              "overlap": 1
+            }
+          },
+          "fixed": [
+            "CODE-MEDIUM-48",
+            "GATE-MEDIUM-49"
+          ],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "확인점 1 마크업 판정 — 공백·탭·개행 구분, BEM(paywall__overlay--active), 하이픈 세그먼트, `ad` 부분문자열(paywall-adaptive·paywall-loaded 는 벽 유지) 정상. camelCase 만 문제였고 CODE-MEDIUM-48 로 수정",
+            "확인점 3 has_truncation_markup 동치·성능 — 문제 없음. 따옴표 없는 class 미인식은 R3 정규식과 동일한 기존 한계(R4 회귀 아님), data-paywall 3갈래·[...] 동치. 성능은 8MB 최악 본문에서 R3 정규식 843.8ms 대비 460.9ms(0.55x)로 오히려 개선",
+            "확인점 5 위반 메시지 f-string 스코프 — 문제 없음. tier 는 run_battery 매개변수이며 실행에서 정상 바인딩 확인 (양측 독립)"
+          ],
+          "knownLimitations": [
+            "따옴표 없는 속성(class=paywall)은 class/id 경로에서 인식되지 않는다 — R1 이래의 기존 한계이며 R4/R5 가 만든 것이 아니다. JSON-LD·[...]·data-paywall 경로는 따옴표와 무관하게 동작하고, 주요 CMS 는 속성을 따옴표로 감싼다. 별건으로 남긴다"
+          ],
+          "note": "라운드 4 수정본에 대한 확인 라운드. 수렴하지 않았다 — 회귀 2건 확인. 래칫 규칙 유지. codex 2건 · Claude 1건, 교집합 1건으로 합집합 2건. codex 단독: camelCase 판매 조각(내 R4-01 설계의 실제 구멍 — 내 라운드 4 검증문이 paywallPromo 를 'wall 이 맞다'고 못 박은 것 자체가 틀렸고 정정했다). 교집합: compare 전파 누락(양측이 독립으로 같은 실행 결과에 도달). 수정 후 동결 인수 테스트 8/8 green + 라운드 5 검증 33종 PASS + 라운드 2·3·4 검증 재실행 전부 PASS(회귀 없음)."
         }
       ]
     }
