@@ -616,6 +616,31 @@
           "novelty": "R2-04 가 계약을 되살리려 창을 파일 크기까지 넓혔는데 _iter_tail_records 는 창 전체를 handle.read() 한 번으로 읽으므로, 라운드 1 (14) 가 없앤 전량 적재가 최악 경로에서 그대로 복원됐다",
           "resolution": "창을 1MiB 블록 단위로 뒤에서부터 훑고 블록 경계에 걸친 줄만 carry 로 이어 붙인다. 창의 넓이는 훑는 범위이지 메모리 사용량이 아니다",
           "note": "codex 는 확인점 4를 '문제 없음(읽기 4회·86.5MB)'으로 판정했으나 그건 읽기 횟수 축이고, 이 건은 한 번에 들고 있는 메모리 축이다 — 축이 달라 별건으로 계상"
+        },
+        {
+          "id": "CODE-HIGH-46",
+          "severity": "HIGH",
+          "source": "codex",
+          "file": "skills/open-reach/open_reach/detect.py:34",
+          "title": "벽 이름 화이트리스트가 paywall-content 를 놓쳐 진짜 페이월이 success 가 된다",
+          "status": "fixed",
+          "round": 4,
+          "novelty": "R3-03 이 넓은 paywall substring 매칭을 화이트리스트로 교체하면서 생긴 새 경계의 거짓 음성 — 열거에 없는 벽 이름이 조용히 통과한다",
+          "resolution": "접미사 content 를 더하는 대신 열거의 대상을 뒤집었다 — 벽 이름을 열거하지 않고 판매 배너 조각(promo·banner·cta·ad·upsell·related·newsletter·signup·teaser·badge·icon·link)만 배제하고 나머지는 벽으로 본다. 거짓 음성은 SC-3 의 '0건' 을 깨는 hard fail 이고 거짓 양성은 돌파율이라는 비율 목표를 깎으므로, 열거의 불완전함이 비율 쪽에 떨어지도록 방향을 잡는다. 정규식 한 덩어리 대신 class/id 값을 뽑아 토큰·세그먼트 단위로 판정하는 has_truncation_markup() 로 분리",
+          "evidence": "수정 전 class=\"paywall-content\" + 구독 문구 -> verdict None (success). 수정 후 paywall. paywall-body·paywall-locked·paywall-shield·paywall-notice·paywall__inner 등 접미사 추가로는 못 막던 6종도 함께 paywall 로 판정. R3-03 이 고친 거짓 양성 9종(paywall-promo·paywall-related-ad 등)은 문구 유무 양쪽에서 재개설되지 않음 (검증 40종 PASS)"
+        },
+        {
+          "id": "DATA-MEDIUM-47",
+          "severity": "MEDIUM",
+          "source": "claude",
+          "file": "skills/open-reach/open_reach/bench.py:270",
+          "title": "양성이 애초에 0건인 배터리는 근거 없는 rate=0.000 · exit 0 으로 통과한다",
+          "status": "fixed",
+          "round": 4,
+          "novelty": "R3-05 가 '측정 불가는 통과가 아니다' 를 세우면서 조건을 positives and attempted==0 으로 걸어, 예산 소진 경로만 막고 구성 경로(tier 필터 결과 0건)를 남겼다",
+          "resolution": "attempted==0 이면 원인과 무관하게 위반으로 계상하고 사유만 갈라 적는다 (예산 소진 / tier 에 양성 없음). 소비자가 받는 것은 어느 쪽이든 똑같이 '근거 없는 rate=0.000 · exit 0' 이고, 오히려 tier 오타 하나로 관문 전체가 조용히 무력해지는 구성 경로가 더 위험하다",
+          "evidence": "tier=2 에 양성 0건인 배터리: 수정 전 violations=0 · exit 0 -> 수정 후 violations 계상 · cmd_bench 가 EXIT_GATE(3) 반환 · record_run 미호출(오염된 baseline 이 이력에 남지 않음). 양성이 있는 tier 는 위반 없음(정상 경로 무회귀)",
+          "note": "codex 는 확인점 5 를 '문제 없음 — R3 의도와 일치' 로 판정했으나 동의하지 않는다. R3-05 가 세운 원칙은 '측정 못 한 것과 측정해서 0%인 것을 구분한다' 이고, 양성 0건 배터리는 정확히 전자다. 의도와의 일치가 아니라 의도의 미적용이다"
         }
       ],
       "roundResults": [
@@ -764,6 +789,51 @@
             "창 확대 무한루프 없음 — 빈 파일·1바이트·개행만 파일 모두 1회 종료"
           ],
           "note": "라운드 2 수정본에 대한 확인 라운드. 래칫 규칙 유지(delta-only · novelty justification · verdict monotonicity · severity scoping · counter-review). 재개설 0건. codex 4건 · Claude 5건, 교집합 2건으로 합집합 7건. codex 단독: 환경 프록시 우회(CRITICAL) · 양성 0건 exit 0. Claude 단독: data-paywall 부정값 · baseline 오염 · 창 확대 전량 적재. codex 가 '문제 없음'으로 판정한 확인점 2·6 은 Claude 도 독립으로 같은 결론. 수정 후 동결 인수 테스트 8/8 green + 라운드 3 동작 검증 15종 PASS + 라운드 2 동작 검증 16종 재실행 PASS(회귀 없음)."
+        },
+        {
+          "round": 4,
+          "at": "2026-08-26T00:00:00Z",
+          "sourceHash": "19f7ba3208297d5f9f1df57199d93a6083820916-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — 확인 라운드",
+          "findings": {
+            "total": 2,
+            "bySeverity": {
+              "CRITICAL": 0,
+              "HIGH": 1,
+              "MEDIUM": 1,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 1,
+              "claude": 1,
+              "overlap": 0
+            }
+          },
+          "fixed": [
+            "CODE-HIGH-46",
+            "DATA-MEDIUM-47"
+          ],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "확인점 1 _iter_tail_records — 문제 없음. codex 101 케이스 오라클 대조, Claude 차등 퍼즈 1800 케이스(무작위 300 파일 x 6 창 크기) 불일치 0건 + 블록 배수 파일 19064 레코드 전량 일치",
+            "확인점 2 resolve_entry 형식 — 문제 없음. 주소는 대괄호, 호스트는 raw IPv6 (CURLOPT_RESOLVE 규격, 양측 독립 확인)",
+            "확인점 3 Session(trust_env=False) 자원 — 문제 없음. drain -> resp.close -> session.close 순서 확인, resolve 미지원 PolicyBlocked 경로에서 세션 누수 없음",
+            "확인점 6 prior_rate truncated 제외 — 문제 없음. 필드 없는 pre-R3 레코드는 완주로 하위호환, 전부 truncated 이면 None"
+          ],
+          "disagreements": [
+            {
+              "check": "확인점 5 bench attempted==0 위치",
+              "codex": "문제 없음 — 양성 0건 배터리는 정상 통과가 R3 의도와 일치",
+              "claude": "문제 있음 — R3-05 의 원칙이 적용되지 않은 구멍. DATA-MEDIUM-47 로 계상하고 수정",
+              "resolution": "Claude 판정 채택. 인수 테스트 배터리는 양성·음성을 함께 가지므로 계약과 충돌하지 않음(8/8 green 확인)"
+            }
+          ],
+          "note": "라운드 3 수정본에 대한 확인 라운드. 래칫 규칙 유지. 재개설 0건. codex 1건(HIGH) · Claude 1건(MEDIUM), 교집합 0건. codex 가 남긴 유일한 지적은 R3-03 의 새 경계가 만든 거짓 음성이고, 제안(접미사 content 추가) 대신 열거 방향 자체를 반전해 같은 부류를 함께 막았다. 수정 후 동결 인수 테스트 8/8 green + 라운드 4 검증 40종 PASS + 라운드 3 검증 15종 · 라운드 2 검증 16종 재실행 PASS. 라운드 2 검증문 1건은 위반 '개수' 를 세고 있어 R4-02 로 거짓 실패했고, 판정 기준을 해당 위반의 '존재' 로 고쳤다 (코드 회귀 아님)."
         }
       ]
     }

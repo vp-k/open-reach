@@ -267,9 +267,15 @@ def run_battery(
     # "측정을 못 했다"를 구분할 수 없다. 앞의 것은 실패고 뒤의 것은 판정 불가인데
     # 둘 다 exit 0 으로 나가면 판정 불가가 통과가 된다 — 음성 관문을 먼저 돌리게 되면서
     # 예산이 음성에서 다 소진되는 경로가 새로 생겼으므로 여기서 명시적으로 막는다.
-    if positives and attempted == 0:
+    #
+    # 양성이 애초에 0건인 배터리(tier 필터 결과 0)도 마찬가지다. 원인이 예산이냐
+    # 구성이냐만 다를 뿐 소비자가 받는 것은 똑같이 "근거 없는 rate=0.000 · exit 0" 이고,
+    # 오히려 이쪽이 더 위험하다 — tier 오타 하나로 관문 전체가 조용히 무력해진다.
+    if attempted == 0:
         negative_violations.append(
             "양성 케이스를 한 건도 실행하지 못했다 — 벽시계 상한으로 측정 불가"
+            if positives
+            else f"tier={tier} 에 해당하는 양성 케이스가 배터리에 없다 — 측정 불가"
         )
 
     total = attempted if truncated else len(positives) * runs

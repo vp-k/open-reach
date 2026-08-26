@@ -26,29 +26,56 @@ _PAYWALL_WORDS = re.compile(
 )
 # 발행자가 본문을 **잘랐다는 구조적 표시**만 센다. `…<` 같은 표기는 정상 기사 요약에도
 # 흔해서 신호가 아니라 잡음이고, 잡음을 근거로 삼으면 공개 기사를 페이월로 버리게 된다.
-#
-# class/id 는 **벽을 가리키는 이름**일 때만 신호다. `paywall-promo`·`paywall-related-ad`
-# 처럼 벽이 아니라 벽을 파는 배너 이름이 훨씬 흔한데, 이름에 `paywall` 이 들어갔다는
-# 이유로 공개 기사를 exit 2 로 버리면 돌파율이 그 자리에서 깎인다. 그래서 토큰이
-# 끝나거나 벽을 뜻하는 접미사가 붙은 경우만 인정한다.
-_WALL_NAME = (
-    r"(?:truncated|locked-content|content-locked"
-    r"|paywall(?:[-_](?:overlay|wall|blocker|gate|modal|barrier"
-    r"|container|wrapper|screen|prompt|message|box))?)(?![\w-])"
-)
-_TRUNCATION = re.compile(
-    r"""(\[\s?\.\.\.\s?\]"""
-    rf"""|class\s*=\s*["'][^"']*{_WALL_NAME}"""
-    rf"""|id\s*=\s*["'][^"']*{_WALL_NAME}"""
-    # `data-paywall="false"` 는 "페이월이 아니다"라는 **명시적 부정**이다. 속성이
-    # 있다는 사실만으로 신호로 세면 발행자의 부정을 긍정으로 뒤집어 읽게 된다.
-    # 따옴표를 `?` 로 두면 엔진이 따옴표를 안 쓴 쪽으로 물러나 부정 lookahead 를
-    # 빠져나가므로, 따옴표가 있는 경우와 없는 경우를 갈라서 고정한다.
-    r"""|data-paywall\s*=\s*["'](?!(?:false|0|no|off)\b)"""
+_EXPLICIT_TRUNCATION = re.compile(r"\[\s?\.\.\.\s?\]")
+# `data-paywall="false"` 는 "페이월이 아니다"라는 **명시적 부정**이다. 속성이 있다는
+# 사실만으로 신호로 세면 발행자의 부정을 긍정으로 뒤집어 읽게 된다. 따옴표를 `?` 로
+# 두면 엔진이 따옴표를 안 쓴 쪽으로 물러나 부정 lookahead 를 빠져나가므로, 따옴표가
+# 있는 경우와 없는 경우를 갈라서 고정한다.
+_DATA_PAYWALL = re.compile(
+    r"""(data-paywall\s*=\s*["'](?!(?:false|0|no|off)\b)"""
     r"""|data-paywall\s*=\s*(?!["'])(?!(?:false|0|no|off)\b)"""
     r"""|data-paywall\s*[/>\s])""",
     re.I,
 )
+
+_CLASS_OR_ID = re.compile(r"""(?:class|id)\s*=\s*["']([^"']*)["']""", re.I)
+_SEGMENTS = re.compile(r"[-_]+")
+# 이름이 **벽이 아니라 벽을 파는 배너**임을 드러내는 조각들. 여기 없는 이름은 벽으로
+# 본다 — 방향을 이렇게 잡는 이유는 두 오류의 값이 다르기 때문이다. 거짓 음성(진짜
+# 페이월을 success 로 계상)은 SC-3 의 "0건"을 깨는 hard fail 이고, 거짓 양성은 돌파율
+# 이라는 **비율** 목표를 깎는다. 확실한 제약이 비율 목표를 이긴다.
+#
+# 화이트리스트(벽 이름을 열거)로 가면 `paywall-content`·`paywall-body` 처럼 열거에서
+# 빠진 실제 벽이 조용히 success 가 된다 — 열거는 언제나 불완전한데, 불완전의 대가를
+# hard fail 쪽에 지우는 배치다. 그래서 열거의 대상을 뒤집었다.
+_SELLING_SEGMENTS = frozenset({
+    "promo", "promotion", "banner", "cta", "ad", "ads", "advert", "advertisement",
+    "upsell", "related", "recommend", "recommended", "newsletter", "signup",
+    "teaser", "badge", "icon", "link", "links",
+})
+
+
+def _names_a_wall(token: str) -> bool:
+    """class/id 토큰 하나가 **벽 자체**를 가리키는 이름인가."""
+    token = token.lower()
+    stems = (
+        "paywall" in token
+        or "truncated" in token
+        or ("locked" in token and "content" in token)
+    )
+    if not stems:
+        return False
+    return not any(seg in _SELLING_SEGMENTS for seg in _SEGMENTS.split(token))
+
+
+def has_truncation_markup(html: str) -> bool:
+    """본문이 잘렸다는 **마크업 증거**가 있는가 (읽히는 문구와는 독립인 신호)."""
+    if _EXPLICIT_TRUNCATION.search(html) or _DATA_PAYWALL.search(html):
+        return True
+    for value in _CLASS_OR_ID.findall(html):
+        if any(_names_a_wall(token) for token in value.split()):
+            return True
+    return False
 
 _CAPTCHA_SIGNALS = (
     ("captcha-widget", "captcha_widget_markup"),
@@ -97,8 +124,8 @@ def detect_wall(html: str, extracted: str = "") -> ContentVerdict | None:
     전부 success 가 되고, SC-3 의 "wall/paywall 을 success 로 판정 0건"이 깨진다.
     두 신호를 함께 요구하는 것으로 거짓 양성을 막는다 — 단, 두 신호는 **서로 다른
     증거**여야 한다. 하나는 읽히는 문구(`_PAYWALL_WORDS`), 하나는 마크업 구조
-    (`_TRUNCATION`) 로 갈라놓지 않으면 `class="paywall-ad"` 같은 substring 하나가
-    양쪽을 동시에 켜서 AND 가 이름만 AND 로 남는다.
+    (`has_truncation_markup`) 로 갈라놓지 않으면 `class="paywall-ad"` 같은 substring
+    하나가 양쪽을 동시에 켜서 AND 가 이름만 AND 로 남는다.
 
     반면 로그인월의 **문구 휴리스틱**("로그인"·"sign in")은 본문이 실제로 없을 때만
     쓴다 — 공개 기사 상단에 로그인 폼이 붙어 있다는 이유로 읽히는 본문을
@@ -107,7 +134,7 @@ def detect_wall(html: str, extracted: str = "") -> ContentVerdict | None:
     if _PAYWALL_JSONLD.search(html):
         return ContentVerdict("paywall", "wall", ("paywall_metadata",), True)
 
-    if _PAYWALL_WORDS.search(html) and _TRUNCATION.search(html):
+    if _PAYWALL_WORDS.search(html) and has_truncation_markup(html):
         return ContentVerdict("paywall", "wall", ("paywall_copy_truncated",), True)
 
     thin = len(extracted) < MIN_ARTICLE_CHARS
