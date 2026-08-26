@@ -536,6 +536,86 @@
           "round": 2,
           "novelty": "라운드 1 (16)은 왕복 손실 자체를 고쳤고, 이건 손실이 재발했을 때 감지할 관문이 없다는 별개 문제다 (원자적 교체는 반쯤 쓰인 파일만 막지, 온전히 쓰인 잘못된 파일은 막지 못한다)",
           "resolution": "atomic_write 전에 yamlio.loads(after)로 되읽어 plan_update 결과와 동일한지 대조, 불일치·파싱 실패 시 쓰지 않고 exit 1"
+        },
+        {
+          "id": "SEC-SSRF-CRITICAL-39",
+          "severity": "CRITICAL",
+          "source": "codex",
+          "file": "skills/open-reach/open_reach/transport.py:254",
+          "title": "curl_cffi 가 환경 프록시를 신뢰해 resolve 고정과 peer 검증이 동시에 무력화된다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-01 이 도입한 resolve 고정은 프록시 경유 시 적용되지 않는다 — 대상 이름을 프록시가 해석하고 primary_ip 는 프록시 주소가 되어, 라운드 2가 세운 검증 두 겹이 함께 뚫린다",
+          "resolution": "cffi_requests.Session(trust_env=False) 로 세션을 명시 생성한 뒤 요청한다. trust_env 미지원 버전은 PolicyBlocked 로 fail-closed. stdlib 경로는 http.client 를 직접 써서 애초에 프록시를 타지 않으므로 두 경로 동작이 일치한다"
+        },
+        {
+          "id": "NET-HIGH-40",
+          "severity": "HIGH",
+          "source": "codex+claude",
+          "file": "skills/open-reach/open_reach/transport.py:251",
+          "title": "resolve 항목이 IPv6 를 대괄호 없이 직렬화하고 검증된 주소 중 하나만 고정한다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-01 이 resolved_targets(url)[0] 로 단일 주소를 고정하면서, 고정 이전에 리졸버가 제공하던 다중 A/AAAA 폴백이 사라지고 IPv6 직렬화 오류가 새로 생겼다",
+          "resolution": "resolve_entry() 를 분리해 검증된 주소 전부를 쉼표로 잇고 IPv6 는 대괄호로 감싼다 (CURLOPT_RESOLVE 형식). 모든 주소가 정책 검증을 통과한 것이므로 폴백을 되살려도 경계는 그대로다"
+        },
+        {
+          "id": "CODE-HIGH-41",
+          "severity": "HIGH",
+          "source": "codex+claude",
+          "file": "skills/open-reach/open_reach/detect.py:27",
+          "title": "페이월 '두 신호 AND' 가 한 substring 으로 동시에 켜져 공개 기사가 exit 2 로 버려진다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-03 이 길이 게이트를 제거하면서, _PAYWALL_WORDS 의 맨 `paywall` 토큰과 _TRUNCATION 의 class 매칭이 같은 substring 에 함께 걸린다는 사실이 드러났다 — 길이 게이트가 그동안 이 중복을 가리고 있었다",
+          "resolution": "두 신호를 서로 다른 증거로 분리 — _PAYWALL_WORDS 는 읽히는 문구만(맨 paywall 토큰 제거), _TRUNCATION 은 마크업만. class/id 는 벽을 가리키는 이름(_WALL_NAME 화이트리스트)일 때만 신호로 인정해 paywall-promo·paywall-related-ad 같은 판매 배너를 제외",
+          "evidence": "class=\"paywall-promo-banner\" 만 있고 구독 문구가 없는 공개 기사가 수정 전 paywall 판정 → 수정 후 success"
+        },
+        {
+          "id": "CODE-MEDIUM-42",
+          "severity": "MEDIUM",
+          "source": "claude",
+          "file": "skills/open-reach/open_reach/detect.py:33",
+          "title": "data-paywall=\"false\" 라는 명시적 부정이 잘림 신호로 계상된다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-03 이 새로 넣은 data-paywall 신호가 속성의 존재만 보고 값을 보지 않아, 발행자의 부정을 긍정으로 뒤집어 읽는다",
+          "resolution": "값이 false|0|no|off 가 아닐 때만 신호로 인정. 선택적 따옴표(`[\"']?`)는 엔진이 따옴표 없는 쪽으로 백트래킹해 부정 lookahead 를 빠져나가므로 따옴표 유무를 갈라 고정"
+        },
+        {
+          "id": "DATA-HIGH-43",
+          "severity": "HIGH",
+          "source": "codex",
+          "file": "skills/open-reach/open_reach/bench.py:266",
+          "title": "양성을 한 건도 못 돌아도 rate=0.000 · exit 0 — 측정 없이 통과한다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-05 가 음성을 먼저 돌리게 하면서 예산이 음성에서 소진되는 경로가 새로 생겼는데, '상한으로 못 돈 항목은 위반' 처리를 음성에만 적용해 양성 0건 측정이 무방비로 남았다",
+          "resolution": "positives 가 있는데 attempted==0 이면 '측정 불가' 를 위반으로 계상 → engine 이 EXIT_GATE(3) 로 종료. 측정 못 한 것과 측정해서 0% 인 것을 구분한다",
+          "evidence": "WALL_CLOCK_CAP_S=0 재현: 수정 전 violations=0/exit 0 → 수정 후 violations=1/exit 3"
+        },
+        {
+          "id": "DATA-MEDIUM-44",
+          "severity": "MEDIUM",
+          "source": "claude",
+          "file": "skills/open-reach/open_reach/bench.py:313",
+          "title": "중단된 실행의 rate 0.0 이 이력에 남아 baseline 이 되면 회귀 탐지기가 조용히 꺼진다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-05 의 재배치로 attempted=0·rate 0.0 인 중단 실행이 생기는데, classify_regression 은 부분 결과를 현재 판정에서 거부하면서 prior_rate 는 같은 부분 결과를 기준으로 받아들이는 비대칭이 드러났다",
+          "resolution": "이력에 truncated 를 기록하고 prior_rate 가 중단 실행을 건너뛴다. 부분 결과는 판정 대상도 기준도 되지 않는다로 통일"
+        },
+        {
+          "id": "PERF-MEDIUM-45",
+          "severity": "MEDIUM",
+          "source": "claude",
+          "file": "skills/open-reach/open_reach/observe.py:158",
+          "title": "창 확대가 최대 구간에서 파일을 통째로 메모리에 올려 라운드 1 (14) 가 되살아난다",
+          "status": "fixed",
+          "round": 3,
+          "novelty": "R2-04 가 계약을 되살리려 창을 파일 크기까지 넓혔는데 _iter_tail_records 는 창 전체를 handle.read() 한 번으로 읽으므로, 라운드 1 (14) 가 없앤 전량 적재가 최악 경로에서 그대로 복원됐다",
+          "resolution": "창을 1MiB 블록 단위로 뒤에서부터 훑고 블록 경계에 걸친 줄만 carry 로 이어 붙인다. 창의 넓이는 훑는 범위이지 메모리 사용량이 아니다",
+          "note": "codex 는 확인점 4를 '문제 없음(읽기 4회·86.5MB)'으로 판정했으나 그건 읽기 횟수 축이고, 이 건은 한 번에 들고 있는 메모리 축이다 — 축이 달라 별건으로 계상"
         }
       ],
       "roundResults": [
@@ -642,6 +722,48 @@
           "dismissed": [],
           "dismissedDetails": [],
           "note": "래칫 규칙 적용(delta-only · novelty justification · verdict monotonicity · severity scoping · counter-review). 라운드 1 수정이 만든 회귀·부작용만 대상으로 했고 전 건이 라운드 1 항목과의 차이를 명시한다. 재개설 0건. codex 5건 중 4건은 Claude counter-review와 독립 일치, curl_cffi 요청 전 검증 누락은 codex 단독 발견. 수정 후 동결 인수 테스트 8/8 green + 신규 동작 검증 16종 PASS."
+        },
+        {
+          "round": 3,
+          "at": "2026-08-26T00:00:00Z",
+          "sourceHash": "f1bc6b395a2c4ddefd22fdd2fad0a4830c69ef2b-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — 확인 라운드",
+          "findings": {
+            "total": 7,
+            "bySeverity": {
+              "CRITICAL": 1,
+              "HIGH": 3,
+              "MEDIUM": 3,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 4,
+              "claude": 5,
+              "overlap": 2
+            }
+          },
+          "fixed": [
+            "SEC-SSRF-CRITICAL-39",
+            "NET-HIGH-40",
+            "CODE-HIGH-41",
+            "CODE-MEDIUM-42",
+            "DATA-HIGH-43",
+            "DATA-MEDIUM-44",
+            "PERF-MEDIUM-45"
+          ],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "R2-02 픽스처 예외 경계 — 0177.0.0.1·2130706433·localhost 거부, ::1·::ffff:127.0.0.1 인정 (양측 독립 확인)",
+            "R2-06 refresh 왕복 대조 — 실제 profiles.yaml 로 reparsed==planned, --apply exit 0 (양측 독립 확인)",
+            "PolicyBlocked 전파 — transport.request 의 catch-all 앞 except PolicyBlocked: raise 확인",
+            "창 확대 무한루프 없음 — 빈 파일·1바이트·개행만 파일 모두 1회 종료"
+          ],
+          "note": "라운드 2 수정본에 대한 확인 라운드. 래칫 규칙 유지(delta-only · novelty justification · verdict monotonicity · severity scoping · counter-review). 재개설 0건. codex 4건 · Claude 5건, 교집합 2건으로 합집합 7건. codex 단독: 환경 프록시 우회(CRITICAL) · 양성 0건 exit 0. Claude 단독: data-paywall 부정값 · baseline 오염 · 창 확대 전량 적재. codex 가 '문제 없음'으로 판정한 확인점 2·6 은 Claude 도 독립으로 같은 결론. 수정 후 동결 인수 테스트 8/8 green + 라운드 3 동작 검증 15종 PASS + 라운드 2 동작 검증 16종 재실행 PASS(회귀 없음)."
         }
       ]
     }

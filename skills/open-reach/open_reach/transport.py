@@ -231,6 +231,20 @@ def _send_stdlib(
         conn.close()
 
 
+def resolve_entry(host: str, port: int, addresses: list[str]) -> str:
+    """libcurl `CURLOPT_RESOLVE` 한 줄 — `host:port:addr1,addr2`.
+
+    IPv6 주소는 대괄호로 감싼다. 쉼표로 여러 주소를 이어야 하는 형식이라
+    감싸지 않으면 주소 안의 콜론이 구분자와 섞여 항목 자체가 무효가 된다.
+    검증한 주소를 **전부** 넘긴다 — 하나만 고정하면 dual-stack 호스트에서 첫 주소가
+    불통일 때 폴백이 사라져, 보안을 위해 도입한 고정이 가용성을 깎는다.
+    """
+    literals = []
+    for address in addresses:
+        literals.append(f"[{address}]" if ":" in address else address)
+    return f"{host}:{port}:{','.join(literals)}"
+
+
 def _send_curl_cffi(
     url: str, timeout: float, headers: dict[str, str], impersonate: str
 ) -> tuple[int, dict[str, str], bytes, bool]:
@@ -240,6 +254,12 @@ def _send_curl_cffi(
     이미 요청이 상대에게 도달한 뒤다. 사설 서버에 GET 이 한 번 닿는 것 자체가 SSRF 이므로,
     검증을 요청 뒤로 미루지 않고 **연결할 주소를 우리가 고정한다**.
     고정할 수단이 없는 버전이라면 이 경로는 통제 불가이므로 쓰지 않는다 (fail-closed).
+
+    환경 프록시(`http_proxy` 등)도 같은 이유로 신뢰하지 않는다. 프록시를 타면 대상
+    이름을 **프록시가** 해석하므로 우리가 고정한 주소는 적용되지 않고, `primary_ip` 는
+    프록시의 주소라서 사후 확인마저 대상이 아닌 것을 확인하게 된다 — 검증 두 겹이
+    동시에 무력화된다. stdlib 경로는 `http.client` 를 직접 써서 애초에 프록시를 타지
+    않으므로, 이 경로만 명시적으로 막으면 두 경로의 동작이 같아진다.
     """
     from curl_cffi import requests as cffi_requests  # 지연 임포트 — 없어도 동작해야 한다
 
@@ -248,26 +268,36 @@ def _send_curl_cffi(
     parts = urlsplit(url)
     host = (parts.hostname or "").lower()
     port = parts.port or (443 if parts.scheme == "https" else 80)
-    address = policy.resolved_targets(url)[0]
+    entry = resolve_entry(host, port, policy.resolved_targets(url))
 
     try:
-        resp = cffi_requests.get(
-            url,
-            headers=headers,
-            timeout=timeout,
-            impersonate=impersonate,
-            allow_redirects=False,
-            stream=True,
-            resolve=[f"{host}:{port}:{address}"],
-        )
+        session = cffi_requests.Session(trust_env=False)
     except TypeError as exc:
         raise PolicyBlocked(
             "private_range",
-            "설치된 curl_cffi 가 이름 해석 고정(resolve)을 지원하지 않아 "
-            f"연결 주소를 통제할 수 없다 — 이 경로를 쓰지 않는다 ({exc})",
+            "설치된 curl_cffi 가 환경 프록시 차단(trust_env)을 지원하지 않아 "
+            f"연결 경로를 통제할 수 없다 — 이 경로를 쓰지 않는다 ({exc})",
         ) from exc
 
+    resp = None
     try:
+        try:
+            resp = session.get(
+                url,
+                headers=headers,
+                timeout=timeout,
+                impersonate=impersonate,
+                allow_redirects=False,
+                stream=True,
+                resolve=[entry],
+            )
+        except TypeError as exc:
+            raise PolicyBlocked(
+                "private_range",
+                "설치된 curl_cffi 가 이름 해석 고정(resolve)을 지원하지 않아 "
+                f"연결 주소를 통제할 수 없다 — 이 경로를 쓰지 않는다 ({exc})",
+            ) from exc
+
         got = _merge_headers(
             getattr(resp.headers, "multi_items", resp.headers.items)()
         )
@@ -276,9 +306,10 @@ def _send_curl_cffi(
         body, truncated = _drain_capped(resp.iter_content(chunk_size=_CHUNK_BYTES))
         return resp.status_code, got, body, truncated
     finally:
-        close = getattr(resp, "close", None)
-        if close is not None:
-            close()
+        for closable in (resp, session):
+            close = getattr(closable, "close", None)
+            if close is not None:
+                close()
 
 
 def request(

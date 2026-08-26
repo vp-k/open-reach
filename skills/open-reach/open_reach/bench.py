@@ -263,6 +263,15 @@ def run_battery(
         if truncated:
             break
 
+    # 양성을 한 건도 못 돌았는데 rate=0.000 을 내놓으면, 소비자는 "측정했더니 0%"와
+    # "측정을 못 했다"를 구분할 수 없다. 앞의 것은 실패고 뒤의 것은 판정 불가인데
+    # 둘 다 exit 0 으로 나가면 판정 불가가 통과가 된다 — 음성 관문을 먼저 돌리게 되면서
+    # 예산이 음성에서 다 소진되는 경로가 새로 생겼으므로 여기서 명시적으로 막는다.
+    if positives and attempted == 0:
+        negative_violations.append(
+            "양성 케이스를 한 건도 실행하지 못했다 — 벽시계 상한으로 측정 불가"
+        )
+
     total = attempted if truncated else len(positives) * runs
     return {
         "tier": tier,
@@ -311,11 +320,20 @@ def render(report: dict[str, Any]) -> str:
 
 
 def prior_rate(battery_hash_value: str, tier: int) -> float | None:
-    """같은 배터리·같은 tier 의 가장 최근 실행 돌파율. 없으면 None."""
+    """같은 배터리·같은 tier 의 가장 최근 **완주** 실행 돌파율. 없으면 None.
+
+    중단된 실행은 건너뛴다. `classify_regression` 이 부분 결과를 "좋아졌는지 나빠졌는지
+    말할 자격이 없다"고 보면서 같은 부분 결과를 **비교 기준**으로는 받아들이면 앞뒤가
+    맞지 않는다 — 게다가 양성 0건 중단이 남긴 0.0 이 기준이 되면 이후 어떤 실행도
+    회귀로 잡히지 않아, 회귀 탐지기가 조용히 꺼진다.
+    """
     for record in observe.iter_recent(observe.bench_history_path()):
-        if record.get("battery_hash") == battery_hash_value and record.get("tier") == tier:
-            value = record.get("rate_median")
-            return float(value) if isinstance(value, (int, float)) else None
+        if record.get("battery_hash") != battery_hash_value or record.get("tier") != tier:
+            continue
+        if record.get("truncated"):
+            continue
+        value = record.get("rate_median")
+        return float(value) if isinstance(value, (int, float)) else None
     return None
 
 
@@ -338,6 +356,8 @@ def record_run(report: dict[str, Any], *, battery_path: Path) -> None:
             "passed": report["passed"],
             "failed": report["failed"],
             "rate_median": report["rate_median"],
+            # 중단 여부를 남겨야 다음 실행이 이 줄을 기준으로 삼을지 판단할 수 있다
+            "truncated": bool(report.get("truncated")),
             "by_vendor": report["by_vendor"],
             "by_route": report["by_route"],
             "by_reason": report["by_reason"],

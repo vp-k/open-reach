@@ -20,6 +20,8 @@ _LOCK_ACQUIRE_TIMEOUT_S = 10.0
 # 락 보유 구간은 write 1회(밀리초)다. 이보다 훨씬 긴 나이의 락만 죽은 것으로 본다.
 _LOCK_STALE_S = 30.0
 _TAIL_SCAN_BYTES = 512 * 1024
+# 창이 얼마나 넓어지든 한 번에 메모리에 올리는 상한
+_MAX_READ_CHUNK = 1024 * 1024
 
 
 def repo_root() -> Path:
@@ -155,33 +157,54 @@ def record_success(
     append_jsonl(observations_path(), observation.to_record())
 
 
+def _parse_record(line: bytes) -> dict | None:
+    line = line.strip()
+    if not line:
+        return None
+    try:
+        record = json.loads(line.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    return record if isinstance(record, dict) else None
+
+
 def _iter_tail_records(path: Path, *, scan_bytes: int = _TAIL_SCAN_BYTES):
     """파일 끝에서부터 최근 레코드를 하나씩 내놓는다.
 
     최근 성공 1건을 찾자고 매 fetch 마다 최대 50MB 를 통째로 읽어 들이면,
     관측이 쌓일수록 취득이 느려진다 — 학습이 성능을 갉아먹는 구조가 된다.
+
+    창이 아무리 넓어도 한 번에 들고 있는 것은 블록 하나(`_MAX_READ_CHUNK`)와 블록
+    경계에 걸친 줄 하나뿐이다. 창을 넓힐 수 있게 되면서 `scan_bytes` 는 파일 크기까지
+    올라갈 수 있는데, 그때 한 번에 읽어 버리면 전량 적재가 그대로 되살아난다 —
+    창의 넓이는 **훑는 범위**여야지 **메모리 사용량**이 되어서는 안 된다.
     """
     try:
         size = path.stat().st_size
     except OSError:
         return
+
+    floor = max(0, size - scan_bytes)
+    pos = size
+    carry = b""  # 블록 앞머리에서 잘린 조각 — 앞 블록과 이어 붙여야 한 줄이 된다
     with open(path, "rb") as handle:
-        start = max(0, size - scan_bytes)
-        handle.seek(start)
-        chunk = handle.read(size - start)
-    if start > 0:
-        # 첫 줄은 잘렸을 수 있다 — 버린다
-        newline = chunk.find(b"\n")
-        chunk = chunk[newline + 1 :] if newline >= 0 else b""
-    for line in reversed(chunk.split(b"\n")):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            record = json.loads(line.decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            continue
-        if isinstance(record, dict):
+        while pos > floor:
+            start = max(floor, pos - _MAX_READ_CHUNK)
+            handle.seek(start)
+            block = handle.read(pos - start)
+            pos = start
+            parts = (block + carry).split(b"\n")
+            carry = parts[0]
+            for line in reversed(parts[1:]):
+                record = _parse_record(line)
+                if record is not None:
+                    yield record
+
+    # 창이 파일 전체였다면 남은 조각은 잘린 게 아니라 첫 줄이다.
+    # 창이 파일 중간에서 시작했다면 그 조각은 경계에 걸려 잘렸으므로 버린다.
+    if floor == 0 and carry:
+        record = _parse_record(carry)
+        if record is not None:
             yield record
 
 

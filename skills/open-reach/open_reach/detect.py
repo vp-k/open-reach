@@ -18,17 +18,35 @@ _AUTH_WORDS = re.compile(
     r"(sign\s?in|log\s?in|로그인|登录|회원가입|create an account|continue reading)", re.I
 )
 _PAYWALL_JSONLD = re.compile(r"isaccessibleforfree\"?\s*:\s*false", re.I)
+# **읽히는 문구**만 센다. 여기에 `paywall` 같은 마크업 토큰을 넣으면 아래 구조 신호와
+# 같은 substring 에 함께 걸려서 "두 신호 AND" 가 사실은 신호 1개가 된다.
 _PAYWALL_WORDS = re.compile(
-    r"(subscribe to (continue|read)|구독.{0,6}(하시면|해야)|members? only|paywall|유료 (기사|콘텐츠))",
+    r"(subscribe to (continue|read)|구독.{0,6}(하시면|해야)|members? only|유료 (기사|콘텐츠))",
     re.I,
 )
 # 발행자가 본문을 **잘랐다는 구조적 표시**만 센다. `…<` 같은 표기는 정상 기사 요약에도
 # 흔해서 신호가 아니라 잡음이고, 잡음을 근거로 삼으면 공개 기사를 페이월로 버리게 된다.
+#
+# class/id 는 **벽을 가리키는 이름**일 때만 신호다. `paywall-promo`·`paywall-related-ad`
+# 처럼 벽이 아니라 벽을 파는 배너 이름이 훨씬 흔한데, 이름에 `paywall` 이 들어갔다는
+# 이유로 공개 기사를 exit 2 로 버리면 돌파율이 그 자리에서 깎인다. 그래서 토큰이
+# 끝나거나 벽을 뜻하는 접미사가 붙은 경우만 인정한다.
+_WALL_NAME = (
+    r"(?:truncated|locked-content|content-locked"
+    r"|paywall(?:[-_](?:overlay|wall|blocker|gate|modal|barrier"
+    r"|container|wrapper|screen|prompt|message|box))?)(?![\w-])"
+)
 _TRUNCATION = re.compile(
     r"""(\[\s?\.\.\.\s?\]"""
-    r"""|class\s*=\s*["'][^"']*(?:truncated|paywall|locked-content)"""
-    r"""|data-paywall"""
-    r"""|id\s*=\s*["'][^"']*paywall)""",
+    rf"""|class\s*=\s*["'][^"']*{_WALL_NAME}"""
+    rf"""|id\s*=\s*["'][^"']*{_WALL_NAME}"""
+    # `data-paywall="false"` 는 "페이월이 아니다"라는 **명시적 부정**이다. 속성이
+    # 있다는 사실만으로 신호로 세면 발행자의 부정을 긍정으로 뒤집어 읽게 된다.
+    # 따옴표를 `?` 로 두면 엔진이 따옴표를 안 쓴 쪽으로 물러나 부정 lookahead 를
+    # 빠져나가므로, 따옴표가 있는 경우와 없는 경우를 갈라서 고정한다.
+    r"""|data-paywall\s*=\s*["'](?!(?:false|0|no|off)\b)"""
+    r"""|data-paywall\s*=\s*(?!["'])(?!(?:false|0|no|off)\b)"""
+    r"""|data-paywall\s*[/>\s])""",
     re.I,
 )
 
@@ -77,7 +95,10 @@ def detect_wall(html: str, extracted: str = "") -> ContentVerdict | None:
     페이월은 **구독 문구 + 구조적 잘림 표시**가 함께 있을 때 판정하며 본문 길이를 보지
     않는다. 미리보기를 200자 넘게 주는 페이월이 흔한데 길이로 거르면 그런 페이지가
     전부 success 가 되고, SC-3 의 "wall/paywall 을 success 로 판정 0건"이 깨진다.
-    두 신호를 함께 요구하는 것으로 거짓 양성을 막는다.
+    두 신호를 함께 요구하는 것으로 거짓 양성을 막는다 — 단, 두 신호는 **서로 다른
+    증거**여야 한다. 하나는 읽히는 문구(`_PAYWALL_WORDS`), 하나는 마크업 구조
+    (`_TRUNCATION`) 로 갈라놓지 않으면 `class="paywall-ad"` 같은 substring 하나가
+    양쪽을 동시에 켜서 AND 가 이름만 AND 로 남는다.
 
     반면 로그인월의 **문구 휴리스틱**("로그인"·"sign in")은 본문이 실제로 없을 때만
     쓴다 — 공개 기사 상단에 로그인 폼이 붙어 있다는 이유로 읽히는 본문을
