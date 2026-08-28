@@ -176,6 +176,23 @@
             ],
             "note": "사용자 승인 미리보기의 \"리디렉션 홉 검사에는 적용하지 않는다\" 조항은 us-b-001 정상 리디렉션(/redir/public 상대 경로, 동일 오리진)을 영구 red로 만들어 채택 불가. 매 홉 검사는 유지하되 홉 오리진이 픽스처 오리진과 완전 일치할 때만 예외 적용으로 대체 — /redir/private(포트 1)은 계속 차단되어 AC-B-003-5 불변.",
             "refrozen": true
+          },
+          {
+            "at": "2026-08-28T00:00:00Z",
+            "approvedByUser": true,
+            "trigger": "DOC-LOW-30 — SPEC 자기모순 (redirect_hop 을 담을 자리가 없음)",
+            "changes": [
+              "SPEC Attempt 표: `rule` 필드 추가 (str 또는 null, route=\"policy\" 일 때만 non-null, 값 도메인은 PolicyVerdict.rule) + 근거 문단",
+              "SPEC fetch 테스트 케이스: `rule=\"redirect_hop\"` → `attempts[0].rule=\"redirect_hop\"` (한정자 추가)"
+            ],
+            "note": "SPEC:314 는 리디렉션 차단에 rule=\"redirect_hop\" 을 요구했으나 같은 SPEC 의 Response 2(FetchResult JSON)에 그 필드를 담을 자리가 없었다 — 최상위 추가 필드 금지. rule 은 원래 PolicyVerdict 의 필드이고, AC-B-002-4 가 정책 차단을 attempts[0] 에 남기도록 이미 정했으므로 Attempt 로 옮기는 것이 계약 정합이다. 선택지 3종(요구 삭제 / attempts 로 이동 / 보류) 중 사용자가 이동을 승인했다. 요구 삭제는 scheme·private_range·redirect_hop 세 SSRF 차단이 출력에서 policy_blocked 하나로 붕괴해 회귀가 조용히 지나가므로(NG-10) 채택하지 않았다. AC-B-002-2 의 필드 열거(6종)는 건드리지 않았다 — 정본은 Attempt 표이고 '갖는다' 는 최소 요건이다. 동결 인수 테스트의 필드 단언이 부분집합 검사라 (us-b-002:15) 스위트는 깨지지 않았고 8/8 green 유지.",
+            "refrozen": true,
+            "codeChanges": [
+              "models.py Attempt: rule 필드 + 불변식(route!=policy 인데 rule 이 있으면 InvariantError, 값은 POLICY_RULES 닫힌 집합)",
+              "fetcher.py _policy_attempt(rule=...) + 3개 호출부에서 규칙 ID 전달 (check_url · robots_verdict · PolicyBlocked 예외)"
+            ],
+            "evidence": "동결 인수 스위트 8/8 (ACCEPTANCE_RESULT: total=8 passed=8 failed=0), verify_r9 19종 ALL PASS, verify_r9_live(실제 픽스처 서버 /redir/private) 8종 ALL PASS — redirect_hop·private_range·scheme 3종이 실행에서 구분됨. verify_r2~r7 재실행 전부 ALL PASS(회귀 없음). manifest specHash = 1793427c0e0d7f7f...",
+            "knownGap": "동결된 us-b-003 의 /redir/private 단언은 여전히 exit 2 + policy_blocked 까지다 — attempts[0].rule 단언은 없다. 인수 테스트 확대는 이번 승인 범위 밖이라 넣지 않았고, 대신 verify_r9_live 로 실측했다. R2 에서 인수 테스트에 편입할 후보."
           }
         ]
       }
@@ -1008,6 +1025,41 @@
             "확인점 5 소비처 전수 — 문제 없음. run_battery 의 두 목록을 읽는 곳은 cmd_bench 와 compare 뿐이며 모두 갱신됨. compare 반환 tuple 의 두 번째 값은 cmd_compare 의 stderr G-3 진단에 쓰이므로 죽은 값이 아님"
           ],
           "note": "라운드 6 수정본에 대한 확인 라운드. 수렴하지 않았다 — 회귀 1건 확인. 래칫 규칙 유지. codex 1건 · Claude 1건, 교집합 1건으로 합집합 1건. 내가 r7 프롬프트 확인점 2 에 'cmd_compare 밖(main 의 GovernanceError 핸들러)에서 exit 3 이 새는가' 를 명시적으로 심었고 codex 가 그 경로를 재현했다 — R6-02 의 목표가 미달성이었으므로 delta 안이다. codex 제안은 'exit 4 로 처리하거나 거버넌스 게이트를 적용하지 않는다' 양자택일이었는데 후자는 받지 않았다: G-3 위반 배터리로 잰 숫자는 증적이 될 수 없으므로 검사는 남기고 분류만 옮겼다. 확인점 1·3·4·5 는 양측 모두 문제 없음. 수정 후 동결 인수 테스트 8/8 green + 라운드 7 검증 16종 PASS + 라운드 2~6 검증 재실행 전부 PASS(회귀 없음)."
+        },
+        {
+          "round": 8,
+          "at": "2026-08-26T00:00:00Z",
+          "sourceHash": "96be432364b1eb721c56da647a24975e2f6448eb-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — 수렴 라운드",
+          "findings": {
+            "total": 0,
+            "bySeverity": {
+              "CRITICAL": 0,
+              "HIGH": 0,
+              "MEDIUM": 0,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 0,
+              "claude": 0,
+              "overlap": 0
+            }
+          },
+          "fixed": [],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "확인점 1 compare 의 exit 3 누출 전수 — 문제 없음. GovernanceError 의 유일한 발생 지점은 check_governance(bench.py:128)이고 compare 안의 유일한 호출이 감싸였다. run_battery·_run_original·_evidence·atomic_write 에 발생원 없음. compare 에서 도달 가능한 main() 핸들러는 UsageError->4 · ProfilesError/YamlError->4 · InvariantError/ObservationSchemaError/OSError/KeyboardInterrupt->1 이며 GovernanceError->3 에는 도달 불가 (양측 독립)",
+            "확인점 2 bench 의 exit 3 보존 — 문제 없음. cmd_bench 의 직접 검사와 gate 핸들러를 delta 가 건드리지 않았다. G-1·G-3·G-4·G-6 전부 rc=3 및 규칙 ID 진단 유지 (AC-B-004-2)",
+            "확인점 3 예외 정보 보존 — 문제 없음. 다중 위반 3건이 '; ' 로 전부 보존되고 raise ... from exc 로 원인 체인(GovernanceError) 유지 (양측 독립)",
+            "확인점 4 UsageError 변환의 계약 적합성 — 문제 없음. SPEC 의 compare 는 Response 0/4 만 정의하고 Response 4 의 파일 선점·배터리 부재는 사용 오류의 예시이지 배타 조건이 아니다. us-b-005 의 '배터리 부재 rc=4' 단언과 충돌 없음",
+            "확인점 5 검사 순서 — 문제 없음. 파일 선점(AC-B-005-3) -> load_battery(YamlError) -> 거버넌스 순서 유지. G-3 위반 배터리 + 기존 출력 파일 조합에서 선점이 먼저 걸림 (양측 독립)"
+          ],
+          "note": "**수렴 라운드.** codex 회신 원문: '회귀 없음. 이번 HEAD delta 는 compare() 의 거버넌스 예외 변환만 바꾸며, 새 결함은 확인되지 않았습니다. 작업 트리 변경은 없습니다.' Claude 자체 검토도 발견 0건. 확인점 5종 모두 양측 '문제 없음' 일치. 코드 변경이 없으므로 이 라운드의 sourceHash 가 현재 소스 지문과 일치한다 — code-review-findings 게이트의 귀속 요건 충족. 라운드 추이 30 -> 6 -> 7 -> 2 -> 2 -> 2 -> 1 -> 0. 누적 findingHistory 52건, open 0건, CRITICAL/HIGH open 0건."
         }
       ]
     }

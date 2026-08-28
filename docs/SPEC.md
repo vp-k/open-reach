@@ -176,6 +176,9 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 | status | int 또는 null | `100..599` 또는 null(네트워크 실패) | HTTP 상태 |
 | elapsed_ms | int | `>= 0` | 소요 시간 |
 | outcome | str | `success`/`challenge`/`wall`/`error`/`blocked` | 시도 결과 |
+| rule | str 또는 null | `route="policy"`일 때만 non-null이며 값은 `PolicyVerdict.rule` 도메인 | 적용된 정책 규칙 |
+
+`rule`은 정책 계층이 내린 `PolicyVerdict`를 시도 이력에 남기는 통로다. `FetchResult`는 최상위 필드를 늘리지 않으므로(응답 포맷 고정), 차단 규칙의 식별은 차단 판정이 기록되는 자리인 `attempts[0]`에서 이뤄진다. 이 값이 없으면 `scheme`·`private_range`·`redirect_hop` 세 SSRF 차단이 출력에서 모두 `policy_blocked` 하나로 붕괴해 회귀가 조용히 지나간다 (NG-10).
 
 ### FetchResult
 | 필드 | 타입 | 제약조건 | 설명 |
@@ -311,7 +314,7 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
   - 429 + `Retry-After` 픽스처 → exit 1, `failure_reason="rate_limited"`, 재시도 총량이 `max_attempts` 이하
   - `http://127.0.0.1:1/x` → exit 2, `failure_reason="policy_blocked"`, `attempts[0].route="policy"`, 네트워크 요청 0건
   - `file:///etc/passwd` → exit 2, `policy_blocked` (스킴 위반)
-  - 공개에서 사설로 리디렉션하는 픽스처 → exit 2, `policy_blocked`, `rule="redirect_hop"`
+  - 공개에서 사설로 리디렉션하는 픽스처 → exit 2, `policy_blocked`, `attempts[0].rule="redirect_hop"`
   - `--timeout 0` → exit 4
 
 ### `bench`

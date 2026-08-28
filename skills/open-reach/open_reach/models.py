@@ -109,6 +109,11 @@ class Attempt:
     status: int | None
     elapsed_ms: int
     outcome: str
+    # 정책 계층이 내린 PolicyVerdict.rule 을 시도 이력에 남기는 통로.
+    # FetchResult 는 최상위 필드를 늘리지 않으므로(응답 포맷 고정) 차단 규칙의
+    # 식별은 차단 판정이 기록되는 자리인 attempts[0] 에서 이뤄진다.
+    # 기본값 None 이라 기존 호출부는 그대로 둔다 — 정책 경로만 값을 채운다.
+    rule: str | None = None
 
     def __post_init__(self) -> None:
         if self.route not in ROUTES:
@@ -119,6 +124,13 @@ class Attempt:
             raise InvariantError(f"unknown url_variant: {self.url_variant}")
         if self.elapsed_ms < 0:
             raise InvariantError("elapsed_ms must be >= 0")
+        if self.rule is not None:
+            # 값의 도메인은 PolicyVerdict 와 같은 닫힌 집합이고, 정책이 아닌
+            # 계층이 규칙 ID 를 달고 나오는 것은 프로그래밍 오류다.
+            if self.route != "policy":
+                raise InvariantError(f"rule is only for route=policy: {self.route}")
+            if self.rule not in POLICY_RULES:
+                raise InvariantError(f"unknown policy rule: {self.rule}")
 
 
 @dataclass(frozen=True)

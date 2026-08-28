@@ -23,7 +23,7 @@ _BACKOFF_MAX_S = 30.0
 _RATE_LIMIT_MAX_RETRIES = 3
 
 
-def _policy_attempt(outcome: str = "blocked") -> Attempt:
+def _policy_attempt(outcome: str = "blocked", rule: str | None = None) -> Attempt:
     return Attempt(
         route="policy",
         impersonate=None,
@@ -32,6 +32,7 @@ def _policy_attempt(outcome: str = "blocked") -> Attempt:
         status=None,
         elapsed_ms=0,
         outcome=outcome,
+        rule=rule,
     )
 
 
@@ -197,13 +198,13 @@ def fetch(request: FetchRequest) -> FetchResult:
         return _failure(url, "network", attempts)
 
     if not verdict.allowed:
-        attempts.append(_policy_attempt())
+        attempts.append(_policy_attempt(rule=verdict.rule))
         return _failure(url, "policy_blocked", attempts)
 
     # ── 2. robots.txt ───────────────────────────────────────────────────
     robots = policy.robots_verdict(url, timeout=request.timeout_s)
     if not robots.allowed:
-        attempts.append(_policy_attempt())
+        attempts.append(_policy_attempt(rule=robots.rule))
         return _failure(url, "policy_blocked", attempts)
 
     # ── 3. 시도 계획 ────────────────────────────────────────────────────
@@ -220,8 +221,10 @@ def fetch(request: FetchRequest) -> FetchResult:
 
         try:
             outcome = _attempt_step(request, step, deadline, attempts, budget)
-        except transport.PolicyBlocked:
-            attempts.append(_policy_attempt())
+        except transport.PolicyBlocked as exc:
+            # 여기가 redirect_hop 이 나오는 유일한 자리다 — 선요청 후 차단이라
+            # 규칙 ID 를 버리면 세 SSRF 차단이 출력에서 구분되지 않는다.
+            attempts.append(_policy_attempt(rule=exc.rule))
             return _failure(url, "policy_blocked", attempts)
         except _RateLimitExhausted:
             last_reason = "rate_limited"
