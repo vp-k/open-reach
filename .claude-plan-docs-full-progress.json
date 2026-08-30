@@ -11,19 +11,19 @@
   "dod": {
     "user_story": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-28T02:47:29Z (critical: 0, major: 0, minor: 0)"
     },
     "data_model": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-28T02:47:29Z (critical: 0, major: 0, minor: 0)"
     },
     "api_contract": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-28T02:47:29Z (critical: 0, major: 0, minor: 0)"
     },
     "error_scenarios": {
       "checked": true,
-      "evidence": "spec-completeness PASS at 2026-08-25T12:26:09Z (critical: 0, major: 0, minor: 0)"
+      "evidence": "spec-completeness PASS at 2026-08-28T02:47:29Z (critical: 0, major: 0, minor: 0)"
     },
     "no_definition_conflict": {
       "checked": true,
@@ -193,6 +193,84 @@
             ],
             "evidence": "동결 인수 스위트 8/8 (ACCEPTANCE_RESULT: total=8 passed=8 failed=0), verify_r9 19종 ALL PASS, verify_r9_live(실제 픽스처 서버 /redir/private) 8종 ALL PASS — redirect_hop·private_range·scheme 3종이 실행에서 구분됨. verify_r2~r7 재실행 전부 ALL PASS(회귀 없음). manifest specHash = 1793427c0e0d7f7f...",
             "knownGap": "동결된 us-b-003 의 /redir/private 단언은 여전히 exit 2 + policy_blocked 까지다 — attempts[0].rule 단언은 없다. 인수 테스트 확대는 이번 승인 범위 밖이라 넣지 않았고, 대신 verify_r9_live 로 실측했다. R2 에서 인수 테스트에 편입할 후보."
+          },
+          {
+            "at": "2026-08-29T00:00:00Z",
+            "approvedByUser": true,
+            "trigger": "R1 실측 — 9벤더 × ≥2건(G-1)을 만족하는 출하 배터리를 구성할 수 없음",
+            "changes": [
+              "AC-B-004-2 (:115): G-1 의 대상을 '벤더 9종' 에서 '배터리가 선언한 vendor_scope 범위의 벤더' 로 변경. 미선언 시 범위는 9종 전체임을 같은 문장에 명시",
+              "BatteryFile 헤더 스키마 (:237-238): vendor_scope(str 배열, 선택) 와 vendor_scope_reason(vendor_scope 가 있으면 필수) 2행 추가",
+              "Bench 거버넌스 적용 범위 (:330): role: production 검사 목록에 G-8 추가",
+              "Response 3 (:333): 위반 규칙 ID 열거를 'G-1 부터 G-6' 에서 'G-1·G-3·G-4·G-6·G-8' 로 교체"
+            ],
+            "note": "선택지 3종 중 사용자가 (a) '4벤더로 R1 배터리를 구성하고 9벤더는 R2 로' 를 승인했다. 핵심은 **기준을 낮추지 않았다**는 것이다 — G-1 의 하한(≥2건)은 그대로고, 바뀐 것은 그 하한을 적용할 범위를 배터리가 **명시적으로 선언**하게 한 점이다. (b) 'G-1 하한을 실측 가능한 값으로 개정' 은 게이트를 실측에 맞춰 낮추는 것이라 택하지 않았다. SPEC 「Round 경계」가 애초에 'WAF 감지기 9종 전체' 를 R2 로 두고 R2 계약을 'R1 측정 결과를 근거로 확정한다' 고 적어 두었으므로, 9벤더 배터리는 R1 산출물이 아니다. 후보 87건을 두 차례 실측해 4종만 기준을 채웠다 (docs/r1-report.md §4). 범위 축소가 조용히 일어나지 않도록 G-8 을 함께 신설했다: 사유(vendor_scope_reason) 필수, 감지기에 없는 벤더 금지, **키 누락 시 9종 전체로 간주**(키를 빠뜨리는 것이 범위를 줄이는 가장 싼 방법이 되면 안 된다), 측정 출력에 vendor_scope 와 vendors_out_of_scope 를 같은 줄에 표기(소비자가 4벤더 측정치를 9벤더 측정치로 읽지 않게). 재동결 시 :330·:333 두 곳도 함께 맞췄다 — 같은 개정이 SPEC 안에서 서로 다른 곳에 남아 자기모순이 되는 것을 막기 위한 정합 수정이고, 새 규정을 더한 것이 아니다.",
+            "refrozen": true,
+            "codeChanges": [
+              "bench.py: vendor_scope() 신설 + check_governance 가 role==production 일 때 G-8 검사 및 선언 범위 기준 G-1 적용, 출력에 vendor_scope/vendors_out_of_scope",
+              "bench/battery.yaml: vendor_scope(cloudflare·akamai·fastly·imperva) + vendor_scope_reason 헤더",
+              "tests/unit/test_bench_vendor_scope.py 5종 (출하 배터리 파일 자체의 거버넌스 통과 포함)"
+            ],
+            "verification": "bench --tier 1 --runs 1 실행: 거버넌스 PASS, negatives_checked=5, BENCH_RESULT rate=1.000 total=10 passed=10 failed=0, exit 0. 단위 40 passed, 동결 인수 8/8."
+          },
+          {
+            "at": "2026-08-29T04:37:07Z",
+            "approvedByUser": true,
+            "trigger": "R2 진입 — SPEC 「Round 경계」가 R2 계약을 'R1 측정 결과를 근거로 R2 진입 시 확정한다'고 미뤄 둔 것을 확정",
+            "changes": [
+              "Success Criteria: SC-8(벤더 감지 정확도 — 오탐 0건 hard fail AND 미탐 <=10%)·SC-9(API 라우팅 무결성 — robots 미검사/임퍼소네이션/인덱스 외 요청/value_pattern 미검증 치환 각각 0건 hard fail) 2행 추가. R2에 게이트가 하나도 없던 상태를 해소",
+              "US-B-009(벤더별 측정 가능성 확보) 신설 + AC-B-009-1..4",
+              "US-B-010(Phase 0 공개 API 라우팅, 2-hop 포함) 신설 + AC-B-010-1..18",
+              "Data Model: ApiIndexEntry(engine/api_index.yaml 1항목) + ChainStep 2개 스키마 추가",
+              "Round 경계 R2 행을 US-B-009·US-B-010으로 교체 + R2 종료 조건(SC-8·SC-9 통과 AND rate_http_only 무회귀) + 'R2에서 하지 않기로 확정한 것' 표(URL 변형·yt-dlp·격자 플래너, 각 제외 근거 명시)",
+              "Non-Goals NG-9 강제 지점: 적용 범위를 지문표(profiles.yaml)로 명시하고, API 인덱스는 호스트를 적는 것이 존재 이유이므로 리터럴 금지 대신 AC-B-010-15(20항목 상한 + source·verified_at 의무)와 AC-B-010-8..14(조립 규칙)로 증식을 막음을 명문화",
+              "FetchResult.metadata 제약: content_license(선택) 추가 — AC-B-010-18과의 자기모순 정합 수정"
+            ],
+            "note": "사용자 결정 2건이 이 개정의 뼈대다. (1) R2 범위 = '2-hop까지 허용' — 1-hop 고정을 권고했으나 사용자가 crates.io 구제를 포함하는 쪽을 택했다(88.6% -> 90.0%). 2-hop은 **상대 서버의 응답이 우리 다음 요청 URL에 영향을 주는 첫 경로**이고, 리디렉션이 아니라 우리가 자발적으로 조립하는 URL이라 hop_guard가 보지 않는 새 SSRF 표면이다. 그래서 허용하되 AC-B-010-8..14로 가뒀다: 체인 길이 <=2, 단계 간 전달은 스칼라 1개, 앵커된 value_pattern 필수, 치환은 경로 세그먼트 1개, 스킴·호스트는 템플릿 고정(응답에서 오지 않음), 조립된 URL도 SSRF 가드 + robots 재검사, 항목당 요청 예산 3회. 하나라도 빠지면 SC-9가 hard fail로 잡도록 게이트를 같이 신설했다. (2) URL 변형·yt-dlp = '근거를 만들기 위해 먼저 측정' — 즉시 제외를 권고했으나 사용자가 측정을 요구했고, 측정 결과 둘 다 근거가 만들어지지 않아 제외로 확정됐다. 권고와 결론이 같아도 **근거의 출처가 추측에서 실측으로 바뀐 것**이 차이다: URL 변형은 성공 표본 8곳의 amphtml 선언 0건 + 차단 4곳 x 변형 3종 회피 0/12(m. 호스트는 4곳 전부 DNS 부재), yt-dlp는 A1 표본 70건 중 미디어 URL 0건 + 대상이 사실상 1개 사이트 + 외부 바이너리 의존이 SC-7과 충돌. 승인 목록의 'Attempt.route에 api 추가'는 빠졌다 — SPEC이 R1부터 같은 자리를 phase0으로 예약해 두고 있어 한 가지 것에 이름을 둘 만들지 않으려 기존 값을 썼고, 스키마는 손대지 않았다(승인받은 것보다 좁은 변경). 또한 이 개정을 쓰며 docs/r1-report.md의 추정 1건을 정정했다 — '원본이 crates.io를 JSON-LD·API로 구제한 것으로 보인다'는 틀렸고, 실측 결과 그 문서에는 JSON-LD가 0개이며 원본의 content_length 5,056은 우리가 받는 바이트와 같다(원본은 5KB JS 셸을 그대로 성공으로 셌다). 그 추정 위에 세우려던 R2 우선순위 1번을 계약에서 뺐다. 변경 5(Round 경계 R2 행)는 범위를 줄이는 개정이므로 review-escalation-check 트리거에 걸린다 — 구현 전 리뷰를 dual 이상으로 올린다.",
+            "refrozen": true,
+            "specHashAfter": "ecfdddac63b69caeb378241fc8af1618524bc17590558f53f80ab57ab53c2038",
+            "specHashBefore": "119ff8c185fae3b01710f3fb0632dd66694f9bb48a529dc265f32178d2658c2e",
+            "evidence": [
+              "bench/evidence/r2-rescue-probe.json (실패 10건별 API/JSON-LD/mobile 구제 후보)",
+              "bench/evidence/r2-discovery-probe.json (API 발견 힌트 0/4사이트 — 인덱스가 유일한 경로임의 근거)",
+              "bench/evidence/r2-payload-probe.json (crates.io 440KB 응답에 기사 분량 없음, readme 엔드포인트 3,511B)",
+              "bench/evidence/r2-variant-probe.json (URL 변형 0/8 선언, 0/12 회피)",
+              "bench/evidence/r2-media-probe.json + r2-media-extract.json (미디어 수요 0/70, Vimeo는 CAPTCHA로 경계 밖, Apple Podcasts는 이미 22,689자 정상 추출)",
+              "docs/r2-contract.md (계약 도출 과정 전문)"
+            ],
+            "codeChanges": [
+              "engine/profiles.yaml: akamai·unknown_challenge의 transform_order에서 mobile 제거 (2줄). SUPPORTED_VARIANTS=(\"original\",)가 이미 걸러 내 동작에는 변화가 없으나, 가리키는 대상이 없는 계획을 데이터에 남겨 두는 것이 NG-10이 막으려는 상태다 — m. 호스트는 실측 4곳 전부 DNS 부재"
+            ],
+            "verification": "재동결 PASS (11 files + docs/SPEC.md, hash ecfdddac…). 동결 인수 8/8 PASS, 단위 40 passed, bench --battery bench/battery.yaml --runs 1: rate=1.000 total=10 passed=10 failed=0 by_route={\"http\":10} regression=none exit 0. AC 22종은 구현 계약으로 R2에서 이행한다."
+          },
+          {
+            "at": "2026-08-30T00:00:00Z",
+            "approvedByUser": true,
+            "trigger": "사용자 지시 'codex 모드로 가고 음성 테스트 7종 넣어' — R2 Phase 0 라우팅 음성 인수 테스트 선작성에 필요한 CLI 계약 추가",
+            "changes": [
+              "fetch CLI 옵션에 `--api-index <경로>` 추가 (bench --battery 와 동일한 구조: 데이터 파일 + 기본값 + 인수 테스트용 오버라이드)",
+              "fetch Request 절에 --api-index 의미와 AC-B-010-8/10/12/15 로드 시점 제약 위반 시 요청 전 exit 3 명시",
+              "fetch 에 Response 3 (API 인덱스 로드 실패, 네트워크 요청 0건) 추가 — 전역 종료 코드 3의 '인덱스 로드 실패'를 fetch 계약에 배선",
+              "fetch 테스트 케이스에 Phase 0 라우팅 음성 케이스 8종 파일 경로와 /_hits 카운터 단언 규약 명시"
+            ],
+            "note": "음성 테스트를 구현 전에 동결하려면 엔진이 '나쁜 인덱스'를 가리킬 수 있어야 한다. 픽스처 인덱스 주입 통로가 없으면 AC-B-010-8~14 는 구현 후에야 검증 가능해지고, 그러면 테스트가 구현에 맞춰지는 순서가 된다(acl v4.2.0 이 막으려는 바로 그 순서). --battery 가 이미 같은 문제를 같은 방법으로 풀고 있어 새 패턴을 만들지 않았다. 동결 시점 상태는 의도된 RED: 9종 중 8종 PASS, 신규 1종 FAIL (10개 단언). 기존 8종 무회귀 확인.",
+            "evidence": [
+              "docs/SPEC.md (fetch CLI 계약)",
+              "tests/acceptance/us-b-010-api-routing-negative.sh (신규, 동결 대상 12번째 파일)",
+              "tests/acceptance/fixture_server.py (/_hits 카운터, /api/* 대역)",
+              "docs/r2-contract.md"
+            ],
+            "codeChanges": [
+              "tests/acceptance/fixture_server.py: 경로별 요청 카운터(_HITS/_record_hit) + /_hits·/_hits/reset + /api/origin(403)·/api/step1/<variant>·/api/step2·/api/ep*·/api/evil 대역 추가"
+            ],
+            "refrozen": true,
+            "specHashBefore": "ecfdddac63b69caeb378241fc8af1618524bc17590558f53f80ab57ab53c2038",
+            "specHashAfter": "6aed2d2741bc4fe9bcc01f94b7bd7f8f7355ee579ac7787bc2301a74580eb375",
+            "verification": {
+              "freeze": "PASS (12 files)",
+              "acceptance": "total=9 passed=8 failed=1 — 의도된 RED (R2 미구현)",
+              "regression": "기존 8종 전부 PASS"
+            }
           }
         ]
       }
@@ -1060,6 +1138,44 @@
             "확인점 5 검사 순서 — 문제 없음. 파일 선점(AC-B-005-3) -> load_battery(YamlError) -> 거버넌스 순서 유지. G-3 위반 배터리 + 기존 출력 파일 조합에서 선점이 먼저 걸림 (양측 독립)"
           ],
           "note": "**수렴 라운드.** codex 회신 원문: '회귀 없음. 이번 HEAD delta 는 compare() 의 거버넌스 예외 변환만 바꾸며, 새 결함은 확인되지 않았습니다. 작업 트리 변경은 없습니다.' Claude 자체 검토도 발견 0건. 확인점 5종 모두 양측 '문제 없음' 일치. 코드 변경이 없으므로 이 라운드의 sourceHash 가 현재 소스 지문과 일치한다 — code-review-findings 게이트의 귀속 요건 충족. 라운드 추이 30 -> 6 -> 7 -> 2 -> 2 -> 2 -> 1 -> 0. 누적 findingHistory 52건, open 0건, CRITICAL/HIGH open 0건."
+        },
+        {
+          "round": 9,
+          "at": "2026-08-28T00:00:00Z",
+          "sourceHash": "72207ea0a16adac4bc9a1eadf904be7f954f5c01-e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "reviewers": [
+            "claude",
+            "codex"
+          ],
+          "mode": "delta-only (ratchet) — SPEC 개정 후 확인 라운드",
+          "findings": {
+            "total": 0,
+            "bySeverity": {
+              "CRITICAL": 0,
+              "HIGH": 0,
+              "MEDIUM": 0,
+              "LOW": 0
+            },
+            "byReviewer": {
+              "codex": 0,
+              "claude": 0,
+              "overlap": 0
+            }
+          },
+          "fixed": [],
+          "dismissed": [],
+          "dismissedDetails": [],
+          "clearedChecks": [
+            "확인점 1 rule 의 누출·누락 — 문제 없음. Attempt 생성 지점 4곳 전수: _policy_attempt(정책 3 호출부)는 verdict.rule·robots.rule·exc.rule 을 전달하고, 나머지 3곳(HTTP 네트워크 실패·HTTP 응답 기록·DNS 실패)은 route=\"http\" 위치 인자라 rule 을 넘기지 않는다. PolicyVerdict(False,...) 17개 생성부와 PolicyBlocked(...) 12개 생성부 전부 non-null 규칙 ID. transport.py:159 는 이미 `verdict.rule or \"private_range\"` 방어 보유 (양측 독립)",
+            "확인점 2 불변식의 범위 — 문제 없음. 비정책 route 에 rule 을 주는 호출부가 없어 InvariantError 는 정상 경로에서 발생 불가. 발생 시 engine.py:271 이 exit 1(프로그래밍 오류)로 처리해 기존 InvariantError 계약과 동일. 예약값 rate_limit·browser_disabled 허용은 SPEC PolicyVerdict 도메인과 일치 (양측 독립)",
+            "확인점 3 응답 포맷 계약 — 문제 없음. FetchResult 최상위 7키 불변, rule 은 attempts[] 안에만 추가. Response 0/1/2 에 Attempt 필드의 정확 집합을 요구하는 문장 없음. Observation 은 별도 dataclass(8필드 화이트리스트, rule 부재)이고 bench·compare 는 attempts 를 직렬화하지 않는다 (양측 독립)",
+            "확인점 4 동결 계약 — 문제 없음. us-b-002:15 의 필드 단언이 `all(k in a for k in (...))` 부분집합 검사라 필드 추가로 깨지지 않는다. 동결 스위트 8/8 유지. /redir/private 의 attempts[0].rule 미검증은 '계약 위반'이 아니라 새 계약에 대한 인수 커버리지 공백 — 양측 모두 이번 delta 결함이 아닌 R2 이관 항목으로 판정",
+            "확인점 5 SPEC 정합 — 문제 없음. 새 rule 행의 제약 서술이 구현 불변식과 일치. attempts 원소 필드를 열거하는 다른 문장은 AC-B-002-2 뿐이며 '갖는다'는 6필드 최소 요건이라 모순 아님(SPEC:385 의 plan 원소는 별개 구조). PolicyVerdict.rule 과 Attempt.rule 은 같은 POLICY_RULES 6종을 가리킴 (양측 독립)"
+          ],
+          "note": "**수렴 라운드.** 사용자 승인 SPEC 개정(DOC-LOW-30 — redirect_hop 을 담을 자리가 없던 자기모순)에 대한 확인 라운드다. codex 회신 원문: '발견 0건 — 회귀 없음.' 확인점 5종 모두 양측 '문제 없음' 일치이며, codex 는 리디렉션 결과를 직접 실행해 attempts=[{route:\"policy\", rule:\"redirect_hop\"}] 를 독립 재현했다. Claude 자체 검토도 발견 0건. 코드 변경이 없으므로 이 라운드의 sourceHash 가 현재 소스 지문과 일치한다. 라운드 추이 30 -> 6 -> 7 -> 2 -> 2 -> 2 -> 1 -> 0 -> 0. 누적 findingHistory 52건, open 0건, CRITICAL/HIGH open 0건. 게이트 재실행: acceptance-gate PASS(8/8, SPEC 해시 대조 통과) · spec-to-tests PASS · spec-completeness PASS(CRITICAL 0/MAJOR 0/MINOR 0). 검증: verify_r9 19종 + verify_r9_live(실제 픽스처 /redir/private) 8종 ALL PASS, verify_r2~r7 재실행 회귀 없음.",
+          "deferred": [
+            "R2 이관: 동결 인수 테스트 us-b-003 의 /redir/private 케이스에 attempts[0].rule=\"redirect_hop\" 단언 추가. SPEC 은 이제 이를 명시하지만 인수 커버리지가 없다 — 양측 리뷰어 모두 delta 결함이 아닌 별건으로 판정. verify_r9_live 로 실측 확인은 마쳤다."
+          ]
         }
       ]
     }

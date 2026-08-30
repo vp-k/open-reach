@@ -59,6 +59,8 @@ HTTP 서버·UI 레이어가 없으므로 외부 계약은 **CLI 서브커맨드
 | SC-5 | 지문표 자동 갱신 | `refresh` 1회 실행의 diff | 수동 편집 `0회` AND 경계 위반 학습 `0건` | R3 |
 | SC-6 | 신규 도메인 일반화 | holdout 배터리 돌파율 | Tier-1 대비 낙폭 `<= 15%p` | R3 |
 | SC-7 | 깨끗한 환경 설치 | 새 환경에서 설치 → 첫 `fetch` 성공까지 사람 개입 횟수 | `0회` (T1 경로 기준) | R3 |
+| SC-8 | 벤더 감지 정확도 | 배터리 각 항목의 `expected.waf_vendor`와 실행 시 감지값 대조 | 오탐(다른 벤더로 단정) **0건**(hard fail) AND 미탐(`unknown_challenge`로 흘림) `<= 10%` | R2 |
+| SC-9 | API 라우팅 무결성 | Phase 0 경로로 성공한 건 전수 감사 | robots 미검사 **0건**, 임퍼소네이션 사용 **0건**, 인덱스에 없는 요청 **0건**, `value_pattern` 미검증 치환 **0건** — 각각 hard fail | R2 |
 
 **측정 규약** — 3회 실행 중앙값으로만 판정한다. `battery_hash`가 달라진 실행은 회귀 비교 대상에서 제외한다. holdout 배터리는 개발 중 실행 이력이 남으면 무효 처리한다. 회귀 판정에는 **dead-band 3%p**를 적용해 네트워크 지터로 인한 거짓 회귀를 차단한다.
 
@@ -112,7 +114,7 @@ As a 리서처, I want to 로그인/페이월이면 우회 시도 없이 즉시 
 As a 개발자, I want to 배터리를 1회 실행해 현재 돌파율 수치를 얻고, so that 개선·회귀를 사람 판단 없이 판정할 수 있다. (J3)
 
 - **AC-B-004-1**: `bench --tier 1`은 마지막 줄에 `BENCH_RESULT: rate=<0.000~1.000> total=<N> passed=<N> failed=<N>` 을 출력하고, 그 앞에 `by_vendor`·`by_route`·`by_reason` 분해를 **반드시** 출력한다. 분해 없는 출력 경로는 존재하지 않는다.
-- **AC-B-004-2**: 배터리 거버넌스 위반 시 측정 전에 exit code `3`으로 중단한다 — 벤더 9종 중 하나라도 2개 미만(G-1, `role: production` 한정), Tier-1에 음성 케이스가 0건(G-3), `expected`/`tier`/`waf_expected`/`added_reason` 중 하나라도 누락된 항목 존재(G-4), Tier-1 항목 수 50 초과(G-6).
+- **AC-B-004-2**: 배터리 거버넌스 위반 시 측정 전에 exit code `3`으로 중단한다 — 배터리가 선언한 `vendor_scope` 범위의 벤더 중 하나라도 2개 미만(G-1, `role: production` 한정. `vendor_scope` 미선언 시 범위는 벤더 9종 전체), Tier-1에 음성 케이스가 0건(G-3), `expected`/`tier`/`waf_expected`/`added_reason` 중 하나라도 누락된 항목 존재(G-4), Tier-1 항목 수 50 초과(G-6).
 - **AC-B-004-3**: 음성 케이스(로그인월·페이월·챌린지) 중 하나라도 `success`로 분류되면 돌파율과 무관하게 **벤치 전체가 fail**(exit `3`)이다.
 - **AC-B-004-4**: 각 실행은 `BenchRun` 1건을 `bench/history.jsonl`에 append하며, 기존 줄을 수정·삭제하지 않는다.
 - **AC-B-004-5**: URL 간 상태가 격리된다 — 배터리를 **셔플 실행한 결과가 순서 실행 결과와 dead-band(3%p) 안에서 일치**한다.
@@ -148,6 +150,54 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 - **AC-B-008-2**: 판별기는 **상태 코드 단독으로 판정하지 않는다** — 403/418/503 + 제목 패턴 + 본문 길이(`< 500`자)와 차단 어휘의 조합으로 판정한다.
 - **AC-B-008-3**: CAPTCHA 위젯이 감지되면 **해결을 시도하지 않고** 즉시 `waf_challenge`로 중단한다 (NG-3). 판정 시점 이후 추가 시도가 없어야 하며, 출력에 CAPTCHA 해결 관련 필드가 존재하지 않는다.
 - **AC-B-008-4**: `bench` 모드에서는 `expected`(제목 포함 문자열 / 본문 포함 문자열 / 최소 길이 / 정규화 해시 중 정의된 조합) 대조를 추가로 통과해야 `passed`로 계상된다. 대조 실패는 `validation_failed`다.
+
+### US-B-009 — 벤더별 측정 가능성 확보 (R2)
+
+<!-- provenance: repo-fact -->
+
+As a 유지보수자, I want to 지문표가 선언한 벤더마다 실측 표본이 배터리에 있길 원한다, so that SC-2의 "벤더별 `>= 50%`"가 미측정이 아니라 판정 가능해진다. (J4)
+
+> 지문표(`engine/profiles.yaml`)에는 이미 9종이 선언돼 있다. 없는 것은 감지기가 아니라 **표본**이며, R1 후보 87건 실측에서 벤더별 2건 이상을 채운 것은 4종(cloudflare·akamai·fastly·imperva)뿐이다. 미확보 5종은 datadome·perimeterx·aws_waf·kasada·f5다.
+
+- **AC-B-009-1**: R2 종료 시 출하 배터리의 `vendor_scope`는 **감지기가 신뢰도 `1.0`으로 지목한 URL이 2건 이상 확보된 벤더 전체**를 포함한다. 확보된 벤더를 `vendor_scope`에서 제외하는 것은 G-8 위반이다.
+- **AC-B-009-2**: 표본 확보 시도는 **후보 목록 1회 실측**으로 한정한다. 후보는 벤더 공개 문서와 MIT 시드(ADR-003) 범위에서만 수집하며, 사이트를 무작위로 훑지 않는다 (NG-5).
+- **AC-B-009-3**: 2건을 채우지 못한 벤더는 `vendor_scope`에 넣지 않고, `vendor_scope_reason`에 **벤더명과 실측 건수**를 남긴다. SC-2는 그 범위에서 판정한다 (NG-8, NG-10).
+- **AC-B-009-4**: `bench` 출력은 배터리 각 항목의 `expected.waf_vendor`와 실행 시 감지값을 대조해 **오탐·미탐 건수**를 낸다. 이 값이 SC-8의 입력이다.
+
+### US-B-010 — Phase 0 공개 API 라우팅 (R2)
+
+<!-- provenance: repo-fact -->
+
+As a 리서처, I want to 원문 HTML로 본문을 얻지 못한 사이트가 스스로 공개한 API가 있으면 그 길로 본문을 얻길 원한다, so that 차단을 뚫는 대신 **열려 있는 문으로 들어간다**. (J1)
+
+> **발견은 규칙화되지 않는다** — crates.io·pypi.org·github.com·news.ycombinator.com 실측에서 `<link rel="alternate" type="application/json">` 0건, HTTP `Link:` 헤더 0건, JSON-LD 0건이다(`bench/evidence/r2-discovery-probe.json`). 따라서 **사이트별 인덱스 파일**이 유일한 실행 경로이며, `/api/v1/…` 같은 경로를 추측해 두드리는 것은 스캐닝이므로 하지 않는다.
+
+**경로 선택과 경계**
+
+- **AC-B-010-1**: Phase 0 경로는 **HTTP 경로가 본문 획득에 실패한 뒤에만** 시도한다. 원문이 정상인 사이트에 API 부하를 주지 않으며, 돌파율의 비교 가능성도 이 순서가 지킨다.
+- **AC-B-010-2**: 인덱스에 항목이 없으면 시도하지 않는다. URL을 조립하거나 추측하지 않는다.
+- **AC-B-010-3**: API URL은 원문과 **별도로 robots를 검사**한다. 호스트가 다를 수 있다.
+- **AC-B-010-4**: Phase 0 경로에서는 **임퍼소네이션을 사용하지 않는다.** `open-reach/<version> (+<repo-url>)` 형식의 정직한 UA를 보낸다. 기계용으로 열어 둔 문을 브라우저인 척하며 두드리지 않는다 (NG-13).
+- **AC-B-010-5**: API가 인증·키를 요구하면(401, 또는 키 안내를 동반한 403) 즉시 중단하고 `auth_wall`로 분류한다. 키를 발급받거나 저장하지 않는다 (NG-1, NG-4).
+- **AC-B-010-6**: 쿼터 소진은 `rate_limited`로 실패한다. 쿼터를 늘리려 키를 만들거나 IP를 바꾸지 않는다 (NG-6).
+- **AC-B-010-7**: 성공 시 `attempts[]`에 `route="phase0"`인 시도가 남고, 사용한 엔드포인트가 결과에 표기된다. 소비자가 HTML 본문과 구분할 수 있어야 한다.
+
+**2-hop 조립 규칙** — 한 단계로 본문에 닿지 못하는 API가 있다(실측: `crates.io/api/v1/crates/{crate}`의 `crate.max_stable_version`을 다음 경로에 넣어야 README 본문에 닿고, 버전 생략형은 `400`이다). 이를 허용하되, **상대 서버의 응답이 우리 다음 요청 URL에 영향을 주는 첫 경로**이므로 — 리디렉션이 아니라 우리가 자발적으로 조립하는 URL이라 `hop_guard`가 보지 않는 자리다 — 조립 규칙을 계약으로 고정한다.
+
+- **AC-B-010-8**: `chain` 길이는 **최대 2**다. 3단 이상은 로드 실패(종료 코드 3)다.
+- **AC-B-010-9**: 한 단계가 다음 단계로 넘기는 값은 **스칼라 1개**뿐이다. `select`가 가리킨 자리에 객체·배열이 있으면 요청하지 않고 중단한다.
+- **AC-B-010-10**: 앵커된 `value_pattern`은 **필수**다. 없는 항목은 로드 실패(종료 코드 3)이며, 뽑은 값이 매치하지 않으면 요청하지 않고 중단한다.
+- **AC-B-010-11**: 넘겨받은 값은 **경로 세그먼트 1개**로만 치환된다. `/`·`.`·`%`·`:`·`?`·`#`가 포함되면 거부한다 (`value_pattern`이 이미 막더라도 이중으로 검사한다).
+- **AC-B-010-12**: **스킴과 호스트는 응답에서 오지 않는다.** 인덱스 템플릿에 적힌 값으로 고정이며, 응답이 우리를 다른 호스트로 보낼 수 없다 (NG-11).
+- **AC-B-010-13**: 조립된 URL도 SSRF 가드와 **robots 검사를 새로 통과**해야 한다. 첫 요청이 통과했다는 사실은 두 번째 요청의 근거가 아니다.
+- **AC-B-010-14**: 한 항목이 쓰는 총 요청 예산은 **3회**(엔드포인트 + 체인 포함)다.
+
+**인덱스 규율과 측정 무결성**
+
+- **AC-B-010-15**: 인덱스는 **최대 20 항목**이며, `source`(해당 API의 공식 문서 URL)와 `verified_at` 누락은 로드 실패(종료 코드 3)다. NG-9가 지문표에서 막은 "사이트 목록의 무한 증식"을 인덱스에서는 상한과 출처 의무로 막는다.
+- **AC-B-010-16**: `bench` 출력은 `rate`와 함께 **`rate_http_only`**를 낸다. Phase 0을 켠 뒤에도 R1의 돌파율과 **같은 정의의 값**이 사라지지 않는다.
+- **AC-B-010-17**: `bench` 분해에 `rescued_by_phase0` 건수를 낸다. 돌파율 상승이 전송 개선인지 API 구제인지 출력만 보고 갈릴 수 있어야 한다.
+- **AC-B-010-18**: 응답이 콘텐츠 라이선스를 명시하면(실측: StackExchange API `content_license: "CC BY-SA 4.0"`) 결과 `metadata`에 함께 싣는다. 본문은 여전히 보관하지 않는다 (NG-12).
 
 ---
 
@@ -186,7 +236,7 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 | url | str | 요청 URL 원문 | 입력 에코 |
 | ok | bool | 필수 | 성공 여부 |
 | content_markdown | str 또는 null | `ok=true`면 non-null | 추출된 본문 |
-| metadata | object | `title`·`final_url`·`content_type`·`fetched_at` | `ok=true`면 필수 |
+| metadata | object | `title`·`final_url`·`content_type`·`fetched_at` 필수 + `content_license`(선택, 원본이 명시한 경우에만 — AC-B-010-18) | `ok=true`면 필수 |
 | failure_reason | str 또는 null | `ok=false`면 11종 중 하나 (non-null) | 실패 사유 |
 | attempts | Attempt 배열 | 길이 `>= 1` | 시도 이력 |
 | final_route | str 또는 null | Attempt.route와 동일 도메인 | 성공 경로 |
@@ -215,6 +265,31 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 
 **제약**: `detectors[].pattern`에 **호스트명·도메인 리터럴을 넣을 수 없다** (NG-9). 린트가 검사한다.
 
+### ApiIndexEntry (`engine/api_index.yaml` 1 항목, R2)
+
+| 필드 | 타입 | 제약조건 | 설명 |
+|------|------|----------|------|
+| host | str | 필수, 정확 일치 | 원문 URL의 호스트 |
+| url_pattern | str | 필수, 정규식 | 적용 경로. 템플릿에 치환할 명명 캡처 그룹 포함 |
+| endpoints | str 배열 또는 null | `endpoints`·`chain` 중 **정확히 하나**만 non-null | 병렬 요청 후 응답을 이어 붙이는 단순 형태 |
+| chain | ChainStep 배열 또는 null | 길이 `1..2` (AC-B-010-8) | 앞 단계 응답에서 뽑은 값을 다음 요청에 넘기는 형태 |
+| response_kind | str | `json` 또는 `html` | `html`이면 기존 추출기를 재사용한다 |
+| content_pointer | str 또는 null | `response_kind="json"`이면 필수 | 본문이 있는 JSON 경로 (예: `items[].body`) |
+| source | str | 필수, `https` URL | 해당 API의 **공식 문서** 주소. 출처 없는 항목은 로드 실패 |
+| verified_at | str | 필수, `YYYY-MM-DD` | 마지막 실측 날짜 |
+
+### ChainStep (`ApiIndexEntry.chain` 1 항목, R2)
+
+| 필드 | 타입 | 제약조건 | 설명 |
+|------|------|----------|------|
+| request | str | 필수, 스킴·호스트가 **리터럴로 고정** (AC-B-010-12) | 요청 URL 템플릿 |
+| response_kind | str | `json` 또는 `html` | 이 단계의 응답 형식 |
+| select | str 또는 null | 마지막 단계가 아니면 필수 | 다음 단계로 넘길 **스칼라 1개**의 JSON 경로 (AC-B-010-9) |
+| value_pattern | str 또는 null | `select`가 non-null이면 필수, `^`·`$` 앵커 필수 | 뽑은 값의 허용 형태 (AC-B-010-10) |
+| bind | str 또는 null | `select`가 non-null이면 필수 | 다음 템플릿에서 쓸 이름. **경로 세그먼트 1개**로만 치환된다 (AC-B-010-11) |
+
+**제약**: `url_pattern`의 캡처 그룹과 `bind` 이름만이 템플릿 치환의 입력이다. 응답에서 온 값이 스킴·호스트·쿼리 구조를 바꿀 수 없다. 인덱스 전체 항목 수는 **20 이하**다 (AC-B-010-15).
+
 ### Observation (`observations.jsonl` 1줄)
 | 필드 | 타입 | 제약조건 | 설명 |
 |------|------|----------|------|
@@ -234,6 +309,8 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 |------|------|----------|------|
 | role | str | `production` 또는 `fixture` | 거버넌스 적용 범위 결정. 출하 배터리는 `production` 고정 |
 | entries | BatteryEntry 배열 | 길이 `>= 1` | 항목 목록 |
+| vendor_scope | str 배열 | 선택. 값은 WAF 감지기에 존재하는 벤더명 | G-1을 적용할 벤더 범위. **생략하면 벤더 9종 전체**가 범위다 — 키 누락이 범위를 줄이는 가장 싼 방법이 되지 않게 한다 (G-8) |
+| vendor_scope_reason | str | `vendor_scope` 가 있으면 **필수**, 길이 `>= 1` | 범위를 좁힌 사유. 사유 없는 축소는 exit `3` (G-8) |
 
 ### BatteryEntry / Expected (`battery.yaml`)
 | 필드 | 타입 | 제약조건 | 설명 |
@@ -296,14 +373,16 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 
 ### `fetch <url>`
 
-옵션: `--intent article|media|raw`, `--timeout <초>`, `--max-attempts <N>`, `--allow-browser`
+옵션: `--intent article|media|raw`, `--timeout <초>`, `--max-attempts <N>`, `--allow-browser`, `--api-index <경로>`
 
 - **Auth**: 없음 — 이 도구는 어떤 자격증명도 받지 않고 저장하지 않는다 (NG-4).
 - **Request**: 위치 인자 `url` (필수), 옵션은 `FetchRequest` 필드와 1:1 대응.
+  `--api-index <경로>`는 Phase 0 공개 API 인덱스(`ApiIndexEntry` 목록)의 대체 파일을 지정한다. 기본값은 출하 인덱스이며, 이 옵션은 인수 테스트가 픽스처 인덱스를 지정하는 통로다 (`bench --battery`와 동일한 구조). 지정 파일이 AC-B-010-8·10·12·15의 로드 시점 제약을 하나라도 어기면 **요청을 시작하기 전에** exit 3으로 중단한다.
 - **Validation**: 스킴 allowlist(`http`/`https`), 길이 2048 이하, DNS 해석 후 사설·루프백·링크로컬·CGNAT 대역 차단, `--timeout` 은 `0 < t <= 60`, `--max-attempts` 는 `1..12`.
 - **Response 0**: `FetchResult` JSON (`ok=true`).
 - **Response 1**: `FetchResult` JSON (`ok=false`, `failure_reason`이 `waf_challenge`·`rate_limited`·`not_found`·`server_error`·`network`·`validation_failed`·`unsupported`·`unknown` 중 하나).
 - **Response 2**: `FetchResult` JSON (`ok=false`, `failure_reason`이 `auth_wall`·`paywall`·`policy_blocked` 중 하나).
+- **Response 3**: `{"error": {"code": "usage", "message": "..."}}` — API 인덱스 로드 실패 (chain 길이 초과, `value_pattern` 누락, 스킴·호스트 바인딩, 항목 수·출처 필드 위반). 네트워크 요청 0건.
 - **Response 4**: `{"error": {"code": "usage", "message": "..."}}`.
 - **테스트 케이스**:
   - 공개 HTML 문서 → exit 0, `content_markdown` 200자 이상, `metadata.title` non-null
@@ -316,6 +395,7 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
   - `file:///etc/passwd` → exit 2, `policy_blocked` (스킴 위반)
   - 공개에서 사설로 리디렉션하는 픽스처 → exit 2, `policy_blocked`, `attempts[0].rule="redirect_hop"`
   - `--timeout 0` → exit 4
+  - Phase 0 라우팅 음성 케이스 8종 (`tests/acceptance/us-b-010-api-routing-negative.sh`) — AC-B-010-8·9·10·11·12·13·14를 각각 **가드가 없으면 실패하는** 형태로 고정한다. "요청하지 않았다"는 픽스처 서버의 경로별 요청 카운터(`/_hits`)로 단언하며, 모든 케이스에서 응답이 지시한 목적지(`/api/evil`)의 요청 수는 0이어야 한다.
 
 ### `bench`
 
@@ -325,10 +405,10 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 - **Request**: 모두 옵션. 기본값 `--tier 1 --runs 3`. `--holdout`은 `bench/holdout.yaml`을 대상으로 하며 `--tier`와 함께 쓸 수 없다.
   `--battery <경로>`는 대체 배터리 파일을 지정하며 `--holdout`과 함께 쓸 수 없다 (인수 테스트가 픽스처 배터리를 지정하는 통로).
 - **Validation**: `--runs` 는 `1..9`, 배터리 파일 존재, 거버넌스 사전 검사.
-  거버넌스 적용 범위는 배터리 파일 헤더의 `role` 이 결정한다 — `role: production` 이면 G-1·G-3·G-4·G-6 전부, `role: fixture` 이면 G-3·G-4·G-6 만 검사한다(벤더 커버리지 G-1은 출하 배터리의 요건이므로).
+  거버넌스 적용 범위는 배터리 파일 헤더의 `role` 이 결정한다 — `role: production` 이면 G-1·G-3·G-4·G-6·G-8 전부, `role: fixture` 이면 G-3·G-4·G-6 만 검사한다(벤더 커버리지 G-1과 그 범위 선언 G-8은 출하 배터리의 요건이므로).
   `--tier`/`--holdout` 로 지정되는 출하 배터리(`bench/battery.yaml`, `bench/holdout.yaml`)는 `role: production` 이어야 하며, 아니면 exit `4`다 — 출하 배터리를 fixture 로 강등해 G-1을 회피하는 경로를 막는다.
 - **Response 0**: `by_vendor` / `by_route` / `by_reason` 분해 블록 + 마지막 줄 `BENCH_RESULT: rate=<f> total=<n> passed=<n> failed=<n>`.
-- **Response 3**: 거버넌스 위반 또는 음성 케이스 오분류. stderr에 위반 규칙 ID(`G-1`부터 `G-6`)를 명시.
+- **Response 3**: 거버넌스 위반 또는 음성 케이스 오분류. stderr에 위반 규칙 ID(`G-1`·`G-3`·`G-4`·`G-6`·`G-8`)를 명시.
 - **Response 4**: 인자 오류 (`--tier`와 `--holdout` 동시 지정, `--battery`와 `--holdout` 동시 지정, 출하 배터리의 `role` 이 `production` 이 아님).
 - **테스트 케이스**:
   - 정상 배터리 → exit 0, 마지막 줄이 `BENCH_RESULT:` 로 시작, 분해 3종이 그 앞에 존재
@@ -483,11 +563,21 @@ As a 리서처, I want to 응답이 챌린지 페이지인지 실제 본문인�
 | Round | 이 SPEC에서의 지위 |
 |-------|-------------------|
 | **R1** | `fetch`(T1 HTTP 경로) · `explain` · `baseline` · `bench` · `compare` · 정책 가드 · 검증기 · 사유 분류 · 관측 스키마 · 본문 추출 — **위 AC 전부가 구현 계약이다** |
-| **R2** | 격자 플래너 확장 · WAF 감지기 9종 전체 · Phase 0 공개 API 인덱스 · URL 변형 · yt-dlp 라우팅 — 계약은 R1 측정 결과를 근거로 R2 진입 시 확정한다 |
+| **R2** | **US-B-009**(벤더 표본 확보와 감지 정확도) · **US-B-010**(Phase 0 공개 API 라우팅, 2-hop 포함) — **위 AC 22종이 구현 계약이다.** SC-8·SC-9가 게이트다 |
 | **R3** | 브라우저 티어(**A8 4항 판정 통과 시에만**) · 경로 재사용 우선순위 · `refresh` · holdout · 설치 시험 · SKILL.md 패키징 |
 | **R4** | 마켓플레이스 등록 · `last_reviewed` 노후 경고 · 운영 문서 |
 
 R1 종료 조건은 **보고서 1장**이다: "실제 리서치 실패율 Z%, Tier-1 돌파율 X%(3회 중앙값), 벤더별 분해, 원본 대비 Y%".
+
+R2 종료 조건은 **SC-8·SC-9 통과 + `rate_http_only`가 R1 대비 회귀하지 않음**이다. Phase 0이 돌파율을 올려도 HTTP 경로의 실력이 떨어지면 R2는 끝나지 않는다.
+
+**R2에서 하지 않기로 확정한 것** — 아래 세 항목은 R1 측정 결과를 근거로 R2 범위에서 제외됐다. 근거는 `docs/r2-contract.md` §2·§5.
+
+| 항목 | 제외 근거 (실측) |
+|---|---|
+| URL 변형 | 성공 표본 8곳의 `<link rel="amphtml">` 선언 **0건**, 차단 4곳 × 변형 3종 회피 **0/12**(`m.` 호스트는 4곳 전부 DNS 부재). 지문표의 미실행 `mobile` 선언도 함께 제거한다 (NG-10) |
+| yt-dlp 라우팅 | A1 표본 70건 중 미디어 URL **0건**, 대상은 사실상 1개 사이트, 외부 바이너리 의존이 SC-7과 충돌. **R4 이후 재검토** |
+| 격자 플래너 확장 | R1 격차 원인 중 플래너에서 온 것 **0건**. US-B-009·010 이후 남는 실패를 규명해 R3에서 결정한다 |
 
 ---
 
@@ -506,7 +596,7 @@ R1 종료 조건은 **보고서 1장**이다: "실제 리서치 실패율 Z%, Ti
 | NG-6 | 프록시 로테이션 | 프록시 인터페이스 부재, 의존성 allowlist |
 | NG-7 | 원본 엔진 코드 벤더링 | `seeded_from` 필드, ADR-003 |
 | NG-8 | 배터리에 없는 사이트를 지원으로 표기 | 문서 린트 (사이트명 목록 금지) |
-| NG-9 | 사이트별 예외 규칙 축적 | `detectors[].pattern` 호스트 리터럴 금지 린트 |
+| NG-9 | 사이트별 예외 규칙 축적 | **지문표**(`profiles.yaml`)에는 `detectors[].pattern` 호스트 리터럴 금지 린트. **API 인덱스**(`api_index.yaml`)는 호스트를 적는 것이 존재 이유이므로 리터럴 금지 대신 AC-B-010-15(20 항목 상한 + `source`·`verified_at` 의무)와 AC-B-010-8~14(조립 규칙)로 증식을 막는다 |
 | NG-10 | 실패를 조용히 넘기기 | 11종 닫힌 분류 + `attempts` 길이 1 이상 |
 | NG-11 | 내부망·메타데이터 접근 | AC-B-003-4, AC-B-003-5, 보안 절 SSRF 차단 |
 | NG-12 | 본문 재배포·장기 보관 | AC-B-001-4, 보안 절 본문 미보관 |

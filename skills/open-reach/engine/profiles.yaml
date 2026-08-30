@@ -112,7 +112,6 @@ profiles:
       - firefox135
     transform_order:
       - original
-      - mobile
     fallback_order:
       - http
       - browser
@@ -329,7 +328,6 @@ profiles:
     impersonate_avoid: []
     transform_order:
       - original
-      - mobile
     fallback_order:
       - http
       - browser
