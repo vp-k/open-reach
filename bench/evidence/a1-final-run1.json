@@ -1,0 +1,702 @@
+[
+  {
+    "url": "https://docs.python.org/3/library/asyncio-task.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 43956
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 2829
+  },
+  {
+    "url": "https://nodejs.org/api/fs.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 258156
+  },
+  {
+    "url": "https://react.dev/reference/react/useEffect",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 36959
+  },
+  {
+    "url": "https://docs.djangoproject.com/en/5.0/topics/db/queries/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 57973
+  },
+  {
+    "url": "https://fastapi.tiangolo.com/tutorial/dependencies/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 11824
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 50532
+  },
+  {
+    "url": "https://docs.docker.com/reference/dockerfile/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 99581
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/indexes.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 1453
+  },
+  {
+    "url": "https://redis.io/docs/latest/develop/data-types/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 6244
+  },
+  {
+    "url": "https://docs.rs/tokio/latest/tokio/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 14481
+  },
+  {
+    "url": "https://go.dev/doc/effective_go",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 96428
+  },
+  {
+    "url": "https://docs.flutter.dev/ui/layout",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 24523
+  },
+  {
+    "url": "https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 14062
+  },
+  {
+    "url": "https://tailwindcss.com/docs/flex",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 1726
+  },
+  {
+    "url": "https://vitejs.dev/guide/features.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 32100
+  },
+  {
+    "url": "https://docs.pydantic.dev/latest/concepts/validators/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 17720
+  },
+  {
+    "url": "https://playwright.dev/docs/api/class-page",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 155581
+  },
+  {
+    "url": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 137373
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 16462
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "safari",
+    "title": null,
+    "chars": 29902
+  },
+  {
+    "url": "https://cloud.google.com/run/docs/deploying",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 20567
+  },
+  {
+    "url": "https://github.com/pallets/flask",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 2558
+  },
+  {
+    "url": "https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 34924
+  },
+  {
+    "url": "https://github.com/fastapi/fastapi/releases",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 8170
+  },
+  {
+    "url": "https://github.com/rust-lang/rust",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 3584
+  },
+  {
+    "url": "https://github.com/vercel/next.js",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 4587
+  },
+  {
+    "url": "https://github.com/psf/requests/blob/main/README.md",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 2467
+  },
+  {
+    "url": "https://github.com/microsoft/playwright/issues",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 2475
+  },
+  {
+    "url": "https://github.com/curl/curl",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 3496
+  },
+  {
+    "url": "https://blog.cloudflare.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 6617
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "chrome_android",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://engineering.fb.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 1050
+  },
+  {
+    "url": "https://stripe.com/blog/engineering",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 9348
+  },
+  {
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 43175
+  },
+  {
+    "url": "https://simonwillison.net/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 33122
+  },
+  {
+    "url": "https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "safari",
+    "title": null,
+    "chars": 8335
+  },
+  {
+    "url": "https://danluu.com/deconstruct-files/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 38302
+  },
+  {
+    "url": "https://overreacted.io/a-complete-guide-to-useeffect/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 44494
+  },
+  {
+    "url": "https://jvns.ca/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 31476
+  },
+  {
+    "url": "https://blog.rust-lang.org/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 16199
+  },
+  {
+    "url": "https://github.blog/engineering/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 4389
+  },
+  {
+    "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://news.ycombinator.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 4045
+  },
+  {
+    "url": "https://www.reddit.com/r/programming/",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null,
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://discuss.python.org/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 2183
+  },
+  {
+    "url": "https://forum.djangoproject.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 792
+  },
+  {
+    "url": "https://arstechnica.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 7987
+  },
+  {
+    "url": "https://techcrunch.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 11626
+  },
+  {
+    "url": "https://www.theverge.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 16987
+  },
+  {
+    "url": "https://www.reuters.com/technology/",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null,
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "chrome",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://www.wsj.com/tech",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null,
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://www.nytimes.com/section/technology",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "safari",
+    "title": null,
+    "chars": 4916
+  },
+  {
+    "url": "https://www.economist.com/science-and-technology",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 1770
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 11758
+  },
+  {
+    "url": "https://www.npmjs.com/package/express",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 5393
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "ok": false,
+    "reason": "validation_failed",
+    "rule": null,
+    "status": 200,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://pub.dev/packages/http",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 11500
+  },
+  {
+    "url": "https://arxiv.org/abs/1706.03762",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 4577
+  },
+  {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 433862
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://datatracker.ietf.org/doc/html/rfc7231",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 211287
+  },
+  {
+    "url": "https://openai.com/pricing",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 15123
+  },
+  {
+    "url": "https://www.anthropic.com/pricing",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 16511
+  },
+  {
+    "url": "https://vercel.com/pricing",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": "chrome",
+    "title": null,
+    "chars": 11958
+  },
+  {
+    "url": "https://www.g2.com/categories/web-scraping",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://www.crunchbase.com/organization/anthropic",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": "firefox",
+    "title": null,
+    "chars": 0
+  },
+  {
+    "url": "https://www.linkedin.com/company/anthropicresearch",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null,
+    "title": null,
+    "chars": 0
+  }
+]

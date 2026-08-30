@@ -1,0 +1,186 @@
+{
+  "declared": [
+    {
+      "url": "https://blog.rust-lang.org/",
+      "robots": true,
+      "status": 200,
+      "bytes": 95800,
+      "final_url": "https://blog.rust-lang.org/",
+      "amphtml": []
+    },
+    {
+      "url": "https://www.theverge.com/tech",
+      "robots": true,
+      "status": 200,
+      "bytes": 685080,
+      "final_url": "https://www.theverge.com/tech",
+      "amphtml": []
+    },
+    {
+      "url": "https://arstechnica.com/",
+      "robots": true,
+      "status": 200,
+      "bytes": 355344,
+      "final_url": "https://arstechnica.com/",
+      "amphtml": []
+    },
+    {
+      "url": "https://www.bbc.com/news/technology",
+      "robots": true,
+      "status": 200,
+      "bytes": 484543,
+      "final_url": "https://www.bbc.com/technology",
+      "amphtml": []
+    },
+    {
+      "url": "https://techcrunch.com/",
+      "robots": true,
+      "status": 200,
+      "bytes": 454695,
+      "final_url": "https://techcrunch.com/",
+      "amphtml": []
+    },
+    {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP",
+      "robots": true,
+      "status": 200,
+      "bytes": 221771,
+      "final_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP",
+      "amphtml": []
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Web_scraping",
+      "robots": true,
+      "status": 200,
+      "bytes": 239672,
+      "final_url": "https://en.wikipedia.org/wiki/Web_scraping",
+      "amphtml": []
+    },
+    {
+      "url": "https://www.nytimes.com/section/technology",
+      "robots": true,
+      "status": 200,
+      "bytes": 985618,
+      "final_url": "https://www.nytimes.com/section/technology",
+      "amphtml": []
+    }
+  ],
+  "blocked_variants": [
+    {
+      "origin": "https://www.g2.com/categories/web-scraping",
+      "tries": [
+        {
+          "url": "https://www.g2.com/categories/web-scraping/amp",
+          "robots": true,
+          "status": 403,
+          "bytes": 1707,
+          "final_url": "https://www.g2.com/categories/web-scraping/amp",
+          "amphtml": [],
+          "kind": "amp_path"
+        },
+        {
+          "url": "https://www.g2.com/categories/web-scraping?amp=1",
+          "robots": true,
+          "status": 403,
+          "bytes": 1707,
+          "final_url": "https://www.g2.com/categories/web-scraping?amp=1",
+          "amphtml": [],
+          "kind": "amp_query"
+        },
+        {
+          "url": "https://m.g2.com/categories/web-scraping",
+          "robots": true,
+          "error": "NetworkError: gaierror: [Errno 11001] getaddrinfo failed",
+          "kind": "mobile_host"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.crunchbase.com/organization/anthropic",
+      "tries": [
+        {
+          "url": "https://www.crunchbase.com/organization/anthropic/amp",
+          "robots": true,
+          "status": 403,
+          "bytes": 5486,
+          "final_url": "https://www.crunchbase.com/organization/anthropic/amp",
+          "amphtml": [],
+          "kind": "amp_path"
+        },
+        {
+          "url": "https://www.crunchbase.com/organization/anthropic?amp=1",
+          "robots": true,
+          "status": 403,
+          "bytes": 5486,
+          "final_url": "https://www.crunchbase.com/organization/anthropic?amp=1",
+          "amphtml": [],
+          "kind": "amp_query"
+        },
+        {
+          "url": "https://m.crunchbase.com/organization/anthropic",
+          "robots": true,
+          "error": "NetworkError: gaierror: [Errno 11001] getaddrinfo failed",
+          "kind": "mobile_host"
+        }
+      ]
+    },
+    {
+      "origin": "https://netflixtechblog.com/",
+      "tries": [
+        {
+          "url": "https://netflixtechblog.com/amp",
+          "robots": true,
+          "status": 403,
+          "bytes": 5739,
+          "final_url": "https://netflixtechblog.com/amp",
+          "amphtml": [],
+          "kind": "amp_path"
+        },
+        {
+          "url": "https://netflixtechblog.com/?amp=1",
+          "robots": true,
+          "status": 403,
+          "bytes": 5741,
+          "final_url": "https://netflixtechblog.com/?amp=1",
+          "amphtml": [],
+          "kind": "amp_query"
+        },
+        {
+          "url": "https://m.netflixtechblog.com/",
+          "robots": true,
+          "error": "NetworkError: gaierror: [Errno 11001] getaddrinfo failed",
+          "kind": "mobile_host"
+        }
+      ]
+    },
+    {
+      "origin": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+      "tries": [
+        {
+          "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python/amp",
+          "robots": true,
+          "status": 403,
+          "bytes": 5451,
+          "final_url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python/amp",
+          "amphtml": [],
+          "kind": "amp_path"
+        },
+        {
+          "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python?amp=1",
+          "robots": true,
+          "status": 403,
+          "bytes": 5472,
+          "final_url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python?amp=1",
+          "amphtml": [],
+          "kind": "amp_query"
+        },
+        {
+          "url": "https://m.stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+          "robots": true,
+          "error": "NetworkError: gaierror: [Errno 11001] getaddrinfo failed",
+          "kind": "mobile_host"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+[
+  {
+    "origin": "https://crates.io/crates/serde",
+    "kind": "api",
+    "target": "https://crates.io/api/v1/crates/serde",
+    "robots": true,
+    "url": "https://crates.io/api/v1/crates/serde",
+    "status": 200,
+    "bytes": 440987,
+    "ctype": "application/json",
+    "ld_blocks": 0,
+    "ld_articlebody": 0,
+    "json_longest_str": 2404
+  },
+  {
+    "origin": "https://crates.io/crates/serde",
+    "kind": "ld",
+    "target": "https://crates.io/crates/serde",
+    "robots": true,
+    "url": "https://crates.io/crates/serde",
+    "status": 200,
+    "bytes": 5056,
+    "ctype": "text/html; charset=utf-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0
+  },
+  {
+    "origin": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "kind": "api",
+    "target": "https://api.stackexchange.com/2.3/questions/231767?site=stackoverflow&filter=withbody",
+    "robots": true,
+    "url": "https://api.stackexchange.com/2.3/questions/231767?site=stackoverflow&filter=withbody",
+    "status": 200,
+    "bytes": 2167,
+    "ctype": "application/json; charset=utf-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0,
+    "json_longest_str": 1372
+  },
+  {
+    "origin": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "kind": "ld",
+    "target": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "robots": true,
+    "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "status": 403,
+    "bytes": 5439,
+    "ctype": "text/html; charset=UTF-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0
+  },
+  {
+    "origin": "https://netflixtechblog.com/",
+    "kind": "ld",
+    "target": "https://netflixtechblog.com/",
+    "robots": true,
+    "url": "https://netflixtechblog.com/",
+    "status": 403,
+    "bytes": 5708,
+    "ctype": "text/html; charset=UTF-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0
+  },
+  {
+    "origin": "https://www.g2.com/categories/web-scraping",
+    "kind": "ld",
+    "target": "https://www.g2.com/categories/web-scraping",
+    "robots": true,
+    "url": "https://www.g2.com/categories/web-scraping",
+    "status": 403,
+    "bytes": 1707,
+    "ctype": "text/html;charset=utf-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0
+  },
+  {
+    "origin": "https://www.crunchbase.com/organization/anthropic",
+    "kind": "ld",
+    "target": "https://www.crunchbase.com/organization/anthropic",
+    "robots": true,
+    "url": "https://www.crunchbase.com/organization/anthropic",
+    "status": 403,
+    "bytes": 5486,
+    "ctype": "text/html; charset=UTF-8",
+    "ld_blocks": 0,
+    "ld_articlebody": 0
+  },
+  {
+    "origin": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "kind": "mobile",
+    "target": "https://m.stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "robots": true,
+    "url": "https://m.stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "error": "NetworkError: gaierror: [Errno 11001] getaddrinfo failed"
+  }
+]

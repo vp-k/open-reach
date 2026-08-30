@@ -1,0 +1,492 @@
+[
+  {
+    "url": "https://docs.python.org/3/library/asyncio-task.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://nodejs.org/api/fs.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://react.dev/reference/react/useEffect",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.djangoproject.com/en/5.0/topics/db/queries/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://fastapi.tiangolo.com/tutorial/dependencies/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.docker.com/reference/dockerfile/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/indexes.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://redis.io/docs/latest/develop/data-types/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.rs/tokio/latest/tokio/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://go.dev/doc/effective_go",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.flutter.dev/ui/layout",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://tailwindcss.com/docs/flex",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://vitejs.dev/guide/features.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.pydantic.dev/latest/concepts/validators/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://playwright.dev/docs/api/class-page",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://cloud.google.com/run/docs/deploying",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/pallets/flask",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/fastapi/fastapi/releases",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/rust-lang/rust",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/vercel/next.js",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/psf/requests/blob/main/README.md",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/microsoft/playwright/issues",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.com/curl/curl",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://blog.cloudflare.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://engineering.fb.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://stripe.com/blog/engineering",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://simonwillison.net/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://danluu.com/deconstruct-files/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://overreacted.io/a-complete-guide-to-useeffect/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://jvns.ca/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://blog.rust-lang.org/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://github.blog/engineering/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted"
+  },
+  {
+    "url": "https://news.ycombinator.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.reddit.com/r/programming/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://discuss.python.org/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://forum.djangoproject.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://arstechnica.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://techcrunch.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.theverge.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.reuters.com/technology/",
+    "ok": false,
+    "status": null,
+    "block_class": "infra_or_auth",
+    "stop_reason": "auth_required"
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.wsj.com/tech",
+    "ok": false,
+    "status": null,
+    "block_class": "infra_or_auth",
+    "stop_reason": "auth_required"
+  },
+  {
+    "url": "https://www.nytimes.com/section/technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.economist.com/science-and-technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.npmjs.com/package/express",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://pub.dev/packages/http",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://arxiv.org/abs/1706.03762",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://datatracker.ietf.org/doc/html/rfc7231",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://openai.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.anthropic.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://vercel.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  },
+  {
+    "url": "https://www.g2.com/categories/web-scraping",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted"
+  },
+  {
+    "url": "https://www.crunchbase.com/organization/anthropic",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted"
+  },
+  {
+    "url": "https://www.linkedin.com/company/anthropicresearch",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success"
+  }
+]

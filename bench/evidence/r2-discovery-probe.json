@@ -1,0 +1,36 @@
+[
+  {
+    "url": "https://crates.io/crates/serde",
+    "status": 200,
+    "bytes": 5056,
+    "link_header": "",
+    "alternate_links": [],
+    "ld_json_blocks": 0
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "status": 200,
+    "bytes": 3036,
+    "link_header": "",
+    "alternate_links": [],
+    "ld_json_blocks": 0
+  },
+  {
+    "url": "https://github.com/psf/requests",
+    "status": 200,
+    "bytes": 316321,
+    "link_header": "",
+    "alternate_links": [
+      "<link rel=\"alternate icon\" class=\"js-site-favicon\" type=\"image/png\" href=\"https://github.githubassets.com/favicons/favicon.png\">"
+    ],
+    "ld_json_blocks": 0
+  },
+  {
+    "url": "https://news.ycombinator.com/item?id=1",
+    "status": 200,
+    "bytes": 6521,
+    "link_header": "",
+    "alternate_links": [],
+    "ld_json_blocks": 0
+  }
+]

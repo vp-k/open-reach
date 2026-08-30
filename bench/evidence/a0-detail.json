@@ -1,0 +1,562 @@
+[
+  {
+    "url": "https://docs.python.org/3/library/asyncio-task.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://nodejs.org/api/fs.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://react.dev/reference/react/useEffect",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.djangoproject.com/en/5.0/topics/db/queries/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://fastapi.tiangolo.com/tutorial/dependencies/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.docker.com/reference/dockerfile/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/indexes.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://redis.io/docs/latest/develop/data-types/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.rs/tokio/latest/tokio/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://go.dev/doc/effective_go",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.flutter.dev/ui/layout",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://tailwindcss.com/docs/flex",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://vitejs.dev/guide/features.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.pydantic.dev/latest/concepts/validators/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://playwright.dev/docs/api/class-page",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://cloud.google.com/run/docs/deploying",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/pallets/flask",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/fastapi/fastapi/releases",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/rust-lang/rust",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/vercel/next.js",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/psf/requests/blob/main/README.md",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/microsoft/playwright/issues",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.com/curl/curl",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://blog.cloudflare.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://engineering.fb.com/",
+    "ok": false,
+    "reason": "validation_failed",
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://stripe.com/blog/engineering",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://simonwillison.net/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://danluu.com/deconstruct-files/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://overreacted.io/a-complete-guide-to-useeffect/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://jvns.ca/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://blog.rust-lang.org/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://github.blog/engineering/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://news.ycombinator.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.reddit.com/r/programming/",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null
+  },
+  {
+    "url": "https://discuss.python.org/",
+    "ok": false,
+    "reason": "auth_wall",
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://forum.djangoproject.com/",
+    "ok": false,
+    "reason": "auth_wall",
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://arstechnica.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://techcrunch.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.theverge.com/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.reuters.com/technology/",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://www.wsj.com/tech",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null
+  },
+  {
+    "url": "https://www.nytimes.com/section/technology",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.economist.com/science-and-technology",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.npmjs.com/package/express",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "ok": false,
+    "reason": "validation_failed",
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://pub.dev/packages/http",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://arxiv.org/abs/1706.03762",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://datatracker.ietf.org/doc/html/rfc7231",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://openai.com/pricing",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://www.anthropic.com/pricing",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://vercel.com/pricing",
+    "ok": true,
+    "reason": null,
+    "rule": null,
+    "status": 200,
+    "imp": null
+  },
+  {
+    "url": "https://www.g2.com/categories/web-scraping",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://www.crunchbase.com/organization/anthropic",
+    "ok": false,
+    "reason": "waf_challenge",
+    "rule": null,
+    "status": 403,
+    "imp": null
+  },
+  {
+    "url": "https://www.linkedin.com/company/anthropicresearch",
+    "ok": false,
+    "reason": "policy_blocked",
+    "rule": "robots",
+    "status": null,
+    "imp": null
+  }
+]

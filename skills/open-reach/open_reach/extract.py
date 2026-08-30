@@ -8,6 +8,10 @@ from __future__ import annotations
 import re
 from html.parser import HTMLParser
 
+# "기사라 부를 만한 길이"는 추출기와 분류기가 **같은 값**을 써야 한다. 두 값이 갈라지면
+# 추출기는 본문을 얻었다고 여기고 분류기는 `empty_body` 로 버리는 구간이 생긴다.
+from .detect import MIN_ARTICLE_CHARS
+
 # 텍스트를 통째로 버리는 태그 — 잡음이거나 사람이 읽는 본문이 아니다
 DROP_TAGS = frozenset(
     {
@@ -144,22 +148,60 @@ def _as_markdown(blocks: list[tuple[str, str, bool]]) -> str:
     return "\n\n".join(lines).strip()
 
 
-def extract(html: str) -> tuple[str, str | None]:
-    """(content_markdown, title) 을 돌려준다.
+_NOSCRIPT_BLOCK = re.compile(r"<noscript[^>]*>(.*?)</noscript>", re.I | re.S)
 
-    `<article>`/`<main>` 이 있으면 그 안만 본문으로 취급하고, 없으면 문서 전체에서
-    잡음 태그를 뺀 나머지를 쓴다.
-    """
+
+def _collect(html: str) -> _Extractor:
     parser = _Extractor()
     try:
         parser.feed(html)
         parser.close()
     except Exception:  # 깨진 마크업도 지금까지 모은 블록으로 진행한다
         pass
+    return parser
+
+
+def _noscript_markdown(html: str) -> str:
+    """`<noscript>` 안쪽을 본문 후보로 뽑는다.
+
+    HTTP 티어는 JS 를 실행하지 않는다 — 즉 발행자가 `<noscript>` 에 넣어 둔 것이
+    **우리 같은 클라이언트를 위해 준비된 바로 그 본문**이다. 이것을 잡음으로 버리는 건
+    브라우저 티어의 전제를 HTTP 티어에 잘못 적용하는 것이고, 실제로 Discourse 포럼에서
+    26만 자 HTML 을 받고도 추출 0자가 나오던 원인이었다(R1 실측, `docs/r1-report.md` §3).
+
+    다만 정상 문서에서 noscript 는 대개 "JS 를 켜라" 안내나 추적 픽셀이므로 **본 문서에서
+    본문을 얻지 못했을 때만** 쓴다 (`extract` 의 후보 우선순위).
+    """
+    inner = "\n".join(m.group(1) for m in _NOSCRIPT_BLOCK.finditer(html))
+    if not inner.strip():
+        return ""
+    return _as_markdown(_collect(inner).blocks)
+
+
+def extract(html: str) -> tuple[str, str | None]:
+    """(content_markdown, title) 을 돌려준다.
+
+    후보를 우선순위대로 늘어놓고 **기사라 부를 만한 길이를 처음 넘긴 것**을 쓴다:
+    `<main>`/`<article>` 안 → 문서 전체 → `<noscript>` 안. 어느 것도 넘기지 못하면
+    가장 긴 것을 그대로 돌려준다 — 판정은 분류기 몫이고, 추출기가 조용히 빈 문자열을
+    내놓으면 실패 원인이 사라진다 (NG-10).
+
+    예전에는 main 영역이 존재하기만 하면 그 안만 무조건 본문으로 삼았다. `<main>` 에
+    제목 한 줄만 들어 있고 실제 본문은 밖에 있는 문서에서 17자를 본문이라 내놓았고,
+    분류기는 그 빈약함을 로그인월로 오해했다.
+    """
+    parser = _collect(html)
 
     main_blocks = [b for b in parser.blocks if b[2]]
-    blocks = main_blocks if main_blocks else parser.blocks
-    markdown = _as_markdown(blocks)
+    candidates = (
+        _as_markdown(main_blocks),
+        _as_markdown(parser.blocks),
+        _noscript_markdown(html),
+    )
+    markdown = next(
+        (c for c in candidates if len(c) >= MIN_ARTICLE_CHARS),
+        max(candidates, key=len),
+    )
 
     title = parser.title
     if not title:

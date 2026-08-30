@@ -1,0 +1,226 @@
+[
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "safari",
+    "headers": "empty",
+    "status": 200,
+    "bytes": 2279185
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "safari",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 13856
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "safari",
+    "headers": "no_ua",
+    "status": 200,
+    "bytes": 2279185
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "safari",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 13856
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "chrome",
+    "headers": "empty",
+    "status": 200,
+    "bytes": 2279185
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "chrome",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 13856
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "chrome",
+    "headers": "no_ua",
+    "status": 200,
+    "bytes": 2279185
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "imp": "chrome",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 13856
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "safari",
+    "headers": "empty",
+    "status": 200,
+    "bytes": 476496
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "safari",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 5793
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "safari",
+    "headers": "no_ua",
+    "status": 200,
+    "bytes": 476496
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "safari",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 5772
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "chrome",
+    "headers": "empty",
+    "status": 200,
+    "bytes": 476496
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "chrome",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 5943
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "chrome",
+    "headers": "no_ua",
+    "status": 200,
+    "bytes": 476496
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "imp": "chrome",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 5943
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "safari",
+    "headers": "empty",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "safari",
+    "headers": "default_all",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "safari",
+    "headers": "no_ua",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "safari",
+    "headers": "ua_only",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "chrome",
+    "headers": "empty",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "chrome",
+    "headers": "default_all",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "chrome",
+    "headers": "no_ua",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "imp": "chrome",
+    "headers": "ua_only",
+    "status": 307,
+    "bytes": 123
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "safari",
+    "headers": "empty",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "safari",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "safari",
+    "headers": "no_ua",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "safari",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "chrome",
+    "headers": "empty",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "chrome",
+    "headers": "default_all",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "chrome",
+    "headers": "no_ua",
+    "status": 403,
+    "bytes": 5294
+  },
+  {
+    "url": "https://stackoverflow.com/questions/tagged/python",
+    "imp": "chrome",
+    "headers": "ua_only",
+    "status": 403,
+    "bytes": 5294
+  }
+]

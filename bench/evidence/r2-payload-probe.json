@@ -1,0 +1,96 @@
+{
+  "crates.io": {
+    "url": "https://crates.io/api/v1/crates/serde",
+    "robots_allowed": true,
+    "robots_rule": null,
+    "status": 200,
+    "ctype": "application/json",
+    "bytes": 440987,
+    "top": [
+      [
+        ".categories[0].description",
+        67,
+        "Crates that are able to function without the Rust standard library."
+      ],
+      [
+        ".versions[0].checksum",
+        64,
+        "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
+      ],
+      [
+        ".versions[1].checksum",
+        64,
+        "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+      ],
+      [
+        ".versions[2].checksum",
+        64,
+        "80ece43fc6fbed4eb5392ab50c07334d3e577cbf40997ee896fe7af40bba4245"
+      ],
+      [
+        ".categories[1].description",
+        62,
+        "Encoding and/or decoding data from one data format to another."
+      ],
+      [
+        ".categories[2].description",
+        62,
+        "Crates that are able to function without the Rust alloc crate."
+      ]
+    ]
+  },
+  "crates.io/readme": {
+    "url": "https://crates.io/api/v1/crates/serde/1.0.219/readme",
+    "robots_allowed": true,
+    "robots_rule": null,
+    "status": 200,
+    "ctype": "text/html",
+    "bytes": 3511,
+    "top": [
+      [
+        "<not json>",
+        "\n<p><strong>Serde is a framework for <em>ser</em>ializing and <em>de</em>serializing Rust data structures efficiently and generically.</strong></p>\n<hr>\n<p>You may be looking for:</p>\n<ul>\n<li><a href"
+      ]
+    ]
+  },
+  "stackexchange": {
+    "url": "https://api.stackexchange.com/2.3/questions/231767?site=stackoverflow&filter=withbody",
+    "robots_allowed": true,
+    "robots_rule": null,
+    "status": 200,
+    "ctype": "application/json; charset=utf-8",
+    "bytes": 2167,
+    "top": [
+      [
+        ".items[0].body",
+        1340,
+        "<p>What functionality does the <a href=\"https://docs.python.org/3/reference/simple_stmts.html#yield\" rel=\"noreferrer\"><code>yield</code></a> keyword in Python p"
+      ],
+      [
+        ".items[0].link",
+        83,
+        "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python"
+      ],
+      [
+        ".items[0].title",
+        53,
+        "What does the &quot;yield&quot; keyword do in Python?"
+      ],
+      [
+        ".items[0].owner.link",
+        44,
+        "https://stackoverflow.com/users/18300/alex-s"
+      ],
+      [
+        ".items[0].owner.profile_image",
+        37,
+        "https://i.sstatic.net/jcyI4.jpg?s=256"
+      ],
+      [
+        ".items[0].content_license",
+        12,
+        "CC BY-SA 4.0"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+# A0 측정 표본 — 실제 리서치 fetch 실패율의 근거 (ADR-005)
+#
+# 이 파일의 실패율이 10% 미만이면 ADR-005 를 철회하고 프로젝트를 중단한다.
+# 따라서 표본이 어려운 사이트로 채워지면 중단 판정을 스스로 회피하는 셈이 된다.
+# 표집 규칙을 먼저 고정하고 그 비율대로만 채웠다.
+#
+# 표집 규칙 — "리서치 중 실제로 본문을 원해서 여는 URL" 의 분포를 따른다.
+#   공식 문서        22건 (31%)  가장 많이 여는 곳
+#   GitHub            8건 (11%)  코드·릴리스·이슈
+#   엔지니어링 블로그 12건 (17%)  기법·사후분석
+#   Q&A / 포럼         6건  (9%)
+#   뉴스 / 미디어      8건 (11%)
+#   패키지 레지스트리  4건  (6%)
+#   학술 / 표준        4건  (6%)
+#   제품 / 시장 조사   6건  (9%)  경쟁 구도·가격 페이지
+#   합계              70건
+#
+# 의도적으로 하지 않은 것:
+#   - 안티봇으로 유명한 사이트를 골라 담지 않았다 (실패율 부풀리기 방지).
+#   - 반대로 정적 문서만 담지도 않았다 (실패율 낮추기 방지).
+#   - 개별 URL 은 "이 도구가 뚫을 수 있는가" 가 아니라 "리서치에서 실제로 여는가" 로만 골랐다.
+#
+# 측정 조건: 표준 HTTP 클라이언트, 임퍼소네이션 없음, max_attempts=1, 브라우저 폴백 없음.
+# 이 수치는 "아무 대책 없이 그냥 가져올 때" 의 실패율이다 — 개선 전 기준선.
+
+# ── 공식 문서 (22) ──────────────────────────────────────────────
+https://docs.python.org/3/library/asyncio-task.html
+https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+https://nodejs.org/api/fs.html
+https://react.dev/reference/react/useEffect
+https://docs.djangoproject.com/en/5.0/topics/db/queries/
+https://fastapi.tiangolo.com/tutorial/dependencies/
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+https://docs.docker.com/reference/dockerfile/
+https://www.postgresql.org/docs/current/indexes.html
+https://redis.io/docs/latest/develop/data-types/
+https://docs.rs/tokio/latest/tokio/
+https://go.dev/doc/effective_go
+https://docs.flutter.dev/ui/layout
+https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html
+https://tailwindcss.com/docs/flex
+https://vitejs.dev/guide/features.html
+https://docs.pydantic.dev/latest/concepts/validators/
+https://playwright.dev/docs/api/class-page
+https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions
+https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html
+https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/
+https://cloud.google.com/run/docs/deploying
+
+# ── GitHub (8) ─────────────────────────────────────────────────
+https://github.com/pallets/flask
+https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py
+https://github.com/fastapi/fastapi/releases
+https://github.com/rust-lang/rust
+https://github.com/vercel/next.js
+https://github.com/psf/requests/blob/main/README.md
+https://github.com/microsoft/playwright/issues
+https://github.com/curl/curl
+
+# ── 엔지니어링 블로그 (12) ──────────────────────────────────────
+https://blog.cloudflare.com/
+https://netflixtechblog.com/
+https://engineering.fb.com/
+https://stripe.com/blog/engineering
+https://martinfowler.com/articles/microservices.html
+https://simonwillison.net/
+https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/
+https://danluu.com/deconstruct-files/
+https://overreacted.io/a-complete-guide-to-useeffect/
+https://jvns.ca/
+https://blog.rust-lang.org/
+https://github.blog/engineering/
+
+# ── Q&A / 포럼 (6) ─────────────────────────────────────────────
+https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python
+https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array
+https://news.ycombinator.com/
+https://www.reddit.com/r/programming/
+https://discuss.python.org/
+https://forum.djangoproject.com/
+
+# ── 뉴스 / 미디어 (8) ──────────────────────────────────────────
+https://arstechnica.com/
+https://techcrunch.com/
+https://www.theverge.com/
+https://www.reuters.com/technology/
+https://www.bloomberg.com/technology
+https://www.wsj.com/tech
+https://www.nytimes.com/section/technology
+https://www.economist.com/science-and-technology
+
+# ── 패키지 레지스트리 (4) ──────────────────────────────────────
+https://pypi.org/project/requests/
+https://www.npmjs.com/package/express
+https://crates.io/crates/serde
+https://pub.dev/packages/http
+
+# ── 학술 / 표준 (4) ────────────────────────────────────────────
+https://arxiv.org/abs/1706.03762
+https://www.rfc-editor.org/rfc/rfc9110.html
+https://www.w3.org/TR/WCAG21/
+https://datatracker.ietf.org/doc/html/rfc7231
+
+# ── 제품 / 시장 조사 (6) ───────────────────────────────────────
+https://openai.com/pricing
+https://www.anthropic.com/pricing
+https://vercel.com/pricing
+https://www.g2.com/categories/web-scraping
+https://www.crunchbase.com/organization/anthropic
+https://www.linkedin.com/company/anthropicresearch

@@ -36,6 +36,19 @@ def _policy_attempt(outcome: str = "blocked", rule: str | None = None) -> Attemp
     )
 
 
+def _explain_block(rule: str | None, detail: str) -> None:
+    """차단 사유를 stderr 로 흘린다 — 규칙 ID 만으로는 원인을 못 찾는다.
+
+    FetchResult 는 SPEC 이 고정한 포맷이라 `detail` 을 담을 자리가 없다. 그런데 규칙
+    ID 는 같아도 원인은 여럿이다(`private_range` 하나에 사설 대역·메타데이터·연결 경로
+    통제 불가가 모두 들어온다). 사유 문장을 버리면 "상대가 막았다"와 "우리 쪽이 그
+    경로를 못 쓴다"가 출력에서 완전히 같아 보인다 — 실제로 그래서 임퍼소네이션 경로가
+    죽은 채로 정책 차단인 척 보고된 적이 있다. 표준 출력(JSON 계약)은 건드리지 않고
+    진단만 stderr 로 보낸다.
+    """
+    sys.stderr.write(f"[open-reach] policy_blocked/{rule or '-'}: {detail}\n")
+
+
 def _failure(url: str, reason: str, attempts: list[Attempt]) -> FetchResult:
     return FetchResult(
         url=url,
@@ -198,17 +211,32 @@ def fetch(request: FetchRequest) -> FetchResult:
         return _failure(url, "network", attempts)
 
     if not verdict.allowed:
+        _explain_block(verdict.rule, verdict.detail)
         attempts.append(_policy_attempt(rule=verdict.rule))
         return _failure(url, "policy_blocked", attempts)
 
     # ── 2. robots.txt ───────────────────────────────────────────────────
     robots = policy.robots_verdict(url, timeout=request.timeout_s)
     if not robots.allowed:
+        _explain_block(robots.rule, robots.detail)
         attempts.append(_policy_attempt(rule=robots.rule))
         return _failure(url, "policy_blocked", attempts)
 
     # ── 3. 시도 계획 ────────────────────────────────────────────────────
     steps, _, table, _ = build_plan(url, max_attempts=request.max_attempts)
+
+    if request.no_impersonate:
+        # 표준 클라이언트 고정. 지문을 뺀 계획에서 url_variant 가 같은 단계들은
+        # 전부 같은 요청이 된다 — 같은 요청의 반복은 시도가 아니다
+        # (profiles.candidates_for 가 저하 모드에서 쓰는 것과 같은 근거).
+        seen: set[str] = set()
+        plain: list[dict[str, Any]] = []
+        for step in steps:
+            if step["url_variant"] in seen:
+                continue
+            seen.add(step["url_variant"])
+            plain.append({**step, "impersonate": None, "order": len(plain) + 1})
+        steps = plain
 
     deadline = time.monotonic() + request.timeout_s * max(1, request.max_attempts)
     last_reason = "unknown"
@@ -224,6 +252,7 @@ def fetch(request: FetchRequest) -> FetchResult:
         except transport.PolicyBlocked as exc:
             # 여기가 redirect_hop 이 나오는 유일한 자리다 — 선요청 후 차단이라
             # 규칙 ID 를 버리면 세 SSRF 차단이 출력에서 구분되지 않는다.
+            _explain_block(exc.rule, exc.detail)
             attempts.append(_policy_attempt(rule=exc.rule))
             return _failure(url, "policy_blocked", attempts)
         except _RateLimitExhausted:

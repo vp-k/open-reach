@@ -12,6 +12,16 @@ from .models import WafVerdict
 
 # 본문으로 인정하는 최소 길이 — AC-B-001-1 의 200자와 같은 기준을 쓴다
 MIN_ARTICLE_CHARS = 200
+# 문단 하나로 인정하는 최소 길이. 총 길이만 보면 "Sign in | Write | Search | Latest ×8 |
+# 푸터 링크" 같은 **네비게이션 껍데기**가 268자로 기준을 넘어 성공이 된다(A1 실측:
+# netflixtechblog). 기사에는 문장 길이의 덩어리가 최소 하나는 있다.
+MIN_PROSE_BLOCK_CHARS = 80
+# 다만 문단 길이만으로 가르면 **짧은 줄로만 이뤄진 진짜 본문**을 버린다 — 소스 코드 뷰
+# (cpython tasks.py: 34,924자 / 최장 블록 74자), 이슈 목록(playwright: 2,475자 / 67자),
+# 블로그 인덱스(blog.rust-lang.org: 16,199자 / 69자)가 전부 여기 해당한다. 그래서
+# **문단이 없어도 양이 압도하면** 본문으로 인정한다. 실측 껍데기는 268자, 짧은 줄로만 된
+# 진짜 본문 중 가장 작은 것은 2,475자였으므로 1,000 은 양쪽에서 2.4배 이상 떨어져 있다.
+NAV_SHELL_MAX_CHARS = 1000
 
 _AUTH_FORM = re.compile(r"""type\s*=\s*["']?password""", re.I)
 _AUTH_WORDS = re.compile(
@@ -109,6 +119,16 @@ _CHALLENGE_SIGNALS = (
     ("access denied", "challenge_denied"),
     ("your request has been blocked", "challenge_denied"),
     ("请开启 javascript", "challenge_js_required"),
+    # Imperva 차단 페이지는 200 + 700자짜리 안내문으로 온다. 상태 코드도 길이도
+    # 정상 문서와 구분되지 않아, 신호가 없으면 **차단을 돌파로 계상**한다
+    # (R1 벤더 실측에서 imperva "성공" 2건이 전부 이 페이지였다).
+    ("pardon our interruption", "challenge_interstitial"),
+    ("made us think you were a bot", "challenge_interstitial"),
+    # 같은 부류의 다른 문면. 이쪽은 200 + 640자에 **문장 형태**로 와서 아래 산문 요건도
+    # 통과한다 — 길이나 형태로는 못 거르고 문면으로만 걸린다 (A1 실측: bloomberg).
+    ("detected unusual activity from your computer network", "challenge_interstitial"),
+    ("know you're not a robot", "challenge_captcha"),
+    ("know you are not a robot", "challenge_captcha"),
 )
 
 
@@ -174,6 +194,72 @@ def detect_challenge(html: str, status: int) -> ContentVerdict | None:
     return None
 
 
+_JS_REQUIRED = re.compile(
+    r"enable\s+javascript|requires?\s+javascript|javascript\s+(?:is\s+)?(?:required|disabled)",
+    re.I,
+)
+
+
+def _is_js_shell(html: str) -> bool:
+    """본문이 없는 이유가 '차단' 이 아니라 '클라이언트 렌더' 임을 구분한다.
+
+    같은 `validation_failed` 라도 원인이 다르면 다음 수가 다르다 — 빈 응답은 재시도가
+    답이고, JS 셸은 브라우저 티어가 답이다. 실패 사유 집합은 닫혀 있으므로(SPEC 분류표)
+    새 사유를 만들지 않고 **신호**로만 갈라 둔다.
+    """
+    return bool(_JS_REQUIRED.search(html))
+
+
+_NOSCRIPT_BLOCK = re.compile(r"<noscript\b.*?</noscript\s*>", re.I | re.S)
+_INERT_BLOCK = re.compile(r"<(script|style|template)\b.*?</\1\s*>", re.I | re.S)
+_TAG = re.compile(r"<[^>]+>")
+
+
+def _text_outside_noscript(html: str) -> str:
+    """`<noscript>` 를 걷어낸 문서에 남는 글자. 태그 제거만 하는 거친 계측이다."""
+    stripped = _NOSCRIPT_BLOCK.sub(" ", html)
+    stripped = _INERT_BLOCK.sub(" ", stripped)
+    return " ".join(_TAG.sub(" ", stripped).split())
+
+
+def _is_js_notice(extracted: str, html: str) -> bool:
+    """추출한 것이 본문이 아니라 **'JavaScript 를 켜라' 안내문 자체**인가.
+
+    `<noscript>` 를 본문 후보에 넣으면서 생긴 구멍이다. 안내문이 200자를 넘고 문장
+    형태이면 `_is_nav_shell` 도 통과해 **차단·셸을 성공으로 계상**한다 — 새 돌파 없이
+    돌파율만 오르는 경로라 막는다 (R11 리뷰 MAJOR-1).
+
+    `html` 전체에 정규식을 걸지 않는 이유: "JavaScript 를 켜라" 는 문구는 그것을
+    설명하는 **진짜 기사**에도 나온다. 그래서 두 축이 겹칠 때만 셸로 본다 —
+    ① 우리가 손에 쥔 본문이 그 안내문이고, ② `<noscript>` 를 걷어내면 문서에 기사라
+    부를 만한 글자가 남지 않는다. ②가 있어서 본문이 따로 있는 문서는 걸리지 않는다.
+    """
+    if not _JS_REQUIRED.search(extracted):
+        return False
+    return len(_text_outside_noscript(html)) < MIN_ARTICLE_CHARS
+
+
+def _is_nav_shell(extracted: str) -> bool:
+    """받은 것이 본문이 아니라 **메뉴·목차 껍데기**인가.
+
+    껍데기의 표지는 두 가지가 겹치는 것이다 — 문장 길이의 덩어리가 하나도 없고, 총량도
+    적다. 둘 중 하나만 보면 각각 오판한다: 문단 길이만 보면 짧은 줄로만 이뤄진 진짜
+    본문(소스 코드·이슈 목록)을 버리고, 총량만 보면 268자짜리 네비게이션이 통과한다.
+
+    제목 줄(`#`)은 문단으로 세지 않는다 — 껍데기가 가장 많이 내놓는 것이 제목이고,
+    "## Latest" 를 여덟 번 받은 것을 기사라 부르면 돌파율이 그만큼 부풀려진다.
+    """
+    if len(extracted) >= NAV_SHELL_MAX_CHARS:
+        return False
+    for block in extracted.split("\n\n"):
+        block = block.strip()
+        if block.startswith("#"):
+            continue
+        if len(block.lstrip("- ")) >= MIN_PROSE_BLOCK_CHARS:
+            return False
+    return True
+
+
 def classify(status: int, html: str, extracted: str) -> ContentVerdict:
     """상태 코드·본문·신호를 함께 보고 최종 판정한다.
 
@@ -190,8 +276,8 @@ def classify(status: int, html: str, extracted: str) -> ContentVerdict:
     if challenge is not None:
         return challenge
 
-    substantial = len(extracted) >= MIN_ARTICLE_CHARS
-    if substantial:
+    substantial = len(extracted) >= MIN_ARTICLE_CHARS and not _is_nav_shell(extracted)
+    if substantial and not _is_js_notice(extracted, html):
         return ContentVerdict(None, "success", (), False)
 
     if 500 <= status < 600:
@@ -201,7 +287,15 @@ def classify(status: int, html: str, extracted: str) -> ContentVerdict:
     if 400 <= status < 500:
         return ContentVerdict("not_found", "error", (f"http_{status}",), False)
     if 200 <= status < 300:
-        return ContentVerdict("validation_failed", "error", ("empty_body",), False)
+        if _is_js_shell(html):
+            signal = "js_shell"
+        elif len(extracted) >= MIN_ARTICLE_CHARS:
+            # 길이는 넘겼는데 문단이 없다 = 메뉴·목록만 받았다. `empty_body` 로 적으면
+            # "아무것도 못 받았다"로 읽혀서 다음 수(브라우저 티어)가 가려진다.
+            signal = "nav_shell"
+        else:
+            signal = "empty_body"
+        return ContentVerdict("validation_failed", "error", (signal,), False)
     return ContentVerdict("unknown", "error", (f"http_{status}",), False)
 
 

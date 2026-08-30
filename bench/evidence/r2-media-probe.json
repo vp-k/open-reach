@@ -1,0 +1,46 @@
+{
+  "targets": [
+    {
+      "name": "youtube_watch",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "robots_allowed": true,
+      "robots_rule": null,
+      "status": 200,
+      "bytes": 1440233
+    },
+    {
+      "name": "youtube_channel",
+      "url": "https://www.youtube.com/@Anthropic-ai",
+      "robots_allowed": true,
+      "robots_rule": null,
+      "status": 200,
+      "bytes": 1145809
+    },
+    {
+      "name": "vimeo",
+      "url": "https://vimeo.com/76979871",
+      "robots_allowed": true,
+      "robots_rule": null,
+      "status": 200,
+      "bytes": 12723
+    },
+    {
+      "name": "podcast_page",
+      "url": "https://podcasts.apple.com/us/podcast/lex-fridman-podcast/id1434243584",
+      "robots_allowed": true,
+      "robots_rule": null,
+      "status": 200,
+      "bytes": 579957
+    },
+    {
+      "name": "conf_talk",
+      "url": "https://www.usenix.org/conference/osdi23/presentation/li-jinhui",
+      "robots_allowed": true,
+      "robots_rule": null,
+      "status": 404,
+      "bytes": 18229
+    }
+  ],
+  "sample_media_count": 0,
+  "sample_total": 70
+}

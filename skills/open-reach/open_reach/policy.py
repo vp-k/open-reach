@@ -123,12 +123,84 @@ def _resolve(host: str, port: int) -> list[str]:
     return addresses
 
 
+# RFC 6052 §2.2 — 접두 길이에 따라 IPv4 32비트가 놓이는 자리가 다르고,
+# 비트 64..71(u 옥텟)은 어느 배치에서도 건너뛴다.
+_NAT64_WELL_KNOWN = ipaddress.ip_network("64:ff9b::/96")  # RFC 6052
+_NAT64_LOCAL_USE = ipaddress.ip_network("64:ff9b:1::/48")  # RFC 8215
+# /48 접두 안에서 쓰일 수 있는 배치들. 어느 것으로 읽었을 때든 사설·메타데이터가
+# 나오면 막는다 — 어떤 배치인지 확정할 수 없으니 과잉 차단 쪽으로 기운다.
+# 순서는 실제 배포 빈도순(/96 이 압도적으로 흔하다)이다. 차단 사유 문장은 처음
+# 걸린 배치를 인용하므로, 순서가 뒤집히면 `64:ff9b:1::7f00:1` 을 막고도 사유에는
+# 127.0.0.1 대신 다른 배치의 부산물인 `0.0.0.0` 이 찍혀 진단이 사람을 헷갈리게 한다.
+_NAT64_LOCAL_LAYOUTS = (96, 64, 56, 48)
+
+
+def _rfc6052_extract(value: int, prefix_len: int) -> ipaddress.IPv4Address:
+    """128비트 값에서 RFC 6052 배치대로 IPv4 32비트를 꺼낸다 (u 옥텟은 건너뛴다)."""
+    out = 0
+    pos = prefix_len
+    read = 0
+    while read < 32:
+        if 64 <= pos < 72:  # u 옥텟은 주소가 아니다
+            pos = 72
+            continue
+        out = (out << 1) | ((value >> (127 - pos)) & 1)
+        pos += 1
+        read += 1
+    return ipaddress.IPv4Address(out)
+
+
+def _nat64_embedded(ip: ipaddress.IPv6Address) -> list[ipaddress.IPv4Address]:
+    """NAT64 접두 안에 든 IPv4 목적지를 꺼낸다.
+
+    `64:ff9b::a9fe:a9fe` 는 v6 대역표에도, IPv4-mapped/6to4/Teredo 어디에도 걸리지
+    않지만 NAT64 게이트웨이를 지나면 169.254.169.254(클라우드 메타데이터)에 닿는다.
+    표기만 바꿔 SSRF 가드를 우회하는 통로이므로 여기서 함께 푼다.
+    """
+    value = int(ip)
+    if ip in _NAT64_WELL_KNOWN:
+        return [_rfc6052_extract(value, 96)]
+    if ip in _NAT64_LOCAL_USE:
+        return [_rfc6052_extract(value, pl) for pl in _NAT64_LOCAL_LAYOUTS]
+    return []
+
+
+def _embedded_v4(ip: ipaddress.IPv6Address) -> list[ipaddress.IPv4Address]:
+    """IPv6 표기 안에 들어 있는 실제 IPv4 목적지를 모두 꺼낸다.
+
+    `::ffff:127.0.0.1`(IPv4-mapped)·`2002::/16`(6to4)·Teredo·NAT64 는 `ip.version == 6`
+    이므로 v6 대역표만 보면 하나도 걸리지 않는다. 그러나 패킷이 실제로 향하는 곳은
+    안에 든 IPv4 다 — 풀지 않으면 루프백·사설 대역이 SSRF 가드를 그대로 지나간다.
+    Teredo 는 (서버, 클라이언트) 두 주소를 담으므로 둘 다 본다: 판정 불가한 쪽을
+    통과시키는 것보다 과잉 차단이 낫다 (가드는 fail-closed 다).
+    """
+    found: list[ipaddress.IPv4Address] = []
+    mapped = ip.ipv4_mapped
+    if mapped is not None:
+        found.append(mapped)
+    sixtofour = ip.sixtofour
+    if sixtofour is not None:
+        found.append(sixtofour)
+    teredo = ip.teredo
+    if teredo is not None:
+        found.extend(teredo)
+    found.extend(_nat64_embedded(ip))
+    return found
+
+
 def _blocked_band(address: str) -> str | None:
     try:
         ip = ipaddress.ip_address(address)
     except ValueError:
         # 주소를 해석할 수 없다 = 판정 불가 = 차단
         return f"주소 판정 불가: {address}"
+
+    if ip.version == 6:
+        for inner in _embedded_v4(ip):
+            reason = _blocked_band(str(inner))
+            if reason is not None:
+                return f"{address} 안에 IPv4 {inner} 가 들어 있다 — {reason}"
+
     networks = _BLOCKED_V4 if ip.version == 4 else _BLOCKED_V6
     for network in networks:
         if ip in network:

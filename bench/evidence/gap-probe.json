@@ -1,0 +1,90 @@
+[
+  {
+    "url": "https://netflixtechblog.com",
+    "orig_content_length": 125385,
+    "safari": {
+      "status": 307,
+      "raw_bytes": 123,
+      "extracted_chars": 19,
+      "head": "Temporary Redirect."
+    },
+    "chrome": {
+      "status": 307,
+      "raw_bytes": 123,
+      "extracted_chars": 19,
+      "head": "Temporary Redirect."
+    },
+    "firefox": {
+      "status": 307,
+      "raw_bytes": 123,
+      "extracted_chars": 19,
+      "head": "Temporary Redirect."
+    }
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "orig_content_length": 2278947,
+    "safari": {
+      "status": 200,
+      "raw_bytes": 2313001,
+      "extracted_chars": 3772,
+      "head": "### Technology  - AI  - Big Tech  - Cybersecurity  - Consumer Tech  - Startups  - Screentime  - Tech In Depth  US Premarket Movers for Augus"
+    },
+    "chrome": {
+      "status": 200,
+      "raw_bytes": 2313001,
+      "extracted_chars": 3772,
+      "head": "### Technology  - AI  - Big Tech  - Cybersecurity  - Consumer Tech  - Startups  - Screentime  - Tech In Depth  US Premarket Movers for Augus"
+    },
+    "firefox": {
+      "status": 200,
+      "raw_bytes": 2313001,
+      "extracted_chars": 3772,
+      "head": "### Technology  - AI  - Big Tech  - Cybersecurity  - Consumer Tech  - Startups  - Screentime  - Tech In Depth  US Premarket Movers for Augus"
+    }
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "orig_content_length": 5056,
+    "safari": {
+      "status": 200,
+      "raw_bytes": 5056,
+      "extracted_chars": 73,
+      "head": "For full functionality of this site it is necessary to enable JavaScript."
+    },
+    "chrome": {
+      "status": 200,
+      "raw_bytes": 5056,
+      "extracted_chars": 73,
+      "head": "For full functionality of this site it is necessary to enable JavaScript."
+    },
+    "firefox": {
+      "status": 200,
+      "raw_bytes": 5056,
+      "extracted_chars": 73,
+      "head": "For full functionality of this site it is necessary to enable JavaScript."
+    }
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21",
+    "orig_content_length": 475848,
+    "safari": {
+      "status": 301,
+      "raw_bytes": 277,
+      "extracted_chars": 49,
+      "head": "# Moved Permanently  The document has moved here."
+    },
+    "chrome": {
+      "status": 301,
+      "raw_bytes": 277,
+      "extracted_chars": 49,
+      "head": "# Moved Permanently  The document has moved here."
+    },
+    "firefox": {
+      "status": 301,
+      "raw_bytes": 277,
+      "extracted_chars": 49,
+      "head": "# Moved Permanently  The document has moved here."
+    }
+  }
+]

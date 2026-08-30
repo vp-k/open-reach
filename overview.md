@@ -120,13 +120,20 @@
 
 | 규칙 | 내용 |
 |------|------|
-| G-1 | Tier-1은 WAF 벤더 9종을 **각각 최소 2개씩** 포함한다. 한 벤더라도 미달이면 `bench`가 fail한다 (출하 배터리 `role: production` 한정 — 테스트 픽스처 배터리는 이 규칙에서 제외되고, 출하 배터리를 `fixture`로 강등하는 경로는 exit 4로 막힌다) |
+| G-1 | Tier-1은 **선언된 범위의 WAF 벤더를 각각 최소 2개씩** 포함한다. 한 벤더라도 미달이면 `bench`가 fail한다 (출하 배터리 `role: production` 한정 — 테스트 픽스처 배터리는 이 규칙에서 제외되고, 출하 배터리를 `fixture`로 강등하는 경로는 exit 4로 막힌다). 범위를 선언하지 않은 배터리는 **9종 전체**가 범위다 |
 | G-2 | Tier-1의 최소 1/3은 **T1(HTTP 클라이언트)로 뚫리지 않음이 확인된** URL이어야 한다 |
 | G-3 | Tier-1에는 **의도적 로그인월·페이월·챌린지 URL(음성 케이스)** 을 포함한다. 이들이 success로 분류되면 벤치 전체가 fail |
 | G-4 | 각 항목은 `expected`(정답 대조 기준)와 `tier`, `waf_expected`, `added_reason`을 갖는다 |
 | G-5 | URL 교체·삭제는 **별도 커밋**으로만 하며, 제거된 항목과 사유를 `battery-changelog.md`에 보존한다 |
 | G-6 | Tier-1 규모 상한 50 URL. 더 넣고 싶으면 Tier-2로 간다 |
 | G-7 | holdout 배터리는 별도 파일이며, 개발 중 실행 이력이 남으면 무효 처리한다 |
+| G-8 | G-1의 범위를 9종보다 좁히려면 `vendor_scope`(벤더 목록)와 `vendor_scope_reason`(사유)을 배터리 헤더에 **명시**해야 한다. 사유가 없거나 감지기에 없는 벤더를 넣으면 fail. 측정 결과에는 `vendor_scope`와 `vendors_out_of_scope`가 함께 출력된다 — 좁힌 사실이 결과와 분리되면 소비자는 부분 측정치를 전수 측정치로 읽는다 |
+
+> **G-1 범위 지정의 근거 (R1)**: R1 실측에서 후보 87건을 두드려 벤더별 ≥2건을 확보한 것은
+> cloudflare·akamai·fastly·imperva 4종뿐이었다(`docs/r1-report.md` §4). SPEC 「Round 경계」가
+> WAF 감지기 9종 전체를 R2로 두고 R2 계약을 R1 측정 결과로 확정한다고 규정하므로,
+> **기준(≥2건)은 낮추지 않고 범위만 명시**하는 쪽을 택했다. 남은 5종(datadome·perimeterx·
+> aws_waf·kasada·f5)은 R2에서 후보를 확보한 뒤 편입한다.
 
 ### 판정 규칙의 소멸 대비
 

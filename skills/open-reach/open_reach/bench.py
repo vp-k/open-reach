@@ -73,8 +73,39 @@ def _assertion_count(entry: dict[str, Any]) -> int:
     return sum(1 for key in EXPECTED_ASSERTIONS if expected.get(key) is not None)
 
 
+def vendor_scope(battery: dict[str, Any]) -> tuple[tuple[str, ...], list[str]]:
+    """이 배터리가 **실증하기로 선언한** 벤더 집합과, 선언 자체의 위반 목록 (G-8).
+
+    G-1 은 원래 9종 전부에 ≥2건을 요구했다. R1 실측에서 후보 87건을 두드려도 4종만
+    기준을 채웠고(`docs/r1-report.md` §4), SPEC 「Round 경계」는 애초에 "WAF 감지기
+    9종 전체"를 R2 로 두고 R2 계약을 "R1 측정 결과를 근거로 확정한다"고 적어 두었다.
+
+    그래서 **기준을 낮추지 않고 범위를 명시**하는 쪽을 택한다 — 선언된 벤더는 여전히
+    ≥2건을 채워야 하고(G-1 불변), 좁힌 사실이 파일과 출력에 남는다(G-8). 미선언은
+    9종 전체로 간주한다: 키를 빠뜨리는 것이 범위를 줄이는 가장 싼 방법이 되면 안 된다.
+    """
+    violations: list[str] = []
+    raw = battery.get("vendor_scope")
+    if raw is None:
+        return tuple(WAF_VENDORS), violations
+
+    if not isinstance(raw, list) or not raw:
+        violations.append("G-8: vendor_scope 는 비어 있지 않은 벤더 목록이어야 한다")
+        return tuple(WAF_VENDORS), violations
+
+    scope = tuple(str(v) for v in raw)
+    unknown = sorted(set(scope) - set(WAF_VENDORS))
+    if unknown:
+        violations.append(f"G-8: 감지기에 없는 벤더를 범위에 넣었다 — {unknown}")
+    if not str(battery.get("vendor_scope_reason") or "").strip():
+        # 범위를 좁힌 이유가 없으면 G-1 은 "그때그때 통과하도록 적는 값"이 된다
+        violations.append("G-8: vendor_scope 를 선언했으면 vendor_scope_reason 이 필요하다")
+
+    return tuple(v for v in scope if v in WAF_VENDORS), violations
+
+
 def check_governance(battery: dict[str, Any], *, shipped: bool) -> None:
-    """G-1 / G-3 / G-4 / G-6. role 에 따라 적용 범위가 달라진다."""
+    """G-1 / G-3 / G-4 / G-6 / G-8. role 에 따라 적용 범위가 달라진다."""
     role = battery.get("role")
     if role not in VALID_ROLES:
         # role 을 모르면 어느 거버넌스를 적용할지도 모른다 — 조용히 건너뛰면
@@ -113,7 +144,10 @@ def check_governance(battery: dict[str, Any], *, shipped: bool) -> None:
         violations.append(f"G-6: Tier-1 항목이 {len(tier1)} 개로 상한 {TIER1_MAX_ENTRIES} 초과")
 
     if role == "production":
-        counts = {v: 0 for v in WAF_VENDORS}
+        scope, scope_violations = vendor_scope(battery)
+        violations.extend(scope_violations)
+
+        counts = {v: 0 for v in scope}
         for entry in tier1:
             vendor = entry.get("waf_expected")
             if vendor in counts:
@@ -285,10 +319,15 @@ def run_battery(
             else f"tier={tier} 에 해당하는 양성 케이스가 배터리에 없다 — 측정 불가"
         )
 
+    scope, _ = vendor_scope(battery)
     total = attempted if truncated else len(positives) * runs
     return {
         "tier": tier,
         "runs": runs,
+        # 범위를 좁힌 사실은 결과와 **같은 줄에** 남아야 한다. 파일에만 적어 두면
+        # 소비자는 4벤더 측정치를 9벤더 측정치로 읽는다 (G-8).
+        "vendor_scope": list(scope),
+        "vendors_out_of_scope": sorted(set(WAF_VENDORS) - set(scope)),
         "total": total,
         "passed": passed,
         "failed": failed,
@@ -322,6 +361,10 @@ def render(report: dict[str, Any]) -> str:
     lines = [
         f"tier={report['tier']} runs={report['runs']} "
         f"negatives_checked={report['negatives_checked']}",
+        "vendor_scope: "
+        + json.dumps(report.get("vendor_scope", []), ensure_ascii=False)
+        + " out_of_scope: "
+        + json.dumps(report.get("vendors_out_of_scope", []), ensure_ascii=False),
         "by_vendor: " + json.dumps(report["by_vendor"], ensure_ascii=False, sort_keys=True),
         "by_route: " + json.dumps(report["by_route"], ensure_ascii=False, sort_keys=True),
         "by_reason: " + json.dumps(report["by_reason"], ensure_ascii=False, sort_keys=True),
@@ -579,7 +622,16 @@ def baseline(sample_path: Path, *, timeout: float) -> dict[str, Any]:
     failed = 0
     for url in urls:
         result = fetcher.fetch(
-            FetchRequest(url=url, timeout_s=timeout, allow_browser=False, max_attempts=1)
+            FetchRequest(
+                url=url,
+                timeout_s=timeout,
+                allow_browser=False,
+                max_attempts=1,
+                # SPEC `baseline` Response 0 — "표준 HTTP 클라이언트(임퍼소네이션 없음)".
+                # 지정하지 않으면 curl_cffi 가 설치된 환경에서 chrome 임퍼소네이션이
+                # 첫 시도로 들어와 기준선이 아니게 된다.
+                no_impersonate=True,
+            )
         )
         if not result.ok:
             failed += 1

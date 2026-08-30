@@ -1,0 +1,702 @@
+[
+  {
+    "url": "https://docs.python.org/3/library/asyncio-task.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 176916,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 153146,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://nodejs.org/api/fs.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 1101697,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://react.dev/reference/react/useEffect",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 607063,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.89)"
+  },
+  {
+    "url": "https://docs.djangoproject.com/en/5.0/topics/db/queries/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 272801,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://fastapi.tiangolo.com/tutorial/dependencies/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 136646,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.83)"
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 588186,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.8)"
+  },
+  {
+    "url": "https://docs.docker.com/reference/dockerfile/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 1047210,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.86)"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/indexes.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 16278,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.75)"
+  },
+  {
+    "url": "https://redis.io/docs/latest/develop/data-types/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 134765,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.85)"
+  },
+  {
+    "url": "https://docs.rs/tokio/latest/tokio/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 56946,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.99)"
+  },
+  {
+    "url": "https://go.dev/doc/effective_go",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 142869,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://docs.flutter.dev/ui/layout",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 399692,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 48706,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.88)"
+  },
+  {
+    "url": "https://tailwindcss.com/docs/flex",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 389155,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.67)"
+  },
+  {
+    "url": "https://vitejs.dev/guide/features.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 272274,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.93)"
+  },
+  {
+    "url": "https://docs.pydantic.dev/latest/concepts/validators/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 134686,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.8)"
+  },
+  {
+    "url": "https://playwright.dev/docs/api/class-page",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 953723,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 2019523,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.83)"
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 37837,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.92)"
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 87604,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.92)"
+  },
+  {
+    "url": "https://cloud.google.com/run/docs/deploying",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 255891,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.98)"
+  },
+  {
+    "url": "https://github.com/pallets/flask",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 290345,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.86)"
+  },
+  {
+    "url": "https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 864914,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://github.com/fastapi/fastapi/releases",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 474818,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://github.com/rust-lang/rust",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 359258,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.89)"
+  },
+  {
+    "url": "https://github.com/vercel/next.js",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 434106,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.81)"
+  },
+  {
+    "url": "https://github.com/psf/requests/blob/main/README.md",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 261799,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.85)"
+  },
+  {
+    "url": "https://github.com/microsoft/playwright/issues",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 298261,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.85)"
+  },
+  {
+    "url": "https://github.com/curl/curl",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 356617,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.85)"
+  },
+  {
+    "url": "https://blog.cloudflare.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 193838,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.85)"
+  },
+  {
+    "url": "https://netflixtechblog.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 125385,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.17)"
+  },
+  {
+    "url": "https://engineering.fb.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 77718,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.7)"
+  },
+  {
+    "url": "https://stripe.com/blog/engineering",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 228880,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.84)"
+  },
+  {
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 85952,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.94)"
+  },
+  {
+    "url": "https://simonwillison.net/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 93203,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.86)"
+  },
+  {
+    "url": "https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 55936,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://danluu.com/deconstruct-files/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 43171,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.88)"
+  },
+  {
+    "url": "https://overreacted.io/a-complete-guide-to-useeffect/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 750797,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://jvns.ca/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 146791,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.83)"
+  },
+  {
+    "url": "https://blog.rust-lang.org/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 95800,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.65)"
+  },
+  {
+    "url": "https://github.blog/engineering/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 188831,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted",
+    "verdict": "challenge",
+    "content_length": 5439,
+    "summary": "failed after 5 attempts; profile=cloudflare_turnstile; stop=exhausted; verdicts=challenge,challenge,challenge,challenge,challenge\n💡 R7 API-first 권장: WAF가 HTML 경로를 차단 중. Playwright MCP 사용 → browser_navigate → browser_network_requests → `/api/`·`/graphql`·`\\.json` 필터로 내부 엔드포인트 탐지 → 해당 URL을 `python3 -m engine <API_URL>`로 재호출. 대부분 API 레이어는 WAF 방어가 얕아 curl_cffi만으로 수집됨."
+  },
+  {
+    "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted",
+    "verdict": "challenge",
+    "content_length": 6345,
+    "summary": "failed after 5 attempts; profile=cloudflare_turnstile; stop=exhausted; verdicts=challenge,challenge,challenge,challenge,challenge\n💡 R7 API-first 권장: WAF가 HTML 경로를 차단 중. Playwright MCP 사용 → browser_navigate → browser_network_requests → `/api/`·`/graphql`·`\\.json` 필터로 내부 엔드포인트 탐지 → 해당 URL을 `python3 -m engine <API_URL>`로 재호출. 대부분 API 레이어는 WAF 방어가 얕아 curl_cffi만으로 수집됨."
+  },
+  {
+    "url": "https://news.ycombinator.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 34592,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://www.reddit.com/r/programming/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 190238,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.41)"
+  },
+  {
+    "url": "https://discuss.python.org/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 261910,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.24)"
+  },
+  {
+    "url": "https://forum.djangoproject.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 224319,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.23)"
+  },
+  {
+    "url": "https://arstechnica.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 354571,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.87)"
+  },
+  {
+    "url": "https://techcrunch.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 448988,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.69)"
+  },
+  {
+    "url": "https://www.theverge.com/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 936656,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.89)"
+  },
+  {
+    "url": "https://www.reuters.com/technology/",
+    "ok": false,
+    "status": null,
+    "block_class": "infra_or_auth",
+    "stop_reason": "auth_required",
+    "verdict": "auth_required",
+    "content_length": 774,
+    "summary": "failed after 1 attempts; profile=None; stop=auth_required; verdicts=auth_required"
+  },
+  {
+    "url": "https://www.bloomberg.com/technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 2278947,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.69)"
+  },
+  {
+    "url": "https://www.wsj.com/tech",
+    "ok": false,
+    "status": null,
+    "block_class": "infra_or_auth",
+    "stop_reason": "auth_required",
+    "verdict": "auth_required",
+    "content_length": 770,
+    "summary": "failed after 1 attempts; profile=None; stop=auth_required; verdicts=auth_required"
+  },
+  {
+    "url": "https://www.nytimes.com/section/technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 957153,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.99)"
+  },
+  {
+    "url": "https://www.economist.com/science-and-technology",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 213133,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.66)"
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 244890,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=1.0)"
+  },
+  {
+    "url": "https://www.npmjs.com/package/express",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 127620,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.78)"
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 5056,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.33)"
+  },
+  {
+    "url": "https://pub.dev/packages/http",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 40330,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.89)"
+  },
+  {
+    "url": "https://arxiv.org/abs/1706.03762",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 43644,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 1184898,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.91)"
+  },
+  {
+    "url": "https://www.w3.org/TR/WCAG21/",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 475848,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.83)"
+  },
+  {
+    "url": "https://datatracker.ietf.org/doc/html/rfc7231",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 359913,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.93)"
+  },
+  {
+    "url": "https://openai.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 993886,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.69)"
+  },
+  {
+    "url": "https://www.anthropic.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 1483716,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.84)"
+  },
+  {
+    "url": "https://vercel.com/pricing",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 1204068,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.82)"
+  },
+  {
+    "url": "https://www.g2.com/categories/web-scraping",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted",
+    "verdict": "challenge",
+    "content_length": 1707,
+    "summary": "failed after 5 attempts; profile=cloudflare_turnstile; stop=exhausted; verdicts=challenge,challenge,challenge,challenge,challenge\n💡 R7 API-first 권장: WAF가 HTML 경로를 차단 중. Playwright MCP 사용 → browser_navigate → browser_network_requests → `/api/`·`/graphql`·`\\.json` 필터로 내부 엔드포인트 탐지 → 해당 URL을 `python3 -m engine <API_URL>`로 재호출. 대부분 API 레이어는 WAF 방어가 얕아 curl_cffi만으로 수집됨."
+  },
+  {
+    "url": "https://www.crunchbase.com/organization/anthropic",
+    "ok": false,
+    "status": null,
+    "block_class": "bot_detection",
+    "stop_reason": "exhausted",
+    "verdict": "challenge",
+    "content_length": 5486,
+    "summary": "failed after 5 attempts; profile=cloudflare_turnstile; stop=exhausted; verdicts=challenge,challenge,challenge,challenge,challenge\n💡 R7 API-first 권장: WAF가 HTML 경로를 차단 중. Playwright MCP 사용 → browser_navigate → browser_network_requests → `/api/`·`/graphql`·`\\.json` 필터로 내부 엔드포인트 탐지 → 해당 URL을 `python3 -m engine <API_URL>`로 재호출. 대부분 API 레이어는 WAF 방어가 얕아 curl_cffi만으로 수집됨."
+  },
+  {
+    "url": "https://www.linkedin.com/company/anthropicresearch",
+    "ok": true,
+    "status": null,
+    "block_class": null,
+    "stop_reason": "success",
+    "verdict": "weak_ok",
+    "content_length": 333219,
+    "summary": "curl_cffi safari + original + referer:self_root → weak_ok (content=raw, q=0.83)"
+  }
+]

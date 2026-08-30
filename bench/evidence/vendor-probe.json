@@ -1,0 +1,642 @@
+[
+  {
+    "guess": "cloudflare",
+    "url": "https://www.cloudflare.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Cloudflare: Build for the agent era",
+    "chars": 6324,
+    "final": "https://www.cloudflare.com/"
+  },
+  {
+    "guess": "cloudflare",
+    "url": "https://blog.cloudflare.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Cloudflare Blog",
+    "chars": 6617,
+    "final": "https://blog.cloudflare.com/"
+  },
+  {
+    "guess": "cloudflare",
+    "url": "https://developers.cloudflare.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Cloudflare Developer Docs | Cloudflare Docs",
+    "chars": 5959,
+    "final": "https://developers.cloudflare.com/"
+  },
+  {
+    "guess": "cloudflare",
+    "url": "https://www.digitalocean.com/community/tutorials",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Tutorials | DigitalOcean",
+    "chars": 778,
+    "final": "https://www.digitalocean.com/community/tutorials"
+  },
+  {
+    "guess": "cloudflare",
+    "url": "https://discord.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server"
+    ],
+    "title": "Discord - Group Chat That’s All Fun & Games",
+    "chars": 1827,
+    "final": "https://discord.com/"
+  },
+  {
+    "guess": "akamai",
+    "url": "https://www.ibm.com/think/topics/api",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akbmsc-cookie",
+      "akamai-header"
+    ],
+    "title": "What Is an API (Application Programming Interface)? | IBM",
+    "chars": 22325,
+    "final": "https://www.ibm.com/think/topics/api"
+  },
+  {
+    "guess": "akamai",
+    "url": "https://www.adobe.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie",
+      "akamai-header"
+    ],
+    "title": "Adobe: Creative, marketing and document management solutions",
+    "chars": 12382,
+    "final": "https://www.adobe.com/"
+  },
+  {
+    "guess": "akamai",
+    "url": "https://www.airbnb.com/",
+    "outcome": "validation_failed",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie"
+    ],
+    "title": "ko.airbnb.com로 이동합니다.",
+    "chars": 0,
+    "final": "https://www.airbnb.com/"
+  },
+  {
+    "guess": "akamai",
+    "url": "https://www.philips.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Philips - フィリップス | Philips",
+    "chars": 1046,
+    "final": "https://www.philips.co.jp/"
+  },
+  {
+    "guess": "akamai",
+    "url": "https://www.salesforce.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "title": "世界No.1 AI CRM | AIエージェント搭載のSFA、CRM | セールスフォース・ジャパン",
+    "chars": 3194,
+    "final": "https://www.salesforce.com/jp/?ir=1"
+  },
+  {
+    "guess": "fastly",
+    "url": "https://github.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHubAmerican ",
+    "chars": 3441,
+    "final": "https://github.com/"
+  },
+  {
+    "guess": "fastly",
+    "url": "https://docs.python.org/3/library/json.html",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "json — JSON encoder and decoder — Python 3.14.7 documentation",
+    "chars": 25138,
+    "final": "https://docs.python.org/3/library/json.html"
+  },
+  {
+    "guess": "fastly",
+    "url": "https://pypi.org/project/requests/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Client Challenge",
+    "chars": 209,
+    "final": "https://pypi.org/project/requests/"
+  },
+  {
+    "guess": "fastly",
+    "url": "https://stripe.com/docs",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Stripe DocumentationThe Stripe Docs logo",
+    "chars": 3335,
+    "final": "https://docs.stripe.com"
+  },
+  {
+    "guess": "fastly",
+    "url": "https://www.theguardian.com/international",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Latest news, sport and opinion from the Guardiandouble quotation markd",
+    "chars": 16499,
+    "final": "https://www.theguardian.com/international"
+  },
+  {
+    "guess": "datadome",
+    "url": "https://www.leboncoin.fr/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "title": "leboncoin.fr",
+    "chars": 43,
+    "final": "https://www.leboncoin.fr/"
+  },
+  {
+    "guess": "datadome",
+    "url": "https://www.vinted.fr/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Vinted | Toute la seconde main dans une seule application",
+    "chars": 1761,
+    "final": "https://www.vinted.fr/"
+  },
+  {
+    "guess": "datadome",
+    "url": "https://www.rakuten.fr/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Rakuten - Achat et vente neuf, occasion et reconditionnéClubRicons / n",
+    "chars": 7882,
+    "final": "https://fr.shopping.rakuten.com/"
+  },
+  {
+    "guess": "datadome",
+    "url": "https://www.hermes.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "hermes.com",
+    "chars": 43,
+    "final": "https://www.hermes.com/"
+  },
+  {
+    "guess": "datadome",
+    "url": "https://www.seloger.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "title": "seloger.com",
+    "chars": 43,
+    "final": "https://www.seloger.com/"
+  },
+  {
+    "guess": "perimeterx",
+    "url": "https://www.zillow.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "perimeterx",
+    "confidence": 1.0,
+    "signals": [
+      "px-captcha-body",
+      "px-press-hold"
+    ],
+    "title": "Access to this page has been denied",
+    "chars": 0,
+    "final": "https://www.zillow.com/"
+  },
+  {
+    "guess": "perimeterx",
+    "url": "https://www.shein.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server"
+    ],
+    "title": "最大90%OFF#SHEINFallsCalling#SHEIN秋の感謝祭| 流行のレディースファッションを見る | レディースファッション",
+    "chars": 466,
+    "final": "https://jp.shein.com/?cdn_rsite=ak&ref=www&rep=dir&ret=jp"
+  },
+  {
+    "guess": "perimeterx",
+    "url": "https://www.grubhub.com/",
+    "outcome": "validation_failed",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Grubhub food delivery is not available in your country",
+    "chars": 74,
+    "final": "https://www.grubhub.com/"
+  },
+  {
+    "guess": "perimeterx",
+    "url": "https://www.wayfair.com/",
+    "outcome": "rate_limited",
+    "status": 429,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server"
+    ],
+    "title": "Access to this page has been denied",
+    "chars": 0,
+    "final": "https://www.wayfair.com/"
+  },
+  {
+    "guess": "perimeterx",
+    "url": "https://www.crunchbase.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "title": "Crunchbase | Private Company Data & Predictive Intelligence",
+    "chars": 5592,
+    "final": "https://www.crunchbase.com/"
+  },
+  {
+    "guess": "imperva",
+    "url": "https://www.tui.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie"
+    ],
+    "title": "Urlaub buchen » sicher und günstig reisen | TUI",
+    "chars": 8394,
+    "final": "https://www.tui.com/"
+  },
+  {
+    "guess": "imperva",
+    "url": "https://www.petco.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "title": "Just a moment...",
+    "chars": 0,
+    "final": "https://www.petco.com/"
+  },
+  {
+    "guess": "imperva",
+    "url": "https://www.zoominfo.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "title": "Just a moment...",
+    "chars": 0,
+    "final": "https://www.zoominfo.com/"
+  },
+  {
+    "guess": "imperva",
+    "url": "https://www.saks.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "title": "saksfifthavenue.com",
+    "chars": 43,
+    "final": "https://www.saksfifthavenue.com/"
+  },
+  {
+    "guess": "imperva",
+    "url": "https://www.bancosantander.com/",
+    "outcome": "server_error",
+    "status": 503,
+    "vendor": "imperva",
+    "confidence": 1.0,
+    "signals": [
+      "incap-session-cookie",
+      "visid-incap-cookie",
+      "iinfo-header",
+      "incapsula-incident",
+      "incapsula-resource"
+    ],
+    "title": "",
+    "chars": 0,
+    "final": "https://www.bancosantander.com/"
+  },
+  {
+    "guess": "f5",
+    "url": "https://www.bankofamerica.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie"
+    ],
+    "title": "Bank of America - Banking, Credit Cards, Loans and Merrill Investing",
+    "chars": 3566,
+    "final": "https://www.bankofamerica.com/"
+  },
+  {
+    "guess": "f5",
+    "url": "https://www.chase.com/",
+    "outcome": "auth_wall",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Credit Card, Mortgage, Banking, Auto | Chase Online | Chase.com",
+    "chars": 80,
+    "final": "https://www.chase.com/"
+  },
+  {
+    "guess": "f5",
+    "url": "https://www.wellsfargo.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "title": "Wells Fargo Bank | Financial Services & Online Banking",
+    "chars": 2333,
+    "final": "https://www.wellsfargo.com/"
+  },
+  {
+    "guess": "f5",
+    "url": "https://www.aa.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "unknown_challenge",
+    "confidence": 0.4,
+    "signals": [
+      "unclassified_block"
+    ],
+    "title": "Access Denied",
+    "chars": 193,
+    "final": "https://www.aa.com/"
+  },
+  {
+    "guess": "f5",
+    "url": "https://www.ups.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "title": "글로벌 발송 및 물류 서비스 | UPS - 한국",
+    "chars": 5485,
+    "final": "https://www.ups.com/kr/ko/home"
+  },
+  {
+    "guess": "aws_waf",
+    "url": "https://aws.amazon.com/ko/what-is/api/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "API란 무엇인가요? - 애플리케이션 프로그래밍 인터페이스 설명 - AWS\n                     x\n     ",
+    "chars": 8263,
+    "final": "https://aws.amazon.com/ko/what-is/api/"
+  },
+  {
+    "guess": "aws_waf",
+    "url": "https://www.twitch.tv/",
+    "outcome": "validation_failed",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Twitch",
+    "chars": 0,
+    "final": "https://www.twitch.tv/"
+  },
+  {
+    "guess": "aws_waf",
+    "url": "https://www.imdb.com/",
+    "outcome": "robots",
+    "detail": "robots"
+  },
+  {
+    "guess": "aws_waf",
+    "url": "https://www.audible.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Audible | Listen to Audiobooks, Podcasts, & Originals",
+    "chars": 6147,
+    "final": "https://www.audible.com/"
+  },
+  {
+    "guess": "aws_waf",
+    "url": "https://developer.amazon.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "Amazon Developers",
+    "chars": 2711,
+    "final": "https://developer.amazon.com/"
+  },
+  {
+    "guess": "kasada",
+    "url": "https://www.kayak.com/",
+    "outcome": "ok",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "航空券・ホテル・レンタカーの料金検索・比較 | KAYAK",
+    "chars": 11849,
+    "final": "https://www.kayak.co.jp/?ispredir=true"
+  },
+  {
+    "guess": "kasada",
+    "url": "https://www.ticketmaster.com/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "unknown_challenge",
+    "confidence": 0.4,
+    "signals": [
+      "unclassified_block"
+    ],
+    "title": "Let's Get Your Identity Verified",
+    "chars": 0,
+    "final": "https://www.ticketmaster.com/"
+  },
+  {
+    "guess": "kasada",
+    "url": "https://www.hoyolab.com/",
+    "outcome": "validation_failed",
+    "status": 200,
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "title": "HoYoLAB - Official Community",
+    "chars": 10,
+    "final": "https://www.hoyolab.com/"
+  },
+  {
+    "guess": "kasada",
+    "url": "https://www.canadagoose.com/",
+    "outcome": "rate_limited",
+    "status": 429,
+    "vendor": "kasada",
+    "confidence": 1.0,
+    "signals": [
+      "kpsdk-header"
+    ],
+    "title": "",
+    "chars": 0,
+    "final": "https://www.canadagoose.com/"
+  },
+  {
+    "guess": "kasada",
+    "url": "https://www.bunnings.com.au/",
+    "outcome": "waf_challenge",
+    "status": 403,
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "title": "Just a moment...",
+    "chars": 0,
+    "final": "https://www.bunnings.com.au/"
+  }
+]

@@ -98,6 +98,11 @@ class FetchRequest:
     timeout_s: float = 20.0
     allow_browser: bool = False
     max_attempts: int = 6
+    # A0 기준선(`baseline`)의 계약은 "표준 HTTP 클라이언트(임퍼소네이션 없음)만 사용한
+    # 실패율"이다. 프로필 계획에 그대로 맡기면 curl_cffi 설치 여부에 따라 chrome
+    # 임퍼소네이션이 섞여 들어가 같은 표본이 다른 수치를 낸다 — 개선 전 기준선이
+    # 개선 후 수치와 뒤섞이면 중단 판정(ADR-005)의 근거가 무너진다.
+    no_impersonate: bool = False
 
 
 @dataclass(frozen=True)

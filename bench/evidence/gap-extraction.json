@@ -1,0 +1,50 @@
+[
+  {
+    "url": "https://discuss.python.org/",
+    "status": 200,
+    "html_bytes": 261964,
+    "markdown_chars": 0,
+    "title": "Discussions on Python.org",
+    "verdict_outcome": "wall",
+    "verdict_reason": "auth_wall",
+    "verdict_signals": [
+      "login_form"
+    ]
+  },
+  {
+    "url": "https://forum.djangoproject.com/",
+    "status": 200,
+    "html_bytes": 224477,
+    "markdown_chars": 0,
+    "title": "Django Forum",
+    "verdict_outcome": "wall",
+    "verdict_reason": "auth_wall",
+    "verdict_signals": [
+      "login_form"
+    ]
+  },
+  {
+    "url": "https://engineering.fb.com/",
+    "status": 200,
+    "html_bytes": 77718,
+    "markdown_chars": 17,
+    "title": "Engineering at Meta - Engineering at Meta Blog",
+    "verdict_outcome": "error",
+    "verdict_reason": "validation_failed",
+    "verdict_signals": [
+      "empty_body"
+    ]
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "status": 200,
+    "html_bytes": 5056,
+    "markdown_chars": 0,
+    "title": "crates.io: Rust Package Registry",
+    "verdict_outcome": "error",
+    "verdict_reason": "validation_failed",
+    "verdict_signals": [
+      "empty_body"
+    ]
+  }
+]

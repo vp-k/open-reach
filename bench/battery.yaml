@@ -1,0 +1,176 @@
+# open-reach R1 출하 배터리 (Tier-1)
+#
+# 모든 항목은 R1 벤더 실측(후보 87건, `bench/evidence/vendor-probe*.json`)에서
+# **감지기가 신뢰도 1.0 으로 벤더를 지목한** URL 이다. 추측으로 붙인 라벨은 없다.
+#
+# 범위를 3종이 아닌 4종으로 잡은 이유는 imperva 를 **음성 케이스로** 넣었기 때문이다.
+# imperva 는 R1 HTTP 티어로 뚫리지 않는다 — 그 사실 자체를 고정해 둬야 나중에
+# "뚫었다"는 판정이 진짜인지 알 수 있다. 실제로 실측 초안에서는 imperva 성공 2건이
+# 잡혀 있었는데, 전부 Imperva 차단 페이지("Pardon Our Interruption", 200 + 700자)를
+# 본문으로 오인한 것이었다. 이 배터리가 그 회귀를 다시 잡는다.
+role: production
+vendor_scope:
+  - cloudflare
+  - akamai
+  - fastly
+  - imperva
+# SPEC 「Round 경계」가 WAF 감지기 9종 전체를 R2 로 두고, R2 계약을 R1 측정 결과로
+# 확정한다고 규정한다. R1 실측에서 후보 87건 중 ≥2건을 확보한 벤더는 이 4종뿐이며
+# (docs/r1-report.md §4), 남은 5종은 R2 에서 후보를 확보한 뒤 편입한다.
+vendor_scope_reason: "R1 실측(후보 87건)에서 벤더별 ≥2건을 확보한 4종. 나머지 5종(datadome·perimeterx·aws_waf·kasada·f5)은 SPEC 「Round 경계」에 따라 R2. 벤더별 ≥2건 기준(G-1)은 낮추지 않았다."
+
+entries:
+  # ── cloudflare (양성 4) ────────────────────────────────────────────────
+  - id: cf-001
+    url: https://www.cloudflare.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: cf-ray·cf-bm·server 3신호 일치, 실측 6324자
+    negative_case: null
+    expected:
+      title_contains: Cloudflare
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+  - id: cf-002
+    url: https://blog.cloudflare.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 같은 벤더의 다른 오리진 — 단일 호스트 특성에 의존하지 않게
+    negative_case: null
+    expected:
+      title_contains: Cloudflare
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+  - id: cf-003
+    url: https://www.rakuten.fr/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 벤더 자사 도메인 밖 사례 — 벤더 사이트만 통과하는 착시 방지, 실측 7882자
+    negative_case: null
+    expected:
+      title_contains: Rakuten
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+  - id: cf-004
+    url: https://www.upwork.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 실측 11084자 — 대형 SPA 계열에서도 본문이 나오는지
+    negative_case: null
+    expected:
+      title_contains: Upwork
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+
+  # ── akamai (양성 4) ────────────────────────────────────────────────────
+  - id: ak-001
+    url: https://www.ibm.com/think/topics/api
+    tier: 1
+    waf_expected: akamai
+    added_reason: 실측 22325자 — 긴 기술 문서 경로
+    negative_case: null
+    expected:
+      title_contains: API
+      body_contains: null
+      min_chars: 800
+      normalized_hash: null
+  - id: ak-002
+    url: https://www.adobe.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 실측 12382자
+    negative_case: null
+    expected:
+      title_contains: Adobe
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+  - id: ak-003
+    url: https://www.bankofamerica.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 금융권 — 봇 대응이 가장 공격적인 업종에서의 기준선
+    negative_case: null
+    expected:
+      title_contains: Bank of America
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+  - id: ak-004
+    url: https://www.ups.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 로케일별 제목이 바뀌는 사이트 — 로케일 무관 토큰으로 대조
+    negative_case: null
+    expected:
+      title_contains: UPS
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+
+  # ── fastly (양성 2) ────────────────────────────────────────────────────
+  - id: fa-001
+    url: https://www.bbc.com/news
+    tier: 1
+    waf_expected: fastly
+    added_reason: 실측 8510자 — 뉴스 본문 추출 경로
+    negative_case: null
+    expected:
+      title_contains: BBC
+      body_contains: null
+      min_chars: 800
+      normalized_hash: null
+  - id: fa-002
+    url: https://www.rust-lang.org/
+    tier: 1
+    waf_expected: fastly
+    added_reason: 실측 2692자 — 정적 사이트 경로
+    negative_case: null
+    expected:
+      title_contains: Rust
+      body_contains: null
+      min_chars: 500
+      normalized_hash: null
+
+  # ── 음성 케이스 (G-3) ──────────────────────────────────────────────────
+  # 여기 있는 것들이 success 로 분류되면 벤치 전체가 fail 한다. 돌파율을 올리는
+  # 가장 값싼 방법이 "차단 페이지를 본문으로 세는 것"이므로, 그 길을 막아 둔다.
+  - id: im-neg-001
+    url: https://www.regions.com/
+    tier: 1
+    waf_expected: imperva
+    added_reason: Imperva 인터스티셜(200 + 827자)을 success 로 세던 회귀를 고정
+    negative_case: waf_challenge
+    expected: null
+  - id: im-neg-002
+    url: https://www.harveynorman.com.au/
+    tier: 1
+    waf_expected: imperva
+    added_reason: 같은 인터스티셜의 다른 오리진 — 단일 사이트 문구에 의존하지 않게
+    negative_case: waf_challenge
+    expected: null
+  - id: cf-neg-001
+    url: https://www.hermes.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: cloudflare 403 챌린지 — R1 HTTP 티어로 뚫리지 않음이 확인된 URL (G-2)
+    negative_case: waf_challenge
+    expected: null
+  - id: cf-neg-002
+    url: https://www.zoominfo.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: cloudflare 403 챌린지 — 위와 같음 (G-2)
+    negative_case: waf_challenge
+    expected: null
+  - id: ak-neg-001
+    url: https://www.homedepot.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: akamai 403 챌린지 — 위와 같음 (G-2)
+    negative_case: waf_challenge
+    expected: null

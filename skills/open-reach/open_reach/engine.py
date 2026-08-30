@@ -126,20 +126,58 @@ def _check_common(args: argparse.Namespace) -> None:
         raise bench_mod.UsageError(f"URL 이 {policy.MAX_URL_LENGTH} 자를 초과했다")
 
 
+def _shipped_paths() -> tuple[Path, Path]:
+    """SPEC:329 가 '출하 배터리' 라고 부르는 두 파일.
+
+    티어는 항목의 `tier` 필드로 갈리지 파일로 갈리지 않는다 — 파일명에 티어를 넣으면
+    SPEC 이 지정한 `bench/battery.yaml` 이 영영 존재하지 않는 경로가 되어, 기본 실행이
+    항상 "출하 배터리가 아직 없다" 로 죽고 사용자는 `--battery` 로 우회하게 된다.
+
+    **둘 다 `repo_root()` 기준이다.** holdout 을 `state_dir()` 기준으로 잡으면
+    `OPENREACH_STATE_DIR` 한 줄로 출하 holdout 의 신원이 바뀐다 — 그 상태에서 진짜
+    출하 파일을 `--battery` 로 가리키면 `shipped=False` 가 되어 `role: production`
+    검사가 꺼지고, 방금 막은 우회로(SPEC:329)가 환경변수로 다시 열린다.
+    SPEC:454 가 `OPENREACH_STATE_DIR` 로 옮기라고 한 것은 **상태 파일**(관측 로그·이력)
+    이지 저장소에 체크인되는 출하 배터리가 아니다.
+    """
+    bench_dir = observe.repo_root() / "bench"
+    return (bench_dir / "battery.yaml", bench_dir / "holdout.yaml")
+
+
 def _battery_path(args: argparse.Namespace) -> tuple[Path, bool]:
-    """(경로, 출하 배터리 여부)."""
+    """(경로, 출하 배터리 여부).
+
+    `shipped` 는 **경로로** 판정한다. 플래그로 판정하면 `--battery bench/battery.yaml`
+    처럼 출하 배터리를 직접 가리키는 순간 "출하 배터리는 role: production 이어야 한다"
+    검사가 조용히 꺼진다 — SPEC:329 가 막으라고 적어 둔 바로 그 우회로(출하 배터리를
+    fixture 로 강등해 G-1 을 피하는 길)가 다시 열린다.
+    """
+    shipped_battery, holdout = _shipped_paths()
+
     if getattr(args, "holdout", False):
         if getattr(args, "battery", None):
             raise bench_mod.UsageError("--holdout 과 --battery 는 함께 쓸 수 없다")
-        return observe.state_dir() / "bench" / "holdout.yaml", False
+        return holdout, True
+
     if args.battery:
-        return Path(args.battery), False
-    shipped = observe.repo_root() / "bench" / f"battery-tier{args.tier}.yaml"
-    if not shipped.exists():
+        path = Path(args.battery)
+        return path, _same_file(path, shipped_battery) or _same_file(path, holdout)
+
+    if not shipped_battery.exists():
         raise bench_mod.UsageError(
-            f"출하 배터리가 아직 없다 ({shipped}). --battery 로 경로를 지정하라"
+            f"출하 배터리가 아직 없다 ({shipped_battery}). --battery 로 경로를 지정하라"
         )
-    return shipped, True
+    return shipped_battery, True
+
+
+def _same_file(a: Path, b: Path) -> bool:
+    """같은 파일을 가리키는가. 존재하지 않는 경로도 이름 기준으로 비교한다."""
+    try:
+        if a.exists() and b.exists():
+            return a.samefile(b)
+    except OSError:
+        pass
+    return a.resolve() == b.resolve()
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
