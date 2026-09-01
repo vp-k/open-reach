@@ -615,21 +615,28 @@ def prior_rate(battery_hash_value: str, tier: int) -> float | None:
             continue
         if record.get("truncated"):
             continue
+        # 게이트로 막힌 실행의 돌파율은 신뢰할 수 없다 (음성 오분류로 부풀거나
+        # 측정 불가로 표본이 다르다) — 중단 실행과 같은 이유로 기준에서 제외한다.
+        if record.get("gated"):
+            continue
         value = record.get("rate_median")
         return float(value) if isinstance(value, (int, float)) else None
     return None
 
 
-def record_run(report: dict[str, Any], *, battery_path: Path) -> None:
+def record_run(report: dict[str, Any], *, battery_path: Path, gated: bool = False) -> None:
     digest = battery_hash(battery_path)
     report["regression"] = classify_regression(
         report["rate_median"],
         prior_rate(digest, report["tier"]),
         truncated=bool(report.get("truncated")),
     )
+    # 이력은 append 전용이다 — 회전이 오래된 줄을 지우면 AC-B-004-4("기존 줄을
+    # 수정·삭제하지 않는다")를 깬다. observations.jsonl 과 달리 회전하지 않는다.
     observe.append_jsonl(
         observe.bench_history_path(),
-        {
+        rotate=False,
+        record={
             "ts": utc_now(),
             "engine": f"open-reach@{__version__}",
             "regression": report["regression"],
@@ -647,6 +654,9 @@ def record_run(report: dict[str, Any], *, battery_path: Path) -> None:
             "vendor_sc8": report.get("vendor_sc8", {}),
             # 중단 여부를 남겨야 다음 실행이 이 줄을 기준으로 삼을지 판단할 수 있다
             "truncated": bool(report.get("truncated")),
+            # 게이트(음성 오분류·측정 불가)로 막힌 실행은 이력엔 남기되(AC-B-004-4)
+            # 돌파율이 신뢰할 수 없으므로 다음 실행의 회귀 **기준**으로는 쓰지 않는다.
+            "gated": bool(gated),
             "by_vendor": report["by_vendor"],
             "by_route": report["by_route"],
             "by_reason": report["by_reason"],

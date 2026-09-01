@@ -140,6 +140,21 @@ def _attempt_step(
 
     반환 None 은 네트워크 실패 — 다음 지문으로 넘어가도 된다.
     """
+    def _record_redirect(hop_url: str, status: int, elapsed_ms: int) -> None:
+        # 우리가 실제로 추종한 중간 3xx 홉 (차단으로 끝나는 홉 포함). 최종 응답은
+        # 아래에서 verdict.outcome 으로 따로 기록하므로 여기서는 중간 홉만 남는다.
+        attempts.append(
+            Attempt(
+                "http",
+                step["impersonate"],
+                None,
+                step["url_variant"],
+                status,
+                elapsed_ms,
+                "redirect",
+            )
+        )
+
     while True:
         started = time.monotonic()
         try:
@@ -148,6 +163,7 @@ def _attempt_step(
                 timeout=request.timeout_s,
                 impersonate=step["impersonate"],
                 hop_check=policy.hop_guard,
+                on_dispatch=_record_redirect,
             )
         except transport.NetworkError:
             attempts.append(

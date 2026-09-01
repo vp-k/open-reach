@@ -59,12 +59,34 @@ def _default_port(scheme: str) -> int:
     return 443 if scheme == "https" else 80
 
 
+class _InvalidURL(Exception):
+    """URL 구성요소가 문법적으로 유효 범위를 벗어났다 (예: 포트 0-65535 초과)."""
+
+
+def _port_of(parts) -> int:
+    """명시 포트 또는 스킴 기본 포트.
+
+    범위를 벗어난 포트는 `urlsplit` 이 아니라 `.port` 접근 순간 `ValueError` 를 던진다
+    (지연 파싱). 이 예외가 정책 함수를 뚫고 나가면 CLI 가 구조화된 결과 없이 죽고
+    (일반 fetch), Phase 0 격리 계약도 깨진다. 한곳에서 잡아 `_InvalidURL` 로 바꿔
+    각 호출자가 자기 계약(verdict/PolicyBlocked)에 맞게 거부하도록 한다.
+    """
+    try:
+        explicit = parts.port
+    except ValueError as exc:
+        raise _InvalidURL(f"포트 범위 초과 (0-65535): {exc}") from exc
+    return explicit or _default_port(parts.scheme)
+
+
 def origin_of(url: str) -> str | None:
     """`scheme://host:port` 로 정규화한다. 기본 포트는 명시 포트와 같은 것으로 본다."""
     parts = urlsplit(url)
     if parts.scheme not in ALLOWED_SCHEMES or not parts.hostname:
         return None
-    port = parts.port or _default_port(parts.scheme)
+    try:
+        port = _port_of(parts)
+    except _InvalidURL:
+        return None
     return f"{parts.scheme}://{parts.hostname.lower()}:{port}"
 
 
@@ -229,7 +251,10 @@ def check_url(url: str) -> PolicyVerdict:
     if host in METADATA_HOSTS:
         return PolicyVerdict(False, "private_range", f"클라우드 메타데이터 주소: {host}")
 
-    port = parts.port or _default_port(parts.scheme)
+    try:
+        port = _port_of(parts)
+    except _InvalidURL as exc:
+        return PolicyVerdict(False, "scheme", str(exc))
     exempt = fixture_origin()
     target_origin = f"{parts.scheme}://{host}:{port}"
     if exempt is not None and target_origin == exempt:
@@ -257,7 +282,10 @@ def check_peer(url: str, address: str) -> PolicyVerdict:
     if host in METADATA_HOSTS or address in METADATA_HOSTS:
         return PolicyVerdict(False, "private_range", f"클라우드 메타데이터 주소: {address}")
 
-    port = parts.port or _default_port(parts.scheme)
+    try:
+        port = _port_of(parts)
+    except _InvalidURL as exc:
+        return PolicyVerdict(False, "scheme", str(exc))
     exempt = fixture_origin()
     if exempt is not None and f"{parts.scheme}://{host}:{port}" == exempt:
         # 오리진이 예외라도 **연결된 주소**가 루프백을 벗어나면 예외가 아니다.
@@ -287,7 +315,10 @@ def resolved_targets(url: str) -> list[str]:
 
     parts = urlsplit(url)
     host = (parts.hostname or "").lower()
-    port = parts.port or _default_port(parts.scheme)
+    try:
+        port = _port_of(parts)
+    except _InvalidURL as exc:
+        raise transport.PolicyBlocked("scheme", str(exc)) from exc
     if host in METADATA_HOSTS:
         raise transport.PolicyBlocked("private_range", f"클라우드 메타데이터 주소: {host}")
 

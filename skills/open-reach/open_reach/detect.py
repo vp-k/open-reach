@@ -276,13 +276,21 @@ def classify(status: int, html: str, extracted: str) -> ContentVerdict:
     if challenge is not None:
         return challenge
 
+    # 401 은 인증 필요 = 인증벽이다. 본문이 길어도 그것은 우리가 돌파한 공개 콘텐츠가
+    # 아니라 로그인 뒤의 자원이므로, 성공(substantial) 판정보다 **먼저** auth_wall 로
+    # 종료한다. 여기 순서를 넘기면 401+긴 본문이 success 로 새어 돌파율을 부풀리고
+    # NG-1(로그인월 미돌파·감지만)을 깬다. 403 은 소프트 WAF 차단이라도 공개 본문을
+    # 그대로 주는 경우가 있어 아래 success 예외(이 함수의 요점)를 유지한다.
+    if status == 401:
+        return ContentVerdict("auth_wall", "wall", ("http_401",), True)
+
     substantial = len(extracted) >= MIN_ARTICLE_CHARS and not _is_nav_shell(extracted)
     if substantial and not _is_js_notice(extracted, html):
         return ContentVerdict(None, "success", (), False)
 
     if 500 <= status < 600:
         return ContentVerdict("server_error", "error", (f"http_{status}",), False)
-    if status in (401, 403):
+    if status == 403:
         return ContentVerdict("waf_challenge", "blocked", (f"http_{status}",), False)
     if 400 <= status < 500:
         return ContentVerdict("not_found", "error", (f"http_{status}",), False)

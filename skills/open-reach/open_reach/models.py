@@ -29,7 +29,10 @@ FAILURE_REASONS = (
 BOUNDARY_REASONS = ("auth_wall", "paywall", "policy_blocked")
 
 ROUTES = ("policy", "phase0", "http", "browser")
-OUTCOMES = ("success", "challenge", "wall", "error", "blocked")
+# "redirect" 는 최종 응답이 아니라 우리가 실제로 추종한 중간 3xx 홉을 attempts 에
+# 정직하게 남기기 위한 값이다 (감사 완전성 — 나간 요청은 모두 기록한다). 종료 코드나
+# 실패 사유에는 관여하지 않는다: 최종 판정은 마지막 홉의 outcome 이 결정한다.
+OUTCOMES = ("success", "challenge", "wall", "error", "blocked", "redirect")
 URL_VARIANTS = ("original", "mobile", "rss", "json", "oembed", "amp")
 INTENTS = ("article", "media", "raw")
 

@@ -98,11 +98,19 @@ class _FileLock:
             pass
 
 
-def append_jsonl(path: Path, record: dict) -> None:
+def append_jsonl(path: Path, record: dict, *, rotate: bool = True) -> None:
+    """JSONL 1줄 append.
+
+    `rotate=True`(기본)는 `observations.jsonl` 처럼 무한히 커지는 학습 로그용이다 —
+    상한 도달 시 오래된 `.1` 을 버려 크기를 제한한다. `rotate=False` 는
+    `bench/history.jsonl` 처럼 **기존 줄을 절대 삭제·수정하면 안 되는** 이력용이다
+    (AC-B-004-4). 회전은 `.1` 을 지우므로 이력에 쓰면 그 계약을 깬다.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = (json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
     with _FileLock(path):
-        _rotate_if_needed(path)
+        if rotate:
+            _rotate_if_needed(path)
         fd = os.open(path, os.O_CREAT | os.O_WRONLY | os.O_APPEND, 0o644)
         try:
             os.write(fd, payload)

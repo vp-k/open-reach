@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import http.client
 import socket
+import ssl
 import sys
 import threading
 import time
@@ -333,6 +334,8 @@ def _merge_headers(pairs) -> dict[str, str]:
 def _send_stdlib(
     url: str, timeout: float, headers: dict[str, str]
 ) -> tuple[int, dict[str, str], bytes, bool]:
+    from . import policy  # 순환 임포트 회피 (전송 -> 정책)
+
     parts = urlsplit(url)
     host = parts.hostname or ""
     port = parts.port or (443 if parts.scheme == "https" else 80)
@@ -340,21 +343,50 @@ def _send_stdlib(
     if parts.query:
         target += "?" + parts.query
 
-    if parts.scheme == "https":
-        conn: http.client.HTTPConnection = http.client.HTTPSConnection(host, port, timeout=timeout)
-    else:
-        conn = http.client.HTTPConnection(host, port, timeout=timeout)
-    try:
-        # 요청을 보내기 **전에** 붙은 주소를 검증한다 — 재조회 결과가 바뀌었어도 여기서 걸린다
-        conn.connect()
-        _verify_peer(url, _peer_address(conn.sock))
-        conn.request("GET", target, headers=headers)
-        resp = conn.getresponse()
-        body, truncated = _read_capped(resp.read)
-        got = _merge_headers(resp.getheaders())
-        return resp.status, got, body, truncated
-    finally:
-        conn.close()
+    # DNS 를 우리가 직접 고정한다. `HTTPSConnection(host)` 에 맡기면 connect() 가 이름을
+    # **다시** 해석하므로, 최초 check_url 이후 재바인딩되면 커널이 사설 IP 에 먼저 붙어
+    # (요청 데이터는 안 나가도) 내부망에 TCP knock 이 발생한다. curl_cffi 경로가
+    # `CURLOPT_RESOLVE` 로 닫는 TOCTOU 를 stdlib 경로도 같은 방식으로 닫는다 —
+    # 정책이 검증한 주소로만 소켓을 열고(resolved_targets: 차단이면 PolicyBlocked),
+    # HTTPS 는 원래 hostname 으로 SNI·Host 를 유지해 인증서 검증이 정상 동작한다.
+    pinned = policy.resolved_targets(url)  # 차단 대역이면 여기서 PolicyBlocked
+    last_exc: OSError | None = None
+    for pin_ip in pinned:
+        try:
+            raw = socket.create_connection((pin_ip, port), timeout=timeout)
+        except OSError as exc:
+            last_exc = exc
+            continue
+        try:
+            # 붙은 주소를 한 번 더 검증한다 — pin_ip 는 이미 정책 통과분이지만
+            # "연결하는 주소 == 검증한 주소" 를 코드로 못박아 둔다.
+            _verify_peer(url, _peer_address(raw))
+            if parts.scheme == "https":
+                sock: socket.socket = ssl.create_default_context().wrap_socket(
+                    raw, server_hostname=host
+                )
+                conn: http.client.HTTPConnection = http.client.HTTPSConnection(
+                    host, port, timeout=timeout
+                )
+            else:
+                sock = raw
+                conn = http.client.HTTPConnection(host, port, timeout=timeout)
+            conn.sock = sock  # 우리가 연결한 소켓을 넘겨 connect() 재해석을 건너뛴다
+            try:
+                conn.request("GET", target, headers=headers)
+                resp = conn.getresponse()
+                body, truncated = _read_capped(resp.read)
+                got = _merge_headers(resp.getheaders())
+                return resp.status, got, body, truncated
+            finally:
+                conn.close()
+        except BaseException:
+            try:
+                raw.close()
+            except OSError:
+                pass
+            raise
+    raise NetworkError(f"연결 실패: {host}:{port} ({last_exc})")
 
 
 def resolve_entry(host: str, port: int, addresses: list[str]) -> str:
@@ -441,12 +473,17 @@ def request(
     impersonate: str | None = None,
     referer: str | None = None,
     hop_check: Callable[[str], None] | None = None,
+    on_dispatch: Callable[[str, int, int], None] | None = None,
     user_agent: str | None = None,
     accept: str | None = None,
 ) -> Response:
     """단건 GET. 리디렉션은 직접 따라가며 매 홉마다 `hop_check` 를 호출한다.
 
     `hop_check` 는 차단 시 PolicyBlocked 를 던져야 한다.
+    `on_dispatch(url, status, hop_ms)` 는 **최종 응답이 아닌 중간 3xx 홉**이 발생할 때마다
+    호출된다 — 호출자가 실제로 나간 요청을 attempts 에 기록할 수 있게 하는 감사 훅이다.
+    최종 응답(비-3xx)에는 호출하지 않으므로 호출자의 최종 기록과 이중 계상되지 않는다.
+    hop_check 로 차단되는 홉도 차단 직전에 한 번 통지한다 — 나간 요청은 남긴다.
     `elapsed_ms` 에는 의도적 페이싱 대기를 넣지 않는다 — 지연 지표가 부풀려지면
     측정으로 쓸 수 없다.
 
@@ -501,9 +538,13 @@ def request(
                 raise NetworkError(f"{type(exc).__name__}: {exc}") from exc
             except Exception as exc:  # curl_cffi 예외군은 클래스 계층이 다르다
                 raise NetworkError(f"{type(exc).__name__}: {exc}") from exc
-            net_ms += int((time.monotonic() - started) * 1000)
+            hop_ms = int((time.monotonic() - started) * 1000)
+            net_ms += hop_ms
 
         if status in (301, 302, 303, 307, 308) and "location" in got:
+            # 이 홉은 실제로 회선에 나갔다. hop 상한 초과·차단으로 이어지더라도 기록은 남긴다.
+            if on_dispatch is not None:
+                on_dispatch(current, status, hop_ms)
             if hop >= MAX_REDIRECTS:
                 raise PolicyBlocked("redirect_hop", f"리디렉션 홉이 {MAX_REDIRECTS} 를 초과했다")
             nxt = urljoin(current, got["location"])

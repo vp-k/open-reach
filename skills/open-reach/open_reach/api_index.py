@@ -522,12 +522,22 @@ def _reserve(budget: list[int]) -> None:
         raise _BudgetExhausted
 
 
-def _request(url: str, *, kind: str, timeout: float, budget: list[int]) -> transport.Response:
+def _request(
+    url: str, *, kind: str, timeout: float, budget: list[int], on_attempt=None
+) -> transport.Response:
     _reserve(budget)
     budget[0] -= 1
     origin = policy.origin_of(url)
     if origin is None:
         raise Rejected(f"오리진을 판정할 수 없는 URL: {url}")
+
+    def _on_dispatch(hop_url: str, status: int, elapsed_ms: int) -> None:
+        # 실제로 추종한 중간 3xx 홉 (같은 오리진 검사로 차단되는 홉 포함). 최종 응답은
+        # `_emit_attempt` 가 따로 남기므로 여기서는 중간 홉만 감사에 남는다 — 일반 fetch
+        # 경로와 동일한 완전성 (SC-9).
+        if on_attempt is not None:
+            on_attempt(hop_url, kind, status, elapsed_ms, "redirect")
+
     return transport.request(
         url,
         timeout=timeout,
@@ -535,6 +545,7 @@ def _request(url: str, *, kind: str, timeout: float, budget: list[int]) -> trans
         user_agent=HONEST_UA,
         accept=_accept_for(kind),
         hop_check=_same_origin_hop(origin),
+        on_dispatch=_on_dispatch,
     )
 
 
@@ -557,7 +568,7 @@ def _content_from(
     if kind == "json":
         try:
             payload = json.loads(response.text())
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, RecursionError):
             return None, None, None
         license_value = _license_of(payload)
         raw = select_scalar(payload, pointer or "")
@@ -621,6 +632,13 @@ def run(
     except transport.NetworkError as exc:
         outcome.notes.append(f"network: {exc}")
         return outcome
+    except Exception as exc:  # noqa: BLE001
+        # 계약: run() 은 어떤 실패도 밖으로 던지지 않는다 (전 단계 격리 — Phase 0 이
+        # 뒤 단계·CLI 를 오염시키면 안 된다). 위 분류에 안 걸린 예상 밖 예외
+        # (비정상 깊이 JSON 의 RecursionError, 조립 URL 의 포트 범위 초과 등)도
+        # outcome 에 종류를 그대로 남기고 정상 종료한다 (NG-10 — 다른 이유로 세탁 금지).
+        outcome.notes.append(f"internal: {type(exc).__name__}: {exc}")
+        return outcome
 
 
 def _emit_attempt(on_attempt, outcome, url, response, kind, blocked) -> None:
@@ -646,7 +664,7 @@ def _run_chain(entry, captures, *, intent, timeout, budget, on_attempt, outcome)
         _reserve(budget)          # 라운드 4 — `_guard` 의 robots 요청보다 먼저 센다
         _guard(url, timeout=timeout)
         kind = str(step.get("response_kind") or entry.get("response_kind") or "html")
-        response = _request(url, kind=kind, timeout=timeout, budget=budget)
+        response = _request(url, kind=kind, timeout=timeout, budget=budget, on_attempt=on_attempt)
         blocked = _classify_block(response.status, response.text(), response.headers)
         _emit_attempt(on_attempt, outcome, url, response, kind, blocked)
         if blocked is not None:
@@ -670,7 +688,7 @@ def _run_chain(entry, captures, *, intent, timeout, budget, on_attempt, outcome)
         # 다음 단계로 넘길 값 — 스칼라 1개, 앵커 패턴 일치, 세그먼트 1개
         try:
             payload = json.loads(response.text())
-        except (ValueError, TypeError) as exc:
+        except (ValueError, TypeError, RecursionError) as exc:
             raise Rejected(f"step{index}: JSON 이 아니다 — {exc}") from exc
         pointer = str(step["select"])
         value = _as_scalar(select_scalar(payload, pointer), pointer)
@@ -693,7 +711,7 @@ def _run_endpoints(entry, captures, *, intent, timeout, budget, on_attempt, outc
         # 쏘지 않기로 한 엔드포인트의 정책 판정이 항목의 결과로 보고된다 (라운드 4).
         _reserve(budget)
         _guard(url, timeout=timeout)
-        response = _request(url, kind=kind, timeout=timeout, budget=budget)
+        response = _request(url, kind=kind, timeout=timeout, budget=budget, on_attempt=on_attempt)
         blocked = _classify_block(response.status, response.text(), response.headers)
         _emit_attempt(on_attempt, outcome, url, response, kind, blocked)
         if blocked is not None:
