@@ -505,7 +505,7 @@ def test_source_must_be_https(tmp_path):
 
 
 def test_request_budget_value_is_pinned():
-    """죽여야 할 변이: `REQUEST_BUDGET` 을 2 로 줄이기.
+    """죽여야 할 변이: `REQUEST_BUDGET` 을 2 로 줄이기 / 4 로 늘리기.
 
     아래 엔드포인트 테스트만으로는 부족하다 — 상수를 반복 횟수로 쓰는 산식은 값이
     바뀌어도 초록이기 때문이다 (라운드 5 HIGH-2 와 같은 함정, 라운드 8 MEDIUM).
@@ -514,11 +514,15 @@ def test_request_budget_value_is_pinned():
 
 
 def test_endpoints_budget_reaches_exactly_the_third(server):
-    """죽여야 할 변이: `REQUEST_BUDGET` 을 2 로 줄이기 / 4 로 늘리기.
+    """죽여야 할 변이: `REQUEST_BUDGET` 을 2 로 줄이기.
 
     앞의 두 엔드포인트가 404 고 세 번째가 본문을 주는 정상 항목이다. 예산이 2 면
-    구제를 포기하고, 4 면 쏘지 않기로 한 네 번째까지 두드린다. 기존 인수 테스트는
+    세 번째를 두드리지 못해 구제를 포기한다. 기존 인수 테스트는
     `/api/ep4 == 0` 만 봤고 `/api/ep3 == 1` 은 보지 않았다 (라운드 8 MEDIUM).
+
+    **이 테스트는 예산을 4 로 늘리는 변이는 죽이지 못한다.** 세 번째가 성공하는
+    순간 디스패처가 즉시 반환하므로 `/ep4` 는 예산과 무관하게 0 회다 (라운드 9 LOW).
+    위쪽 변이는 `test_endpoints_budget_stops_before_the_fourth` 가 맡는다.
     """
     entry = {
         "host": "127.0.0.1",
@@ -565,3 +569,46 @@ def test_chain_puts_the_substituted_value_on_the_wire(server):
     assert outcome.reason is None, outcome.notes
     assert HITS.get("/step2/1.0.229", 0) == 1     # 치환값이 실제로 실렸다
     assert HITS.get("/step2/{version}", 0) == 0   # 템플릿 그대로 나가지 않았다
+
+# ── 라운드 9 ──────────────────────────────────────────────────────────────
+
+
+def test_endpoints_budget_stops_before_the_fourth(server):
+    """죽여야 할 변이: `REQUEST_BUDGET` 을 4 로 늘리기.
+
+    앞의 셋이 전부 404 고 **네 번째가 본문을 준다**. 예산이 3 이면 네 번째를
+    두드리지 못해 항목이 실패해야 한다. 예산이 4 면 네 번째가 성공해 버린다.
+
+    바로 위 테스트는 세 번째에서 성공해 즉시 반환하므로 예산이 4 여도 `/ep4` 가
+    0 회다 — 위쪽 변이를 죽이지 못한다 (라운드 9 LOW). 성공 지점을 예산 **밖**으로
+    밀어 두어야 상한이 실제로 검증된다.
+    """
+    entry = {
+        "host": "127.0.0.1",
+        "response_kind": "html",
+        "endpoints": [
+            f"{server}/miss1", f"{server}/miss2", f"{server}/miss3", f"{server}/ep4",
+        ],
+    }
+    outcome = api_index.run(
+        entry, {}, intent="research", timeout=5.0, on_attempt=lambda *a, **k: None
+    )
+    # 예산 소진은 `reason` 이 아니라 "본문을 못 가져왔다"로 나타난다.
+    assert outcome.markdown is None            # 예산 안에서는 구제하지 못한다
+    assert any("budget" in note for note in outcome.notes), outcome.notes
+    assert HITS.get("/miss1", 0) == 1
+    assert HITS.get("/miss2", 0) == 1
+    assert HITS.get("/miss3", 0) == 1
+    assert HITS.get("/ep4", 0) == 0            # 예산 밖은 쏘지 않는다
+
+
+def test_source_must_have_a_host(tmp_path):
+    """죽여야 할 변이: `source` 검사를 `startswith("https://")` 로 되돌리기.
+
+    `"https://"` 는 접두사 검사를 통과하지만 아무것도 가리키지 않는다 —
+    AC-B-010-15 가 요구하는 "검증 가능한 출처"가 아니다 (라운드 9 MEDIUM).
+    """
+    bad = tmp_path / "hostless.yaml"
+    bad.write_text(_INDEX_YAML.format(source="https://"), encoding="utf-8")
+    with pytest.raises(api_index.IndexLoadError):
+        api_index.load(bad)

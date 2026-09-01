@@ -983,7 +983,15 @@ pass A 가 함께 확인해 준 비발견 사항:
 만 보고 `/api/ep3 == 1` 은 보지 않았고, 단위 테스트의 산식은 `REQUEST_BUDGET` 자체를 다시
 읽어 값이 바뀌어도 초록이었다 — 라운드 5 HIGH-2 와 같은 함정이다. `REQUEST_BUDGET == 3`
 을 상수로 못 박고, 앞 둘이 404 고 **세 번째가 본문을 주는** 정상 항목으로 `ep1~ep3` 각
-1회 · `ep4` 0회를 단언한다. 예산이 2 면 구제를 포기하고 4 면 쏘지 않기로 한 곳을 두드린다.
+1회 · `ep4` 0회를 단언한다. 예산이 2 면 세 번째를 못 두드려 구제를 포기한다.
+
+> **정정 (라운드 9 LOW).** 여기에 원래 "4 면 쏘지 않기로 한 곳을 두드린다"고 적혀 있었다.
+> **사실이 아니다.** 세 번째가 성공하는 순간 디스패처가 즉시 반환하므로 `/ep4` 는 예산이
+> 4 여도 0 회다 — 그 테스트는 위쪽 변이를 죽이지 못한다. 상수 고정 테스트가 4 를 잡고
+> 있어 운영 동작은 보호됐지만, **테스트가 죽인다고 적은 변이를 실제로는 죽이지 못한
+> 기록**은 §15-3 이 지적한 것과 같은 종류의 NG-10 위반이다. 라운드 9 에서 성공 지점을
+> 예산 **밖**으로 민 `test_endpoints_budget_stops_before_the_fourth` 를 추가해 위쪽
+> 변이를 실제로 죽이고, 두 테스트의 docstring 도 각자 죽이는 변이만 적도록 고쳤다.
 
 ### 15-3. LOW — 없는 선례를 근거로 든 기록 (내 NG-10 위반)
 
@@ -1038,3 +1046,121 @@ pass A 가 함께 확인해 준 비발견 사항:
 
 둘 다 **사용자 승인 → `acceptance-freeze --approved-by-user`** 로만 닫을 수 있다. 정책상
 MEDIUM 은 완료 비차단이고, 실질 동작은 15-4 의 단위 테스트가 이미 지키고 있다.
+
+## 16. 라운드 9 — 재기록 라운드(수렴)
+
+### 16-0. 왜 라운드가 하나 더 필요했나
+
+라운드 8 의 수정으로 `code-review-findings` 게이트가 `sourceHash=stale` 로 FAIL 했다.
+"리뷰 후 무리뷰 변경"은 완주를 막고, 해소 경로는 **커밋 → 지문 재캡처 → 리뷰어 실제
+호출 1회** 뿐이다(라운드 항목만 append 하는 것은 금지). 그래서 R2 작업 전부를 `2ed7a3d`
+로 커밋하고 델타 리뷰를 1회 돌렸다. 재기록 라운드는 수정 라운드 상한(5) 예외다.
+
+캡처 지문: `2ed7a3dfee06d6b3b038cd9f534b1fd7c89305df-e69de29b…`(작업 트리 clean).
+모드는 codex 1자, 범위는 **라운드 8 의 수정분만**.
+
+결과: **CRITICAL 0 / HIGH 0 / MEDIUM 1 / LOW 1** — 수렴 라운드다.
+
+### 16-1. MEDIUM — `source` 를 접두사로 봤다
+
+라운드 8 에서 `source` 를 https 전용으로 좁혔는데, 검사가 `startswith("https://")` 였다.
+`source: "https://"` 는 이 검사를 통과한다 — 스킴만 있고 호스트가 없어 **아무것도
+가리키지 않는다**. AC-B-010-15 가 요구하는 것은 "https 로 시작하는 문자열"이 아니라
+**검증 가능한 출처**이므로, 출처가 없는 항목과 실질이 같다.
+
+접두사가 아니라 파싱해서 본다 — `urlsplit(source).scheme == "https"` 와 `hostname`
+존재를 함께 요구한다.
+
+### 16-2. LOW — 테스트가 죽인다고 적은 변이를 죽이지 못했다
+
+§15-2 의 정정 블록에 적은 그대로다. `test_endpoints_budget_reaches_exactly_the_third`
+는 세 번째에서 성공해 즉시 반환하므로 예산을 4 로 늘려도 초록이다. 성공 지점을 예산
+**밖**(네 번째)으로 민 테스트를 새로 추가해 위쪽 변이를 실제로 죽인다.
+
+이 두 건은 정책상 **완료 비차단(MEDIUM/LOW)** 이라 deferred 로 넘길 수 있었지만 넘기지
+않았다. 16-2 는 §15-3 에서 내가 스스로 지적한 것과 **같은 종류의 기록 부정확**이고,
+16-1 은 3 줄 수정이다. "정책이 허용한다"를 근거로 남겨 두면 §15-3 이 경고한 관행이
+그대로 반복된다.
+
+### 16-3. 리뷰어가 확인해 준 비발견 사항
+
+- `_bad_path_segment` 는 transport 가 실제로 만드는 `urlsplit(...).path` 와 같은 것을
+  본다(`transport.py:336`). 경로 검사를 우회해 다른 authority 나 미검사 경로로 전송되는
+  구체 문자열은 구성하지 못했다.
+- 요청 시점 `_bad_path_segment` 는 정상 `load() → run()` 흐름에서는 **도달 불가능한 방어
+  심화**다. 로드가 리터럴 위반을 먼저 막고, 런타임 값 자체는 같은 금지 문자를 못 넣는다.
+  공개 API 인 `run(entry, ...)` 가 dict 를 그대로 받으므로 로드를 거치지 않는 호출자에
+  대한 방어로 남긴다 — 다만 **"정상 인덱스에도 별도 공격 경로가 있다"는 뜻은 아니다.**
+- https-only 변경으로 깨진 정당한 경로는 출하 인덱스·동결 픽스처·`tests/fixtures` 어디에도
+  없다.
+- §15-0 과 §15-6 의 deferred 서술은 정직하다고 판정했다.
+
+### 16-4. 검증
+
+- `pytest tests/unit -q` → **105 passed** (라운드 8 의 103 에서 2 종 추가)
+- `bash tests/acceptance/run.sh` → `total=10 passed=10 failed=0`
+- `shared-gate.sh acceptance-gate` → `total=10 passed=10 failed=0 (exit=0)` — 해시 무결성 포함 PASS
+
+변이 2종:
+
+| 변이 | red 가 된 테스트 |
+|------|------------------|
+| J `REQUEST_BUDGET = 4` | `test_request_budget_value_is_pinned`, `test_endpoints_budget_stops_before_the_fourth` |
+| K `source` 를 `startswith("https://")` 로 회귀 | `test_source_must_have_a_host` |
+
+변이 J 에서 `test_endpoints_budget_reaches_exactly_the_third` 는 **초록으로 통과했다** —
+리뷰어 지적(§16-2)이 사실임을 실행으로 확인한 것이고, 새 테스트가 그 자리를 메운다.
+
+#### 인수 스위트가 한 번 0/10 으로 떨어진 건 — 내 실행 환경 오류였다
+
+검증 도중 인수 스위트가 10 건 전부 `robots 를 아예 보지 않았다 (hits=0)` 로 실패했다.
+원인은 제품이 아니라 하네스다. `tests/acceptance/_lib.sh:24` 는
+
+```sh
+export PYTHONPATH="$ROOT/skills/open-reach${PYTHONPATH:+:$PYTHONPATH}"
+```
+
+로 **`:`** 를 구분자로 쓰는데, 내가 앞선 명령에서 PYTHONPATH 를 미리 export 한 탓에
+`C:\...\open-reach:C:/...` 가 만들어졌다. Windows Python 은 `;` 로만 분리하므로 전체가
+존재하지 않는 한 경로가 되고, `open_reach` import 가 실패해 요청이 아예 나가지 않는다.
+별도 셸에서 같은 이어붙이기를 재현해 `ModuleNotFoundError` 를 확인했고, PYTHONPATH 를
+비운 셸에서 다시 돌려 **10/10** 을 얻었다.
+
+`_lib.sh` 는 해시 동결 대상이라 지금 고칠 수 없어 `R2-R9-L2-acc` (LOW, deferred) 로
+기록했다. 정상 실행 경로(PYTHONPATH 미설정)에서는 영향이 없다.
+
+#### 배터리가 36/36 에서 33/36 으로 떨어진 건 — 코드가 아니라 라이브 조건이다
+
+`bench --battery bench/battery.yaml` → `rate=0.917 total=36 passed=33 failed=3`,
+`by_reason: {"waf_challenge": 3}`, `by_vendor` 의 datadome 이 6 → **3**.
+배터리는 실사이트를 때리는 스위트라 먼저 재실행했고 같은 33/36 이 재현됐다 — 흔들림이
+아니라 지속 상태다.
+
+추론으로 끝내지 않고 A/B 로 확정했다. `api_index.py` **만** HEAD(라운드 9 변경 이전)로
+되돌려 같은 배터리를 돌린 결과:
+
+```
+A: 라운드 9 프로덕션 변경 제거(HEAD 상태)로 배터리 실행
+    by_vendor: {"akamai": 12, "cloudflare": 12, "datadome": 3, "fastly": 6}
+    by_reason: {"waf_challenge": 3}
+    BENCH_RESULT: rate=0.917 total=36 passed=33 failed=3
+```
+
+**동일하다.** 라운드 9 의 변경은 인덱스 **로드 시점**의 `source` 검증뿐이라 fetch 결과에
+관여할 수 없다는 판단이 실행으로 확인됐다. 떨어진 3 건은 전부 datadome 이고 사유는
+`waf_challenge` — 오늘 배터리를 반복 실행하는 동안 DataDome 이 rate 기반 챌린지를 걸기
+시작한 것으로 보인다. 우리는 챌린지를 풀지 않는다(NG 경계)이므로 이는 **정상 동작**이다.
+
+> **다만 이것은 R2 의 문제가 아니라 R1 거버넌스의 문제로 남는다.** G-8 은 datadome 을
+> 실측(신뢰도 1.0 ≥2건)으로 편입했고, 배터리의 **절대 하한** 기준은 라이브 벤더 상태에
+> 좌우된다. 하한을 라이브 측정에 걸어 둔 채로는 "회귀"와 "상대편의 정책 변경"이
+> 구분되지 않는다. 판단이 필요한 사안이므로 여기 남기고 R2 완료 조건에는 넣지 않는다 —
+> R2 가 이 값을 움직이지 않았다는 것은 위 A/B 가 보인다.
+
+### 16-5. R2 종료 조건
+
+- open CRITICAL/HIGH = **0**
+- deferred MEDIUM 2건(`R2-R7-M1`, `R2-R8-M2-acc`)은 동결 인수 테스트 개정이 필요해
+  **사용자 승인 → `acceptance-freeze --approved-by-user`** 로만 닫힌다. 정책상 완료 비차단.
+- 라운드 10 은 이 수정분의 귀속용 재기록 라운드다. 신규 finding 이 MEDIUM/LOW 뿐이면
+  수정 없이 기록하고 소스를 그대로 두어 지문 정합을 자동 충족시킨다 — 그것이 종료점이다.

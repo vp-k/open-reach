@@ -251,9 +251,13 @@ def _check_entry(entry: Any, index: int) -> None:
     source = _require_str(entry.get("source"), f"{label}.source")
     # SPEC:278 은 `https` URL 을 요구한다. `http://` 출처는 중간자가 바꿔 쓸 수 있어
     # "검증 가능한 주장"이 되지 못한다 — 계약대로 https 만 받는다 (라운드 8 MEDIUM).
-    if not source.startswith("https://"):
+    # 접두사가 아니라 **파싱해서** 본다. `"https://"` 는 접두사 검사를 통과하지만
+    # 호스트가 없어 아무것도 가리키지 않는다 — 출처 없는 항목과 같다 (라운드 9 MEDIUM).
+    source_parts = urlsplit(source)
+    if source_parts.scheme != "https" or not source_parts.hostname:
         raise IndexLoadError(
-            f"{label}.source: 공식 문서는 https URL 이어야 한다 (AC-B-010-15) — {source!r}"
+            f"{label}.source: 공식 문서는 호스트가 있는 https URL 이어야 한다 "
+            f"(AC-B-010-15) — {source!r}"
         )
     verified_at = _require_str(entry.get("verified_at"), f"{label}.verified_at")
     if not _DATE.match(verified_at):
