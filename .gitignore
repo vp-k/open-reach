@@ -15,3 +15,8 @@ bench/compare-*.json
 
 # 로컬 벤치 산출물
 bench-out/
+
+# 세션 작업상태 (auto-complete-loop 실행 산출물 — 배포본 제외)
+.claude-auto-config.json
+.claude-plan-docs-full-progress.json
+.claude/
