@@ -143,6 +143,9 @@ def _attempt_step(
     def _record_redirect(hop_url: str, status: int, elapsed_ms: int) -> None:
         # 우리가 실제로 추종한 중간 3xx 홉 (차단으로 끝나는 홉 포함). 최종 응답은
         # 아래에서 verdict.outcome 으로 따로 기록하므로 여기서는 중간 홉만 남는다.
+        # `endpoint` 에 **실제로 두드린 URL** 을 남긴다 — url_variant 는 닫힌 집합이라
+        # 리디렉션이 우리를 보낸 경로(a→b/private→c)를 담을 수 없다. 이 값이 없으면
+        # 감사(SC-9)가 최종 URL 만 보고 실제 회선에 나간 경로를 재구성할 수 없다.
         attempts.append(
             Attempt(
                 "http",
@@ -152,6 +155,7 @@ def _attempt_step(
                 status,
                 elapsed_ms,
                 "redirect",
+                endpoint=hop_url,
             )
         )
 

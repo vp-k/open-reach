@@ -238,11 +238,17 @@ def cmd_bench(args: argparse.Namespace) -> int:
         sys.stderr.write("[open-reach] " + violation + "\n")
 
     # 기록은 **항상** 남긴다 — 게이트로 막히는 실행일수록 다음 회귀 감사가 그 측정을
-    # 봐야 한다 (AC-B-004-4: 각 실행 BenchRun 1건 append). 음성 오분류·측정 불가 실행은
-    # 돌파율이 신뢰 불가라 gated 로 표시해 다음 실행의 회귀 **기준**에서만 제외한다.
-    gated = bool(report["negative_violations"] or report["measurement_violations"])
-    bench_mod.record_run(report, battery_path=path, gated=gated)
-    if gated:
+    # 봐야 한다 (AC-B-004-4: 각 실행 BenchRun 1건 append). 신뢰 불가 실행은 gated 로
+    # 표시해 다음 실행의 회귀 **기준**에서만 제외한다. 여기엔 음성 오분류·측정 불가뿐
+    # 아니라 **SC-8 위반**(벤더 오탐/미탐)도 포함된다 — SC-8 이 깨진 실행의 돌파율은
+    # 벤더를 잘못 귀속한 값이라 그대로 baseline 이 되면 다음 회귀 감사를 오염시킨다.
+    baseline_unsafe = bool(
+        report["negative_violations"] or report["measurement_violations"] or sc8
+    )
+    bench_mod.record_run(report, battery_path=path, gated=baseline_unsafe)
+    # 측정 자체가 깨진 경우(음성 오분류·측정 불가)는 렌더 없이 즉시 정지한다.
+    # SC-8 위반은 렌더로 증적을 남긴 뒤 정지한다 (아래).
+    if report["negative_violations"] or report["measurement_violations"]:
         return EXIT_GATE
     sys.stdout.write(bench_mod.render(report) + "\n")
     return EXIT_GATE if sc8 else EXIT_OK

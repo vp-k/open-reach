@@ -125,8 +125,9 @@ class Attempt:
     # 식별은 차단 판정이 기록되는 자리인 attempts[0] 에서 이뤄진다.
     # 기본값 None 이라 기존 호출부는 그대로 둔다 — 정책 경로만 값을 채운다.
     rule: str | None = None
-    # Phase 0 이 실제로 두드린 엔드포인트. AC-B-010-7 이 "어떤 엔드포인트를 썼는지
-    # 보인다"를 요구하는데 `url_variant` 는 닫힌 집합이라 URL 을 담을 수 없다.
+    # 실제로 두드린 URL. Phase 0 은 어떤 엔드포인트를 썼는지(AC-B-010-7), 일반 fetch 는
+    # 리디렉션이 우리를 보낸 실제 홉(SC-9 경로 재구성)을 남긴다 — `url_variant` 는 닫힌
+    # 집합이라 URL 을 담을 수 없다. route=phase0(엔드포인트) 또는 http(추종한 홉)만 채운다.
     endpoint: str | None = None
 
     def __post_init__(self) -> None:
@@ -145,8 +146,10 @@ class Attempt:
                 raise InvariantError(f"rule is only for route=policy: {self.route}")
             if self.rule not in POLICY_RULES:
                 raise InvariantError(f"unknown policy rule: {self.rule}")
-        if self.endpoint is not None and self.route != "phase0":
-            raise InvariantError(f"endpoint is only for route=phase0: {self.route}")
+        if self.endpoint is not None and self.route not in ("phase0", "http"):
+            raise InvariantError(
+                f"endpoint is only for route=phase0 or http: {self.route}"
+            )
 
 
 @dataclass(frozen=True)

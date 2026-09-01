@@ -75,7 +75,10 @@ def _port_of(parts) -> int:
         explicit = parts.port
     except ValueError as exc:
         raise _InvalidURL(f"포트 범위 초과 (0-65535): {exc}") from exc
-    return explicit or _default_port(parts.scheme)
+    # `explicit is None` 만 "포트 미명시"다. `:0` 은 명시된 포트 0 이며 기본 포트가
+    # 아니다 — `or` 로 뭉개면 `http://h:0/` 가 `:80` 오리진으로 정규화되어, 정확한
+    # 픽스처 오리진 매칭(유일한 SSRF 예외)의 경계가 흐려진다. 명시 포트는 그대로 둔다.
+    return explicit if explicit is not None else _default_port(parts.scheme)
 
 
 def origin_of(url: str) -> str | None:
