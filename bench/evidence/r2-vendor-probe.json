@@ -1,0 +1,1184 @@
+[
+  {
+    "url": "https://aws.amazon.com/ko/what-is/api/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 8263,
+    "title": "API란 무엇인가요? - 애플리케이션 프로그래밍 인터페이스 설명 - AWS\n                     x\n                     facebook\n                     linkedin\n                     instagram\n                     twitch\n                     youtube\n                     podcasts\n                     email\n                     California Consumer Privacy Act (CCPA) Opt-Out Icon"
+  },
+  {
+    "url": "https://developer.amazon.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3023,
+    "title": "Amazon Developers"
+  },
+  {
+    "url": "https://www.audible.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 4324,
+    "title": "Amazonオーディオブック : Audible (オーディブル)｜Audible.co.jp公式サイト"
+  },
+  {
+    "url": "https://www.coinbase.com/",
+    "guess": "aws_waf",
+    "r1_vendor": null,
+    "vendor": null,
+    "confidence": null,
+    "signals": null,
+    "ok": false,
+    "reason": "policy_blocked",
+    "status": null,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.deliveroo.co.uk/",
+    "guess": "aws_waf",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 1013,
+    "title": "Deliveroo - Food, Groceries, Pharmacy, Gifts & More. Delivered In A Tap."
+  },
+  {
+    "url": "https://www.epicgames.com/store/en-US/",
+    "guess": "aws_waf",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3218,
+    "title": "Epic Games Store | Official Site"
+  },
+  {
+    "url": "https://www.expedia.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": false,
+    "reason": "rate_limited",
+    "status": 429,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.formula1.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2196,
+    "title": "F1 - The Official Home of Formula 1® RacingF1 TVF1Open menuFIANewsPlay OutlineLive TimingTrophySteering WheelQuestionPrizePlayPlayPlayPlayPlayPlayFlag of ItalyFlag of Great BritainFlag of Great BritainFlag of ItalyFlag of Great BritainFlag of Great BritainFlag of Great BritainFlag of MonacoFlag of NetherlandsPlayPlayPlayPlayPlayPlayChevron RightChevron RightChevron RightChevron RightChevron RightChevron RightInternal linkF1FacebookXInstagramYouTube"
+  },
+  {
+    "url": "https://www.hotels.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": false,
+    "reason": "rate_limited",
+    "status": 429,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.imdb.com/",
+    "guess": "aws_waf",
+    "r1_vendor": null,
+    "vendor": null,
+    "confidence": null,
+    "signals": null,
+    "ok": false,
+    "reason": "policy_blocked",
+    "status": null,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.robinhood.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2333,
+    "title": "Robinhood: 24/5 Commission-Free Stock Trading & Investing"
+  },
+  {
+    "url": "https://www.twitch.tv/",
+    "guess": "aws_waf",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.udemy.com/",
+    "guess": "aws_waf",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 636,
+    "title": "온라인 강의 - 자신의 일정에 맞춰 뭐든지 배워 보세요 | Udemy"
+  },
+  {
+    "url": "https://www.hermes.com/",
+    "guess": "datadome",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.leboncoin.fr/",
+    "guess": "datadome",
+    "r1_vendor": "datadome",
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3128,
+    "title": "leboncoin, site de petites annonces gratuitesLinkedIntwitterinstagrampinterest"
+  },
+  {
+    "url": "https://www.rakuten.fr/",
+    "guess": "datadome",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 7882,
+    "title": "Rakuten - Achat et vente neuf, occasion et reconditionnéClubRicons / nav24 / chevron rightPersonicons / nav24 / chevron rightHearticons / nav24 / chevron rightCarticons / nav24 / chevron rightHelpClubRicons / nav24 / chevron rightPersonicons / nav24 / chevron rightCarticons / nav24 / chevron rightHelphomechevron_bottom"
+  },
+  {
+    "url": "https://www.seloger.com/",
+    "guess": "datadome",
+    "r1_vendor": "datadome",
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.vinted.fr/",
+    "guess": "datadome",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 1971,
+    "title": "Vinted | Toute la seconde main dans une seule application"
+  },
+  {
+    "url": "https://www.aa.com/",
+    "guess": "f5",
+    "r1_vendor": "unknown_challenge",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header",
+      "akamai-cpt-container"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.bankofamerica.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3566,
+    "title": "Bank of America - Banking, Credit Cards, Loans and Merrill Investing"
+  },
+  {
+    "url": "https://www.chase.com/",
+    "guess": "f5",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 220,
+    "title": "Credit Card, Mortgage, Banking, Auto | Chase Online | Chase.com"
+  },
+  {
+    "url": "https://www.commbank.com.au/",
+    "guess": "f5",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2997,
+    "title": "CommBank - bank accounts, credit cards, home loans and insurance"
+  },
+  {
+    "url": "https://www.fidelity.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 1571,
+    "title": "Fidelity International Usage Agreement"
+  },
+  {
+    "url": "https://www.lloydsbank.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3599,
+    "title": "Lloyds Bank - Personal Banking, Personal Finances & Bank Accounts"
+  },
+  {
+    "url": "https://www.pnc.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akbmsc-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2657,
+    "title": "PNC Personal Banking"
+  },
+  {
+    "url": "https://www.regions.com/",
+    "guess": "f5",
+    "r1_vendor": "imperva",
+    "vendor": "imperva",
+    "confidence": 1.0,
+    "signals": [
+      "incap-session-cookie",
+      "visid-incap-cookie",
+      "iinfo-header",
+      "incapsula-resource"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.suntrust.com/",
+    "guess": "f5",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 6724,
+    "title": "Truist Bank | Checking, Savings, Lending, and Financial Services"
+  },
+  {
+    "url": "https://www.tdbank.com/",
+    "guess": "f5",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 5932,
+    "title": "Online Banking, Loans, Credit Cards & Home Lending | TD Bank"
+  },
+  {
+    "url": "https://www.ups.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 5485,
+    "title": "글로벌 발송 및 물류 서비스 | UPS - 한국"
+  },
+  {
+    "url": "https://www.usbank.com/index.html",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3578,
+    "title": "Personal Banking, Credit Cards, Loans & Investing | U.S. Bank"
+  },
+  {
+    "url": "https://www.wellsfargo.com/",
+    "guess": "f5",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2333,
+    "title": "Wells Fargo Bank | Financial Services & Online Banking"
+  },
+  {
+    "url": "https://docs.python.org/3/library/json.html",
+    "guess": "fastly",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 25138,
+    "title": "json — JSON encoder and decoder — Python 3.14.7 documentation"
+  },
+  {
+    "url": "https://github.com/",
+    "guess": "fastly",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3441,
+    "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHubAmerican AirlinesDuolingoErnst and YoungFordInfoSysMercado LibreMercedes-BenzShopifyPhilipsSociété GénéraleSpotifyVodafoneAmerican AirlinesDuolingoErnst and YoungFordInfoSysMercado LibreMercedes-BenzShopifyPhilipsSociété GénéraleSpotifyVodafone"
+  },
+  {
+    "url": "https://nvd.nist.gov/",
+    "guess": "fastly",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://openai.com/index/",
+    "guess": "fastly",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://pypi.org/project/requests/",
+    "guess": "fastly",
+    "r1_vendor": "none",
+    "vendor": "fastly",
+    "confidence": 1.0,
+    "signals": [
+      "fastly-served-by",
+      "fastly-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 11758,
+    "title": "requests · PyPI"
+  },
+  {
+    "url": "https://stripe.com/docs",
+    "guess": "fastly",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3335,
+    "title": "Stripe DocumentationThe Stripe Docs logo"
+  },
+  {
+    "url": "https://www.bbc.com/news",
+    "guess": "fastly",
+    "r1_vendor": "fastly",
+    "vendor": "fastly",
+    "confidence": 1.0,
+    "signals": [
+      "fastly-served-by",
+      "fastly-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 7852,
+    "title": "BBC News - Breaking news, video and the latest top stories from the U.S. and around the worldBritish Broadcasting CorporationNewsBritish Broadcasting Corporation"
+  },
+  {
+    "url": "https://www.etsy.com/",
+    "guess": "fastly",
+    "r1_vendor": "datadome",
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.kickstarter.com/",
+    "guess": "fastly",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.nytimes.com/",
+    "guess": "fastly",
+    "r1_vendor": "datadome",
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 4192,
+    "title": "The New York Times - Breaking News, US News, World News and Videos"
+  },
+  {
+    "url": "https://www.patreon.com/",
+    "guess": "fastly",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2383,
+    "title": "Where Creator Communities Thrive — Patreon"
+  },
+  {
+    "url": "https://www.rust-lang.org/",
+    "guess": "fastly",
+    "r1_vendor": "fastly",
+    "vendor": "fastly",
+    "confidence": 1.0,
+    "signals": [
+      "fastly-served-by",
+      "fastly-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2692,
+    "title": "Rust Programming Language"
+  },
+  {
+    "url": "https://www.theguardian.com/international",
+    "guess": "fastly",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 16333,
+    "title": "Latest news, sport and opinion from the Guardiandouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation markdouble quotation mark"
+  },
+  {
+    "url": "https://www.bancosantander.com/",
+    "guess": "imperva",
+    "r1_vendor": "imperva",
+    "vendor": "imperva",
+    "confidence": 1.0,
+    "signals": [
+      "incap-session-cookie",
+      "visid-incap-cookie",
+      "iinfo-header",
+      "incapsula-incident",
+      "incapsula-resource"
+    ],
+    "ok": false,
+    "reason": "server_error",
+    "status": 503,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.footlocker.com/",
+    "guess": "imperva",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 1563,
+    "title": "Sneakers, Apparel & More | Foot Locker"
+  },
+  {
+    "url": "https://www.gap.com/",
+    "guess": "imperva",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 400,
+    "title": "Gap Individual style for Women's, Men's, Baby & Kids' Clothing"
+  },
+  {
+    "url": "https://www.homedepot.com/",
+    "guess": "imperva",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akamai-ghost"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.lowes.com/",
+    "guess": "imperva",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 545,
+    "title": "Lowe’s Home Improvement"
+  },
+  {
+    "url": "https://www.nordstrom.com/",
+    "guess": "imperva",
+    "r1_vendor": "fastly",
+    "vendor": "fastly",
+    "confidence": 1.0,
+    "signals": [
+      "fastly-served-by",
+      "fastly-header"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.petco.com/",
+    "guess": "imperva",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.saks.com/",
+    "guess": "imperva",
+    "r1_vendor": "datadome",
+    "vendor": "datadome",
+    "confidence": 1.0,
+    "signals": [
+      "datadome-cookie"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.tui.com/",
+    "guess": "imperva",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 8166,
+    "title": "Urlaub buchen » sicher und günstig reisen | TUI"
+  },
+  {
+    "url": "https://www.zoominfo.com/",
+    "guess": "imperva",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.bunnings.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server",
+      "cf-interstitial"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 403,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.canadagoose.com/",
+    "guess": "kasada",
+    "r1_vendor": "kasada",
+    "vendor": null,
+    "confidence": null,
+    "signals": null,
+    "ok": false,
+    "reason": "rate_limited",
+    "status": 429,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.coles.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "imperva",
+    "vendor": "imperva",
+    "confidence": 1.0,
+    "signals": [
+      "incap-session-cookie",
+      "visid-incap-cookie",
+      "iinfo-header",
+      "incapsula-resource"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.harveynorman.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "imperva",
+    "vendor": "imperva",
+    "confidence": 1.0,
+    "signals": [
+      "incap-session-cookie",
+      "visid-incap-cookie",
+      "iinfo-header",
+      "incapsula-resource"
+    ],
+    "ok": false,
+    "reason": "waf_challenge",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.hoyolab.com/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.hoyoverse.com/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.jbhifi.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.kayak.com/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 11849,
+    "title": "航空券・ホテル・レンタカーの料金検索・比較 | KAYAK"
+  },
+  {
+    "url": "https://www.myer.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 3377,
+    "title": "MYER | Shop Fashion, Homewares, Beauty, Toys & More"
+  },
+  {
+    "url": "https://www.stubhub.com/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.ticketmaster.com/",
+    "guess": "kasada",
+    "r1_vendor": "unknown_challenge",
+    "vendor": "unknown_challenge",
+    "confidence": 0.4,
+    "signals": [
+      "unclassified_block"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 403,
+    "chars": 543,
+    "title": "Let's Get Your Identity Verified"
+  },
+  {
+    "url": "https://www.viagogo.com/",
+    "guess": "kasada",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.woolworths.com.au/",
+    "guess": "kasada",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2629,
+    "title": "Woolworths Supermarket - Buy Groceries Online"
+  },
+  {
+    "url": "https://www.bestbuy.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "abck-cookie",
+      "bmsz-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 727,
+    "title": "Best Buy International: Select your Country - Best Buy"
+  },
+  {
+    "url": "https://www.booking.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "aws_waf",
+    "vendor": "aws_waf",
+    "confidence": 1.0,
+    "signals": [
+      "amzn-waf-header"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 202,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.crunchbase.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 5592,
+    "title": "Crunchbase | Private Company Data & Predictive Intelligence"
+  },
+  {
+    "url": "https://www.grubhub.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.shein.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-server"
+    ],
+    "ok": false,
+    "reason": "validation_failed",
+    "status": 200,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.target.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "none",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2470,
+    "title": "Target : Expect More. Pay Less."
+  },
+  {
+    "url": "https://www.upwork.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "cloudflare",
+    "vendor": "cloudflare",
+    "confidence": 1.0,
+    "signals": [
+      "cf-ray-header",
+      "cf-bm-cookie",
+      "cf-server"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 11043,
+    "title": "Upwork | Hire Top Freelance Talent with Confidence"
+  },
+  {
+    "url": "https://www.walmart.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "akamai",
+    "vendor": "akamai",
+    "confidence": 1.0,
+    "signals": [
+      "akbmsc-cookie",
+      "akamai-header"
+    ],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 2207,
+    "title": "Walmart | Save Money. Live better."
+  },
+  {
+    "url": "https://www.wayfair.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "cloudflare",
+    "vendor": null,
+    "confidence": null,
+    "signals": null,
+    "ok": false,
+    "reason": "rate_limited",
+    "status": 429,
+    "chars": 0,
+    "title": null
+  },
+  {
+    "url": "https://www.zillow.com/",
+    "guess": "perimeterx",
+    "r1_vendor": "perimeterx",
+    "vendor": "none",
+    "confidence": 1.0,
+    "signals": [],
+    "ok": true,
+    "reason": null,
+    "status": 200,
+    "chars": 4975,
+    "title": "Zillow: Real Estate, Apartments, Mortgages & Home Values"
+  }
+]

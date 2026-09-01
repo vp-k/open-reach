@@ -39,3 +39,9 @@
 {"ts":"2026-08-29T04:40:46Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"pass"}
 {"ts":"2026-08-29T04:41:33Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
 {"ts":"2026-08-30T13:52:23Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
+{"ts":"2026-09-01T11:09:25Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"fail"}
+{"ts":"2026-09-01T13:43:05Z","event":"gate.result","gate":"acceptance-freeze","phase":"unknown","result":"pass"}
+{"ts":"2026-09-01T13:49:30Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-09-01T13:58:03Z","event":"error.recorded","type":"REVIEW_ROUND_CAP","file":"skills/open-reach/open_reach/api_index.py","level":"L2","count":1}
+{"ts":"2026-09-01T14:31:06Z","event":"gate.result","gate":"acceptance-gate","phase":"unknown","result":"pass"}
+{"ts":"2026-09-01T14:35:27Z","event":"gate.result","gate":"code-review-findings","phase":"unknown","result":"fail"}

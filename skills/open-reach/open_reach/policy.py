@@ -315,11 +315,23 @@ def resolved_targets(url: str) -> list[str]:
     return allowed
 
 
-def hop_guard(next_url: str) -> None:
-    """리디렉션 홉 재검사. 차단이면 transport.PolicyBlocked 를 던진다.
+# robots 를 홉마다 조회할 때 쓰는 타임아웃. hop_check 콜백은 인자를 하나만 받으므로
+# 원 요청의 타임아웃을 넘겨받을 자리가 없다 — robots 조회는 원 요청보다 짧게 잡는다.
+ROBOTS_HOP_TIMEOUT = 10.0
 
-    transport.request 의 `hop_check` 로 넘기는 표준 가드다 — robots 조회를 포함해
-    리디렉션을 따라가는 모든 경로가 같은 가드를 쓴다 (경로별 누락을 만들지 않는다).
+# robots.txt 조회의 리디렉션은 **상한을 두지 않는다.** 라운드 3 에서 항목당 요청 총량
+# 산식을 참으로 만들려고 1홉 상한을 넣었는데, 조회 실패는 SPEC 상 fail-open 이라
+# (아래 `robots_verdict`) 상한에 걸린 조회가 "규칙 없음 = 전부 허용"으로 캐시됐다.
+# `robots.txt -> /r1 -> /r2` 로 정규화하는 사이트에서 `/r2` 의 Disallow 가 통째로
+# 사라지는 우회였다 — 상한을 지키려다 경계를 뚫은 것이다 (라운드 4 HIGH).
+# 요청 총량 상한은 robots 를 `transport.MAX_REDIRECTS` 기준으로 세는 쪽으로 옮겼다.
+
+
+def ssrf_hop_guard(next_url: str) -> None:
+    """SSRF 만 보는 홉 가드.
+
+    robots.txt **자신을** 가져오는 요청에만 쓴다. 여기서 robots 를 다시 보면
+    robots 조회가 robots 조회를 부르는 재귀가 된다.
     """
     from . import transport  # 순환 임포트 회피 (정책 -> 전송)
 
@@ -329,6 +341,26 @@ def hop_guard(next_url: str) -> None:
         raise transport.NetworkError(str(exc)) from exc
     if not verdict.allowed:
         raise transport.PolicyBlocked("redirect_hop", verdict.detail)
+
+
+def hop_guard(next_url: str) -> None:
+    """리디렉션 홉 재검사. 차단이면 transport.PolicyBlocked 를 던진다.
+
+    transport.request 의 `hop_check` 로 넘기는 표준 가드다 — 리디렉션을 따라가는
+    모든 경로가 같은 가드를 쓴다 (경로별 누락을 만들지 않는다).
+
+    **SSRF 와 robots 를 함께 본다.** 리디렉션 목적지는 호스트도 경로도 원 URL 과
+    다를 수 있고, 원 URL 에서 통과한 robots 판정은 목적지의 근거가 아니다
+    (AC-B-010-3·13 이 조립 URL 에 대해 요구하는 것과 같은 이유다). 이전에는
+    SSRF 만 봤고 docstring 만 "robots 조회를 포함해"라고 적혀 있었다 — 코드가
+    아니라 주석이 계약을 지키고 있었다.
+    """
+    from . import transport  # 순환 임포트 회피 (정책 -> 전송)
+
+    ssrf_hop_guard(next_url)
+    robots = robots_verdict(next_url, timeout=ROBOTS_HOP_TIMEOUT)
+    if not robots.allowed:
+        raise transport.PolicyBlocked(robots.rule or "robots_disallow", robots.detail)
 
 
 # ── robots.txt ───────────────────────────────────────────────────────────
@@ -402,7 +434,7 @@ def robots_verdict(url: str, *, timeout: float) -> PolicyVerdict:
             _robots_cache[origin] = ([], f"robots.txt 조회 차단 ({precheck.detail}) — 기본 허용")
         else:
             try:
-                resp = transport.request(robots_url, timeout=timeout, hop_check=hop_guard)
+                resp = transport.request(robots_url, timeout=timeout, hop_check=ssrf_hop_guard)
                 if 200 <= resp.status < 300:
                     _robots_cache[origin] = (_parse_robots(resp.text()), "fetched")
                 else:

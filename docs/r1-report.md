@@ -350,6 +350,17 @@ SPEC SC-1 은 `open-reach ≥ insane-search × 0.9` 를 R1 한정 게이트로 �
 
 **결과: 9벤더 출하 배터리는 R1 에서 구성할 수 없다.** 상세는 §5 결정 요청 1번.
 
+> **datadome 행 정정 (R2 에서 발견).** 위 표의 "미달" 판정은 **기준을 잘못 적용한 것이다.**
+> AC-B-009-1 이 정한 편입 기준은 「감지기가 신뢰도 1.0 으로 지목한 URL ≥2건」이고,
+> 표의 "탐지" 열이 바로 그 수다 — datadome 은 **5**로 처음부터 충족이었다. "본문 취득
+> 성공" 열을 기준으로 삼은 것은 이 문서가 임의로 덧붙인 잣대이며, 같은 표에서 imperva 는
+> 그 잣대로 **0** 인데도 충족으로 적혀 있어 항목마다 잣대가 달랐다.
+> R2 재실측(`bench/evidence/r2-vendor-probe.json`, 77 URL)에서 신뢰도 1.0 datadome 은
+> 5건이고 그중 leboncoin.fr · nytimes.com 2건은 본문까지 취득된다. 어느 잣대로 재도
+> 미달이 아니다. `bench/battery.yaml` 의 `vendor_scope` 에 datadome 을 편입하고
+> 양성 2건(dd-001/002) · 음성 2건(dd-neg-001/002)을 추가했다.
+> 나머지 4종은 재실측에서도 미달이다 — aws_waf 1 · perimeterx 0 · kasada 0 · f5 0.
+
 ### 4-1. 출하 배터리 실행 (`bench --tier 1`)
 
 배터리를 만들어 두고도 **한 번도 돌려 보지 못한 상태**였다. `engine._battery_path` 가

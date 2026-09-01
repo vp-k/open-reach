@@ -101,4 +101,8 @@ def test_shipped_battery_declares_scope_and_meets_it():
     bench.check_governance(battery, shipped=True)
     scope, violations = bench.vendor_scope(battery)
     assert violations == []
-    assert set(scope) == {"cloudflare", "akamai", "fastly", "imperva"}
+    # 리터럴로 고정하는 이유: G-8 이 금지하는 것은 "사유 없는 **축소**"인데, 축소는
+    # 배터리에서 항목 두 개를 지우기만 해도 조용히 일어나고 거버넌스는 그대로 통과한다
+    # (범위와 항목이 함께 줄기 때문이다). 여기서만 실패한다.
+    # datadome 은 R2 재실측(bench/evidence/r2-vendor-probe.json, 신뢰도 1.0 x5)으로 편입.
+    assert set(scope) == {"cloudflare", "akamai", "fastly", "imperva", "datadome"}

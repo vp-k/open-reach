@@ -1,0 +1,11 @@
+# 픽스처 API 인덱스 — us-b-009 전용. 1-hop 구제 하나만 담는다.
+#
+# host 는 픽스처 오리진이다 (SPEC 「SSRF 예외」로 명문화된 단 하나의 루프백 예외).
+entries:
+  - host: 127.0.0.1
+    url_pattern: "^/api/origin/(?P<name>[a-z]+)"
+    source: "https://example.invalid/fixture-api-docs"
+    verified_at: "2026-09-01"
+    response_kind: html
+    endpoints:
+      - "__FIXTURE_BASE__/api/step2/{name}"

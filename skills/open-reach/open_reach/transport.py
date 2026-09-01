@@ -55,6 +55,53 @@ class PolicyBlocked(Exception):
         self.detail = detail
 
 
+# ── 항목당 실제 요청 총량 (리뷰 라운드 2, H2) ──────────────────────────────
+# AC-B-010-14 는 "엔드포인트 + 체인" 요청을 3회로 센다. 그런데 요청 하나는 리디렉션으로
+# 여러 번 회선에 나가고 robots 조회도 실제 요청이다 — 계약이 세는 단위와 실제 요청 수가
+# 다르다. 이 미터는 **실제 dispatch 마다** 차감해 그 간극을 닫는다.
+# 무장하지 않으면(=state None) 아무것도 하지 않는다 — 일반 fetch 경로는 영향받지 않는다.
+_dispatch_meter = threading.local()
+
+
+@contextmanager
+def dispatch_budget(limit: int) -> Iterator[dict]:
+    """이 블록 안에서 나가는 모든 HTTP 요청을 `limit` 회로 제한한다."""
+    previous = getattr(_dispatch_meter, "state", None)
+    state = {"limit": int(limit), "used": 0}
+    _dispatch_meter.state = state
+    try:
+        yield state
+    finally:
+        _dispatch_meter.state = previous
+
+
+class BudgetExceeded(Exception):
+    """이 블록에 허용된 실제 요청 수를 넘겼다.
+
+    `PolicyBlocked` 가 **아니다.** 정책 차단은 상대가 내린 판정이고(robots·SSRF),
+    이건 우리가 우리에게 건 상한이다. 둘을 한 예외로 합치면 두 가지가 동시에
+    망가진다 — ① `attempts[].rule` 은 `PolicyVerdict.rule` 도메인만 실을 수 있으므로
+    (SPEC.md:229·344) 도메인 밖 값은 `None` 으로 떨어져 "route=policy 면 rule non-null"
+    계약을 깨고, ② robots 조회는 `PolicyBlocked` 를 fail-open 으로 삼키므로
+    (policy.robots_verdict) 예산 초과가 "robots 조회 실패 — 기본 허용"으로 세탁된다.
+    별도 타입이면 둘 다 그대로 위로 올라간다 (리뷰 라운드 3).
+    """
+
+    def __init__(self, limit: int, url: str) -> None:
+        super().__init__(f"실제 요청 {limit} 회를 넘겼다 (리디렉션·robots 포함): {url}")
+        self.limit = limit
+        self.url = url
+
+
+def _count_dispatch(url: str) -> None:
+    state = getattr(_dispatch_meter, "state", None)
+    if state is None:
+        return
+    state["used"] += 1
+    if state["used"] > state["limit"]:
+        raise BudgetExceeded(state["limit"], url)
+
+
 @dataclass
 class Response:
     status: int
@@ -394,14 +441,24 @@ def request(
     impersonate: str | None = None,
     referer: str | None = None,
     hop_check: Callable[[str], None] | None = None,
+    user_agent: str | None = None,
+    accept: str | None = None,
 ) -> Response:
     """단건 GET. 리디렉션은 직접 따라가며 매 홉마다 `hop_check` 를 호출한다.
 
     `hop_check` 는 차단 시 PolicyBlocked 를 던져야 한다.
     `elapsed_ms` 에는 의도적 페이싱 대기를 넣지 않는다 — 지연 지표가 부풀려지면
     측정으로 쓸 수 없다.
+
+    `user_agent`·`accept` 는 **기계용으로 열어 둔 문을 두드리는 경로**(Phase 0 공개 API)
+    를 위한 통로다. 공개 API 에는 브라우저인 척할 이유가 없고, 그렇게 하는 것이
+    NG-13 위반이다 — 정직한 UA 로 자신을 밝힌다 (AC-B-010-4).
     """
     headers = dict(DEFAULT_HEADERS)
+    if user_agent is not None:
+        headers["User-Agent"] = user_agent
+    if accept is not None:
+        headers["Accept"] = accept
     if impersonate and impersonation_available():
         # 임퍼소네이션은 TLS/HTTP2 지문을 **그 브라우저의 것**으로 맞추는 일이다. 그런데
         # 여기서 우리 UA(Chrome 131 Windows)를 덮어쓰면 지문은 Safari 인데 UA 는 Chrome
@@ -415,7 +472,8 @@ def request(
         # 200 이 나왔으므로 원인은 UA 하나로 특정된다. stackoverflow 는 어느 조합에서도
         # 403 이라 이 수정과 무관하다 — 즉 "무조건 좋아지는 조작"이 아니라 우리가 만든
         # 불일치를 없애는 것이다.
-        del headers["User-Agent"]
+        if user_agent is None:
+            del headers["User-Agent"]
     if referer:
         headers["Referer"] = referer
 
@@ -424,6 +482,8 @@ def request(
     for hop in range(MAX_REDIRECTS + 1):
         parts = urlsplit(current)
         host = (parts.hostname or "").lower()
+        # 홉마다 센다 — 예산을 "우리가 부른 횟수"가 아니라 "회선에 나간 횟수"로 잡는다.
+        _count_dispatch(current)
         with host_gate(host):
             started = time.monotonic()
             try:

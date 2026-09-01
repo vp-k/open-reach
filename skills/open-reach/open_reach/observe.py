@@ -41,6 +41,14 @@ def profiles_path() -> Path:
     return repo_root() / "skills" / "open-reach" / "engine" / "profiles.yaml"
 
 
+def api_index_path() -> Path:
+    """Phase 0 공개 API 인덱스. `profiles_path()` 와 같은 규약을 따른다."""
+    raw = os.environ.get("OPENREACH_API_INDEX", "").strip()
+    if raw:
+        return Path(raw).expanduser().resolve()
+    return repo_root() / "skills" / "open-reach" / "engine" / "api_index.yaml"
+
+
 def observations_path() -> Path:
     return state_dir() / "observations.jsonl"
 

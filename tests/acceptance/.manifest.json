@@ -1,10 +1,10 @@
 {
-  "frozenAt": "2026-08-30T13:52:22Z",
-  "gitHead": "72207ea0a16adac4bc9a1eadf904be7f954f5c01",
+  "frozenAt": "2026-09-01T13:43:04Z",
+  "gitHead": "08889483169c0d48d0494b12ea89894d2f894fd4",
   "hashAlgo": "sha256sum",
   "files": {
     "tests/acceptance/_lib.sh": "6a1a608a6d9c72759abec3bd23179d653320096b7512523db42d2bb6a543964c",
-    "tests/acceptance/fixture_server.py": "151dfb1eb6d9c0ae63d6766ad847685cec0c5e9f7e46a2dade027d725253eb6d",
+    "tests/acceptance/fixture_server.py": "627f3f9d67deca22add785c2dae638ab5f3038860847306c42eadbffee7adb75",
     "tests/acceptance/run.sh": "5cfd61b90ddf8e736e5d356eb0d2c320b39f04c5cfbc530c1e7ac258ed395fa4",
     "tests/acceptance/us-b-001-public-fetch.sh": "9660cd9c8409f04dca8b3f4da57720cbba93c96a7117641e98ba12fa471a419e",
     "tests/acceptance/us-b-002-failure-classification.sh": "5cd7aad40268d9fe29c0bff8ff25ca195db4ac1cf01fc84da6dee4939434c819",
@@ -14,11 +14,12 @@
     "tests/acceptance/us-b-006-observation.sh": "86c35be40860a587d3e46bf463572d04a9360aac2d719bc4b748560dfc0e59fd",
     "tests/acceptance/us-b-007-refresh.sh": "b84039d83e102e6a1d5a57735815a14241ece8c14aba096413e61446adfa496e",
     "tests/acceptance/us-b-008-response-validation.sh": "6eb0ec35302d70a69e37d83b487bef8b30a5476942efd50a8d4c76d5663ee5f1",
-    "tests/acceptance/us-b-010-api-routing-negative.sh": "161238f0fdcc6628c1eeca014652d71007bb0f6f340b5b2835d9702800b0beec"
+    "tests/acceptance/us-b-009-vendor-accuracy.sh": "eca0ea2fa269635b29559bab113888859272e660de7f28a5951bc2f6f07da1bf",
+    "tests/acceptance/us-b-010-api-routing-negative.sh": "5fd53d55192d52897a6e166571b0fdfb05acd8cb629769794f33913bde176a41"
   },
   "specFile": {
     "path": "docs/SPEC.md",
-    "hash": "6aed2d2741bc4fe9bcc01f94b7bd7f8f7355ee579ac7787bc2301a74580eb375"
+    "hash": "d80666c5d0fe7189e576099c13337cfbb95f0a374589bce0a0b3c6691cf1904b"
   },
   "refreezeHistory": []
 }

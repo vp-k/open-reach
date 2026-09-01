@@ -16,6 +16,7 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from . import __version__, extract, fetcher, observe, yamlio
 from .models import WAF_VENDORS, FetchRequest, utc_now
@@ -71,6 +72,35 @@ def _assertion_count(entry: dict[str, Any]) -> int:
     if not isinstance(expected, dict):
         return 0
     return sum(1 for key in EXPECTED_ASSERTIONS if expected.get(key) is not None)
+
+
+def expected_vendor(entry: dict[str, Any]) -> str:
+    """배터리 항목의 **정답 벤더 라벨**. 없으면 `none`.
+
+    SPEC AC-B-009-4 본문은 `expected.waf_vendor` 라 적었고, 같은 SPEC 의 Data Model 과
+    거버넌스 G-4 는 최상위 `waf_expected` 를 정의·요구한다. 어느 한쪽만 읽으면 다른
+    표기로 적힌 배터리에서 전 항목이 조용히 `unmeasured` 가 되어 SC-8 이 통과도 실패도
+    못 한다. 그래서 **둘 다 읽고**, 둘이 어긋나면 거버넌스 위반으로 막는다
+    (`check_governance` G-4) — 두 자리에 서로 다른 정답을 적어 두고 유리한 쪽이
+    채점되게 하는 길을 없앤다.
+    """
+    expected = entry.get("expected")
+    nested = expected.get("waf_vendor") if isinstance(expected, dict) else None
+    if nested is not None:
+        return str(nested)
+    return str(entry.get("waf_expected") or "none")
+
+
+def _label_conflict(entry: dict[str, Any]) -> str | None:
+    """두 표기가 **함께 있으면서 다른 값** 이면 그 사실을 문장으로 돌려준다."""
+    expected = entry.get("expected")
+    nested = expected.get("waf_vendor") if isinstance(expected, dict) else None
+    top = entry.get("waf_expected")
+    if nested is None or top is None:
+        return None
+    if str(nested) == str(top):
+        return None
+    return f"{entry.get('id')}: expected.waf_vendor={nested!r} != waf_expected={top!r}"
 
 
 def vendor_scope(battery: dict[str, Any]) -> tuple[tuple[str, ...], list[str]]:
@@ -137,6 +167,11 @@ def check_governance(battery: dict[str, Any], *, shipped: bool) -> None:
             f"G-4: expected 의 4개 필드가 모두 null 인 항목 {empty_expected}"
         )
 
+    conflicts = [c for c in (_label_conflict(e) for e in entries) if c]
+    if conflicts:
+        # 한 항목에 정답이 두 개 적혀 있으면 채점 결과는 "어느 쪽을 읽었나"에 달린다.
+        violations.append(f"G-4: 벤더 정답 라벨 표기 충돌 — {conflicts}")
+
     if not any(e.get("negative_case") for e in tier1):
         violations.append("G-3: Tier-1 에 음성 케이스가 없다")
 
@@ -149,7 +184,7 @@ def check_governance(battery: dict[str, Any], *, shipped: bool) -> None:
 
         counts = {v: 0 for v in scope}
         for entry in tier1:
-            vendor = entry.get("waf_expected")
+            vendor = expected_vendor(entry)
             if vendor in counts:
                 counts[vendor] += 1
         thin = sorted(v for v, n in counts.items() if n < VENDOR_MIN_PER_TIER1)
@@ -194,16 +229,113 @@ def _expected_ok(entry: dict[str, Any], result) -> tuple[bool, str | None]:
     return True, None
 
 
+def same_site(a: str | None, b: str | None) -> bool:
+    """두 URL 이 **같은 호스트**인가. 대소문자만 정규화한다.
+
+    처음에는 `www.` 유무를 같다고 봤는데, WAF 설정 단위는 호스트다 — `shop.example` 은
+    WAF 가 없고 `www.shop.example` 만 Cloudflare 뒤에 있는 배치가 실제로 존재한다.
+    `www` 를 벗겨 내면 그 교차 리디렉션에서 얻은 판정이 다시 `correct` 로 계상된다
+    (리뷰 라운드 2, #6). 브랜드·등록도메인·`www` 여부는 귀속의 근거가 아니다.
+
+    순수 함수 — 네트워크 없이 검증한다.
+    """
+    def host(value: str | None) -> str | None:
+        if not value:
+            return None
+        return (urlsplit(value).hostname or "").lower() or None
+
+    left, right = host(a), host(b)
+    return left is not None and left == right
+
+
 def _fetch_entry(entry: dict[str, Any], *, timeout: float, max_attempts: int):
-    return fetcher.fetch(
+    """(결과, 감지 벤더, 귀속 여부).
+
+    벤더는 응답을 한 번도 못 받았으면 None(측정 불가)이다. 귀속 여부는 그 판정을 만든
+    응답이 **배터리 항목의 사이트에서 왔는가**다 — 리디렉션이 다른 사이트로 넘어가면
+    그쪽 WAF 를 이 항목의 정답 라벨로 채점하게 되고, SC-8 은 겨냥하지 않은 사이트의
+    감지 결과를 이 사이트의 실력으로 계상한다.
+    """
+    trace: dict[str, Any] = {}
+    result = fetcher.fetch(
         FetchRequest(
             url=str(entry.get("url") or ""),
             intent="article",
             timeout_s=timeout,
             allow_browser=False,
             max_attempts=max_attempts,
-        )
+        ),
+        trace=trace,
     )
+    detected = trace.get("waf_vendor")
+    entry_url = str(entry.get("url") or "")
+    origin = trace.get("waf_origin")
+    # 판정이 없으면 귀속을 따질 것도 없다 (True 로 두어 `unmeasured` 를 가리지 않는다).
+    attributed = detected is None or same_site(str(origin or entry_url), entry_url)
+    return (
+        result,
+        (str(detected) if detected is not None else None),
+        attributed,
+        str(origin or ""),
+    )
+
+
+# 벤더 감지 정확도 판정 (AC-B-009-4 · SC-8). 순수 함수 — 네트워크 없이 검증된다.
+#
+# 정답 라벨은 `expected_vendor()` 가 두 표기(`expected.waf_vendor` / `waf_expected`)를
+# 모두 읽고, 둘이 어긋나면 G-4 위반으로 막는다. SPEC 문구를 고치지 않아도 어느 표기로
+# 적힌 배터리든 채점되고, 두 곳에 다른 정답을 적는 세탁은 거버넌스에서 걸린다.
+VENDOR_VERDICTS = ("correct", "false_positive", "false_negative", "unresolved", "unmeasured")
+
+
+def classify_vendor(expected: str, detected: str | None, *, attributed: bool = True) -> str:
+    if detected is None:
+        # 응답 자체가 없었다. 못 맞힌 것이 아니라 **재지 못한** 것이다 —
+        # 미탐으로 세면 네트워크 장애가 감지기 실력으로 둔갑한다.
+        return "unmeasured"
+    if not attributed:
+        # 판정은 있었지만 **다른 사이트의 응답**에서 나왔다. 이 항목의 정답 라벨로
+        # 채점할 근거가 없으므로 맞음으로도 틀림으로도 세지 않는다.
+        return "unresolved"
+    if detected == expected:
+        return "correct"
+    if detected in WAF_VENDORS:
+        # 다른 벤더로 **단정**했다. expected 가 `none` 인데 벤더를 지목한 경우도 여기다.
+        return "false_positive"
+    if expected in WAF_VENDORS:
+        # 있는 벤더를 `none`·`unknown_challenge` 로 흘렸다.
+        return "false_negative"
+    # expected=none 인데 unknown_challenge — 오지목도 미탐도 아니다. 감춰서 반올림하지 않고
+    # 따로 센다. SC-8 의 두 기준 어디에도 들어가지 않는다는 사실 자체가 정보다.
+    return "unresolved"
+
+
+def _tally_vendor(
+    entry: dict[str, Any],
+    detected: str | None,
+    counts: dict[str, int],
+    misses: list[str],
+    *,
+    attributed: bool = True,
+    origin: str = "",
+    unresolved_log: list[str] | None = None,
+) -> None:
+    expected = expected_vendor(entry)
+    verdict = classify_vendor(expected, detected, attributed=attributed)
+    counts[verdict] = counts.get(verdict, 0) + 1
+    if verdict in ("false_positive", "false_negative"):
+        # 건수만 남기면 어느 항목이 틀렸는지 알 수 없어 고칠 수가 없다.
+        misses.append(f"{entry.get('id')}: 기대 {expected} · 감지 {detected} ({verdict})")
+    if verdict == "unresolved" and unresolved_log is not None:
+        # 같은 이유로 `unresolved` 도 어느 항목인지 남긴다. 특히 귀속 실패는
+        # "다른 사이트로 넘어갔다"는 사실 자체가 조사할 거리다 — 건수만 보면
+        # 배터리 URL 이 언제부터 남의 사이트를 재고 있었는지 알 수 없다.
+        why = "귀속 실패" if not attributed else "판정 불가"
+        unresolved_log.append(
+            f"{entry.get('id')}: 기대 {expected} · 감지 {detected} ({why}"
+            + (f", 출처 {origin}" if origin and not attributed else "")
+            + ")"
+        )
 
 
 def run_battery(
@@ -227,6 +359,14 @@ def run_battery(
     by_route: dict[str, int] = {}
     by_reason: dict[str, int] = {}
     per_run_rates: list[float] = []
+    # AC-B-010-16 — Phase 0 을 켠 뒤에도 **R1 과 같은 정의의** 돌파율이 남아 있어야 한다.
+    # 같은 실행에서 같은 분모로 따로 센다. 나중에 재현하려고 Phase 0 을 끄고 한 번 더
+    # 도는 방식은 표본이 달라져(네트워크 상태·레이트리밋) 비교 대상이 되지 못한다.
+    per_run_rates_http: list[float] = []
+    rescued_by_phase0 = 0  # AC-B-010-17
+    vendor_accuracy: dict[str, int] = {k: 0 for k in VENDOR_VERDICTS}
+    vendor_misses: list[str] = []
+    vendor_unresolved: list[str] = []
     passed = 0
     failed = 0
     # 위반은 성격이 둘이고 처분도 달라야 한다.
@@ -250,8 +390,14 @@ def run_battery(
         if time.monotonic() >= deadline:
             measurement_violations.append(f"{entry.get('id')}: 벽시계 상한으로 판정 불가")
             continue
-        result = _fetch_entry(entry, timeout=timeout, max_attempts=max_attempts)
+        result, detected, attributed, origin = _fetch_entry(
+            entry, timeout=timeout, max_attempts=max_attempts
+        )
         negatives_checked += 1
+        _tally_vendor(
+            entry, detected, vendor_accuracy, vendor_misses,
+            attributed=attributed, origin=origin, unresolved_log=vendor_unresolved,
+        )
         want = str(entry.get("negative_case"))
         if result.ok:
             negative_violations.append(f"{entry.get('id')}: success 로 분류됨 (기대 {want})")
@@ -272,6 +418,7 @@ def run_battery(
             ).hexdigest())
 
         run_passed = 0
+        run_passed_http = 0
         run_attempted = 0
         for entry in order:
             if time.monotonic() >= deadline:
@@ -279,8 +426,18 @@ def run_battery(
                 break
             run_attempted += 1
             attempted += 1
-            result = _fetch_entry(entry, timeout=timeout, max_attempts=max_attempts)
-            vendor = str(entry.get("waf_expected") or "none")
+            result, detected, attributed, origin = _fetch_entry(
+                entry, timeout=timeout, max_attempts=max_attempts
+            )
+            if run_index == 0:
+                # 정확도는 **항목당 1회**다. 실행 수만큼 곱해 세면 runs 를 올리는 것만으로
+                # 오탐 건수가 늘어나 SC-8 의 "오탐 0건"이 측정 설정에 좌우된다.
+                _tally_vendor(
+                    entry, detected, vendor_accuracy, vendor_misses,
+                    attributed=attributed, origin=origin,
+                    unresolved_log=vendor_unresolved,
+                )
+            vendor = expected_vendor(entry)
             if result.ok:
                 ok, detail = _expected_ok(entry, result)
                 if ok:
@@ -289,6 +446,10 @@ def run_battery(
                     by_vendor[vendor] = by_vendor.get(vendor, 0) + 1
                     route = result.final_route or "unknown"
                     by_route[route] = by_route.get(route, 0) + 1
+                    if route == "phase0":
+                        rescued_by_phase0 += 1
+                    else:
+                        run_passed_http += 1
                     continue
                 failed += 1
                 by_reason["validation_failed"] = by_reason.get("validation_failed", 0) + 1
@@ -301,6 +462,7 @@ def run_battery(
 
         # 분모는 실제로 시도한 건수다 — 중단된 실행을 완주한 것처럼 계산하지 않는다
         per_run_rates.append(run_passed / run_attempted if run_attempted else 0.0)
+        per_run_rates_http.append(run_passed_http / run_attempted if run_attempted else 0.0)
         if truncated:
             break
 
@@ -332,6 +494,14 @@ def run_battery(
         "passed": passed,
         "failed": failed,
         "rate_median": round(statistics.median(per_run_rates), 3) if per_run_rates else 0.0,
+        "rate_http_only": (
+            round(statistics.median(per_run_rates_http), 3) if per_run_rates_http else 0.0
+        ),
+        "rescued_by_phase0": rescued_by_phase0,
+        "vendor_accuracy": vendor_accuracy,
+        "vendor_sc8": sc8_summary(vendor_accuracy),
+        "vendor_misses": vendor_misses,
+        "vendor_unresolved": vendor_unresolved,
         "by_vendor": by_vendor,
         "by_route": by_route,
         "by_reason": by_reason,
@@ -340,6 +510,49 @@ def run_battery(
         "measurement_violations": measurement_violations,
         "truncated": truncated,
     }
+
+
+# SC-8 판정용 요약. 순수 함수 — 게이트가 무엇을 분모로 삼았는지 출력에 남긴다.
+# 분모를 적지 않으면 "미탐 0건"이 "잘 맞혔다"인지 "한 건도 재지 못했다"인지 구분되지 않는다.
+SC8_MISS_RATE_MAX = 0.10
+
+
+def sc8_summary(counts: dict[str, int]) -> dict[str, Any]:
+    measurable = sum(
+        int(counts.get(k, 0))
+        for k in ("correct", "false_positive", "false_negative", "unresolved")
+    )
+    false_negative = int(counts.get("false_negative", 0))
+    return {
+        "measurable": measurable,
+        "unmeasured": int(counts.get("unmeasured", 0)),
+        "false_positive": int(counts.get("false_positive", 0)),
+        "false_negative": false_negative,
+        "miss_rate": round(false_negative / measurable, 4) if measurable else None,
+    }
+
+
+def sc8_violations(summary: dict[str, Any], *, attempted: bool) -> list[str]:
+    """SC-8 하드 실패 사유. 빈 목록이면 통과다.
+
+    `attempted` 는 "이번 실행에서 항목을 하나라도 돌렸는가"다. 돌렸는데 잴 수 있는
+    것이 하나도 없으면 통과가 아니라 **측정 불가**다 — 이 프로젝트에서 판정 불가는
+    통과가 아니고, 이 조건이 없으면 감지 경로를 통째로 망가뜨려도 오탐 0 으로 통과한다.
+    """
+    out: list[str] = []
+    if summary["false_positive"] > 0:
+        out.append(f"SC-8: 오탐 {summary['false_positive']}건 (허용 0건)")
+    if attempted and summary["measurable"] == 0:
+        out.append(
+            f"SC-8: 벤더 정확도를 한 건도 재지 못했다 (unmeasured={summary['unmeasured']})"
+        )
+    rate = summary["miss_rate"]
+    if rate is not None and rate > SC8_MISS_RATE_MAX:
+        out.append(
+            f"SC-8: 미탐율 {rate:.3f} > {SC8_MISS_RATE_MAX:.2f} "
+            f"({summary['false_negative']}/{summary['measurable']})"
+        )
+    return out
 
 
 def classify_regression(
@@ -368,6 +581,19 @@ def render(report: dict[str, Any]) -> str:
         "by_vendor: " + json.dumps(report["by_vendor"], ensure_ascii=False, sort_keys=True),
         "by_route: " + json.dumps(report["by_route"], ensure_ascii=False, sort_keys=True),
         "by_reason: " + json.dumps(report["by_reason"], ensure_ascii=False, sort_keys=True),
+        # AC-B-010-16·17 — 돌파율이 올랐을 때 그것이 전송 개선인지 API 구제인지
+        # 이 한 줄로 갈린다. rate 만 보면 둘이 구분되지 않는다.
+        f"rate_http_only={report.get('rate_http_only', 0.0):.3f} "
+        f"rescued_by_phase0={report.get('rescued_by_phase0', 0)}",
+        # AC-B-009-4 — SC-8 의 입력.
+        "vendor_accuracy: "
+        + json.dumps(report.get("vendor_accuracy", {}), ensure_ascii=False, sort_keys=True),
+        "vendor_sc8: "
+        + json.dumps(report.get("vendor_sc8", {}), ensure_ascii=False, sort_keys=True),
+        "vendor_misses: "
+        + json.dumps(report.get("vendor_misses", []), ensure_ascii=False),
+        "vendor_unresolved: "
+        + json.dumps(report.get("vendor_unresolved", []), ensure_ascii=False),
         f"regression={report.get('regression', 'incomparable')} "
         f"truncated={str(bool(report.get('truncated'))).lower()}",
         f"BENCH_RESULT: rate={report['rate_median']:.3f} total={report['total']} "
@@ -413,6 +639,12 @@ def record_run(report: dict[str, Any], *, battery_path: Path) -> None:
             "passed": report["passed"],
             "failed": report["failed"],
             "rate_median": report["rate_median"],
+            # R2 종료 조건이 "rate_http_only 가 R1 대비 회귀하지 않음"이므로 이력에
+            # 남지 않으면 그 조건은 다음 실행에서 판정할 수가 없다.
+            "rate_http_only": report["rate_http_only"],
+            "rescued_by_phase0": report["rescued_by_phase0"],
+            "vendor_accuracy": report["vendor_accuracy"],
+            "vendor_sc8": report.get("vendor_sc8", {}),
             # 중단 여부를 남겨야 다음 실행이 이 줄을 기준으로 삼을지 판단할 수 있다
             "truncated": bool(report.get("truncated")),
             "by_vendor": report["by_vendor"],
@@ -579,6 +811,8 @@ def compare(
         "reason": reason,
         "open_reach": {
             "rate": ours["rate_median"],
+            "rate_http_only": ours["rate_http_only"],
+            "rescued_by_phase0": ours["rescued_by_phase0"],
             "total": ours["total"],
             "passed": ours["passed"],
             "failed": ours["failed"],
@@ -593,6 +827,9 @@ def compare(
         "by_vendor": ours["by_vendor"],
         "by_route": ours["by_route"],
         "by_reason": ours["by_reason"],
+        "vendor_accuracy": ours["vendor_accuracy"],
+        "vendor_sc8": ours.get("vendor_sc8", {}),
+        "vendor_misses": ours["vendor_misses"],
         "evidence": _evidence(battery_path, original_cmd),
     }
     # 관문 위반이 있어도 파일은 남긴다 — 실패했다는 사실 자체가 증적이고,

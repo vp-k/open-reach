@@ -1,0 +1,42 @@
+# open-reach Phase 0 — 공개 API 인덱스 (US-B-010)
+#
+# 여기 있는 항목은 전부 **실측된 것**이다. "그 사이트에 API 가 있을 것 같다"는
+# 추측은 항목이 되지 않는다 (NG-10). 각 항목의 `source` 는 그 API 를 공개로
+# 문서화한 페이지이고, `verified_at` 은 우리가 직접 요청해 200 과 본문을 확인한
+# 날짜다. 증적은 bench/evidence/r2-payload-probe.json · r2-rescue-probe.json.
+#
+# 상한은 20 항목이다 (AC-B-010-15). 이 파일은 NG-9(지문표에 호스트 리터럴 금지)의
+# 예외다 — 호스트를 적는 것이 존재 이유이기 때문이다. 대신 상한과 출처 의무가
+# 그 자리를 대신한다.
+#
+# ── 여기에 없는 것과 그 이유 ────────────────────────────────────────────
+# crates.io 2-hop (`/api/v1/crates/{name}` → `max_stable_version` →
+#   `/api/v1/crates/{name}/{version}/readme`) 은 실측으로 확인됐다
+#   (200 / text/html / 3511B, r2-payload-probe.json "crates.io/readme").
+#   막던 것은 두 가지였고, 하나만 풀렸다.
+#   ① 개정 전 AC-B-010-11 이 점을 세그먼트 이탈 **문자**로 못박아 `1.0.229` 같은
+#      정상 버전 값이 정의상 불가능했다 → 사용자 승인으로 개정(점은 문자로 허용,
+#      `.`·`..` **세그먼트**만 거부). 이 벽은 없어졌다.
+#   ② 그러나 2-hop 의 목적지가 **다른 오리진으로 리디렉트한다.** 2026-09-01 실측:
+#        /api/v1/crates/serde        -> 200, max_stable_version="1.0.229"  (1단 성공)
+#        /api/v1/crates/serde/1.0.229/readme
+#          -> https://static.crates.io/readmes/serde/serde-1.0.229.html   (오리진 이탈)
+#      AC-B-010-12/NG-11 이 이를 막는다 — 응답이 우리를 다른 호스트로 보낼 수 없다.
+#      증거: bench/evidence/r2-crates-2hop-live-2026-09-01.json
+#      (r2-payload-probe.json 의 "200 / text/html / 3511B" 는 우리 오리진 가드 없이
+#       리디렉션을 따라간 값이라 이 벽을 보여 주지 못했다.)
+#   static.crates.io URL 을 인덱스 리터럴로 조립하면 AC-B-010-12 는 만족하지만,
+#   그 URL 형식은 공식 문서에 없어 AC-B-010-15 의 `source` 의무를 채울 수 없다.
+#   근거 없는 항목은 넣지 않는다 (NG-10). 이 항목은 여전히 여기에 없다.
+
+entries:
+  # 실측: 원문 HTML 은 403 (r2-rescue-probe.json), 공개 API 는 200 에
+  # `.items[0].body` 1340자. 즉 이 항목은 "구제"가 실제로 성립하는 유일한 실측 사례다.
+  - host: stackoverflow.com
+    url_pattern: "^/questions/(?P<id>[0-9]+)"
+    source: "https://api.stackexchange.com/docs/questions-by-ids"
+    verified_at: "2026-08-30"
+    response_kind: json
+    content_pointer: "items.0.body"
+    endpoints:
+      - "https://api.stackexchange.com/2.3/questions/{id}?site=stackoverflow&filter=withbody"

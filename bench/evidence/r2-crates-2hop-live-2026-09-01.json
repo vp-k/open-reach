@@ -1,0 +1,65 @@
+{
+  "url": "https://crates.io/crates/serde",
+  "ok": false,
+  "content_markdown": null,
+  "metadata": null,
+  "failure_reason": "policy_blocked",
+  "attempts": [
+    {
+      "route": "http",
+      "impersonate": "chrome",
+      "referer": null,
+      "url_variant": "original",
+      "status": 200,
+      "elapsed_ms": 657,
+      "outcome": "error",
+      "rule": null,
+      "endpoint": null
+    },
+    {
+      "route": "http",
+      "impersonate": "safari",
+      "referer": null,
+      "url_variant": "original",
+      "status": 200,
+      "elapsed_ms": 652,
+      "outcome": "error",
+      "rule": null,
+      "endpoint": null
+    },
+    {
+      "route": "http",
+      "impersonate": "firefox",
+      "referer": null,
+      "url_variant": "original",
+      "status": 200,
+      "elapsed_ms": 321,
+      "outcome": "error",
+      "rule": null,
+      "endpoint": null
+    },
+    {
+      "route": "phase0",
+      "impersonate": null,
+      "referer": null,
+      "url_variant": "json",
+      "status": 200,
+      "elapsed_ms": 1516,
+      "outcome": "success",
+      "rule": null,
+      "endpoint": "https://crates.io/api/v1/crates/serde"
+    },
+    {
+      "route": "policy",
+      "impersonate": null,
+      "referer": null,
+      "url_variant": "original",
+      "status": null,
+      "elapsed_ms": 0,
+      "outcome": "blocked",
+      "rule": "redirect_hop",
+      "endpoint": null
+    }
+  ],
+  "final_route": "policy"
+}

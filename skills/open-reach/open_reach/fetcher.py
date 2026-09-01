@@ -11,11 +11,20 @@ import time
 from email.utils import parsedate_to_datetime
 from typing import Any
 
-from . import detect, extract, observe, policy, profiles as profiles_mod, transport
-from .models import Attempt, FetchRequest, FetchResult, utc_now
+from . import api_index, detect, extract, observe, policy, profiles as profiles_mod, transport
+from .models import POLICY_RULES, WAF_VENDORS, Attempt, FetchRequest, FetchResult, WafVerdict, utc_now
 
 # 계획 단계를 더 밟아도 결과가 달라지지 않는 판정들
 _TERMINAL_REASONS = frozenset({"auth_wall", "paywall", "rate_limited", "not_found"})
+
+# Phase 0 을 **쓰면 안 되는** 판정들.
+#   auth_wall·paywall — HTML 이 로그인·구독을 요구해서 못 준 본문을 API 로 대신
+#     받아 오는 것은 그 벽을 우회하는 일이다 (NG-1). 감지하고 보고할 뿐 넘지 않는다.
+#   rate_limited      — 상대가 속도를 줄이라고 말한 상태다. 같은 호스트의 다른 문을
+#     대신 두드리는 것은 그 요청을 무시하는 것이다 (NG-6).
+#   policy_blocked    — 이미 위에서 반환된다. 도달하지 않지만 의도를 남긴다.
+# 나머지(waf_challenge·not_found·server_error·network 등)에서만 시도한다 (AC-B-010-1).
+_PHASE0_NO_GO = frozenset({"auth_wall", "paywall", "rate_limited", "policy_blocked"})
 
 # 429 재시도 정책 (SPEC CLI 계약): Retry-After 우선, 없으면 지수 백오프
 _BACKOFF_BASE_S = 1.0
@@ -188,7 +197,76 @@ def _attempt_step(
         time.sleep(delay)
 
 
-def fetch(request: FetchRequest) -> FetchResult:
+def _try_phase0(request: FetchRequest, attempts: list[Attempt]) -> api_index.Phase0Outcome | None:
+    """인덱스에 항목이 있을 때만 Phase 0 을 돌린다. 없으면 None — 추측하지 않는다 (AC-B-010-2)."""
+    entries = api_index.load_cached(request.api_index)
+    if not entries:
+        return None
+    found = api_index.entry_for(entries, request.url)
+    if found is None:
+        return None
+    entry, captures = found
+
+    def on_attempt(endpoint: str, kind: str, status: int, elapsed_ms: int, outcome: str) -> None:
+        attempts.append(
+            Attempt(
+                "phase0",
+                None,
+                None,
+                "json" if kind == "json" else "original",
+                status,
+                elapsed_ms,
+                outcome,
+                endpoint=endpoint,
+            )
+        )
+
+    outcome = api_index.run(
+        entry,
+        captures,
+        intent=request.intent,
+        timeout=request.timeout_s,
+        on_attempt=on_attempt,
+    )
+    for note in outcome.notes:
+        sys.stderr.write(f"[open-reach] phase0: {note}\n")
+    return outcome
+
+
+def _vendor_rank(vendor: str) -> int:
+    """확신도를 비교하기 전에 **종류**를 먼저 본다.
+
+    `unknown_challenge` 는 "막혔는데 누구인지 모른다"이고 `none` 은 "막히지 않았다"다.
+    confidence 만으로 고르면 none(1.0) 이 unknown_challenge(0.4) 를 이겨서,
+    리다이렉트 끝에 한 번이라도 평범한 응답을 받으면 차단 사실이 사라진다.
+    """
+    if vendor in WAF_VENDORS:
+        return 2
+    return 1 if vendor == "unknown_challenge" else 0
+
+
+def _note_vendor(trace: dict[str, Any] | None, waf: WafVerdict, origin: str) -> None:
+    """시도들 중 가장 강한 판정 하나를 trace 에 남긴다 (AC-B-009-4 의 대조 입력).
+
+    판정과 함께 **그 판정을 만든 응답의 URL** 도 남긴다. 리디렉션이 다른 사이트로
+    넘어가면 거기서 만난 WAF 가 원래 URL 의 판정으로 기록되고, 배터리는 그것을
+    이 항목의 정답 라벨과 대조한다 — 사이트 A 의 감지 결과가 사이트 B 의 실력으로
+    계상되는 자리다. 출처를 남기면 bench 가 귀속을 확인하고 걸러 낼 수 있다.
+    """
+    if trace is None:
+        return
+    prior = trace.get("waf_vendor")
+    if prior is not None:
+        current = (_vendor_rank(str(prior)), float(trace.get("waf_confidence") or 0.0))
+        if current >= (_vendor_rank(waf.vendor), waf.confidence):
+            return
+    trace["waf_vendor"] = waf.vendor
+    trace["waf_confidence"] = waf.confidence
+    trace["waf_signals"] = list(waf.signals)
+    trace["waf_origin"] = origin
+
+
+def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> FetchResult:
     transport.warn_if_degraded()
     url = request.url
     attempts: list[Attempt] = []
@@ -265,8 +343,13 @@ def fetch(request: FetchRequest) -> FetchResult:
 
         response, html, markdown, title, content_verdict = outcome
 
+        # 벤더 판정은 성공·차단을 가리지 않고 **모든 응답에서** 한다. 차단된 응답이야말로
+        # 벤더가 가장 잘 드러나는 자리인데, 성공 분기에서만 재면 감지 정확도(SC-8)의
+        # 표본이 "이미 뚫린 것들"로만 채워져 미탐이 구조적으로 0 이 된다.
+        waf = detect.waf_verdict(response.status, response.headers, html, table)
+        _note_vendor(trace, waf, response.final_url or url)
+
         if content_verdict.reason is None:
-            waf = detect.waf_verdict(response.status, response.headers, html, table)
             _record_success_safely(
                 url,
                 waf_vendor=waf.vendor,
@@ -293,5 +376,40 @@ def fetch(request: FetchRequest) -> FetchResult:
         if content_verdict.terminal or last_reason in _TERMINAL_REASONS:
             # 경계·CAPTCHA·레이트리밋은 다음 지문으로 바꿔 다시 두드릴 대상이 아니다
             break
+
+    # ── 4. Phase 0 공개 API 라우팅 (AC-B-010-1: HTTP 가 본문을 못 얻은 뒤에만) ──
+    if last_reason not in _PHASE0_NO_GO:
+        phase0 = _try_phase0(request, attempts)
+        if phase0 is not None:
+            if phase0.ok:
+                metadata = {
+                    "title": phase0.title,
+                    "final_url": phase0.final_url,
+                    "content_type": phase0.content_type,
+                    "fetched_at": utc_now(),
+                }
+                if phase0.content_license:
+                    # AC-B-010-18 — 원본이 명시한 라이선스만 싣는다. 없으면 없는 대로 둔다.
+                    metadata["content_license"] = phase0.content_license
+                # 관측에는 남기지 않는다. 관측은 "다음에 어떤 지문부터 시도할지"를
+                # 위한 것이고 Phase 0 에는 지문이 없다. 재현할 수 없는 경로를
+                # 직전 성공으로 기록하면 AC-B-006-4(직전 성공 경로가 attempts[0])가
+                # 다음 실행에서 스스로 거짓이 된다.
+                return FetchResult(
+                    url=url,
+                    ok=True,
+                    content_markdown=phase0.markdown,
+                    metadata=metadata,
+                    failure_reason=None,
+                    attempts=attempts,
+                    final_route="phase0",
+                )
+            if phase0.reason == "policy_blocked":
+                # AC-B-010-13 — 조립된 URL 이 SSRF·robots 에 걸렸다
+                rule = phase0.policy_rule
+                attempts.append(_policy_attempt(rule=rule if rule in POLICY_RULES else None))
+                return _failure(url, "policy_blocked", attempts)
+            if phase0.reason is not None:
+                last_reason = phase0.reason
 
     return _failure(url, last_reason, attempts)

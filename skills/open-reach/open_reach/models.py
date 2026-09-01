@@ -103,6 +103,9 @@ class FetchRequest:
     # 임퍼소네이션이 섞여 들어가 같은 표본이 다른 수치를 낸다 — 개선 전 기준선이
     # 개선 후 수치와 뒤섞이면 중단 판정(ADR-005)의 근거가 무너진다.
     no_impersonate: bool = False
+    # Phase 0 공개 API 인덱스의 대체 경로. 값은 **경로**이고 로드된 항목이 아니다 —
+    # FetchRequest 는 frozen dataclass 라 가변 컨테이너를 담으면 불변식이 거짓말이 된다.
+    api_index: str | None = None
 
 
 @dataclass(frozen=True)
@@ -119,6 +122,9 @@ class Attempt:
     # 식별은 차단 판정이 기록되는 자리인 attempts[0] 에서 이뤄진다.
     # 기본값 None 이라 기존 호출부는 그대로 둔다 — 정책 경로만 값을 채운다.
     rule: str | None = None
+    # Phase 0 이 실제로 두드린 엔드포인트. AC-B-010-7 이 "어떤 엔드포인트를 썼는지
+    # 보인다"를 요구하는데 `url_variant` 는 닫힌 집합이라 URL 을 담을 수 없다.
+    endpoint: str | None = None
 
     def __post_init__(self) -> None:
         if self.route not in ROUTES:
@@ -136,6 +142,8 @@ class Attempt:
                 raise InvariantError(f"rule is only for route=policy: {self.route}")
             if self.rule not in POLICY_RULES:
                 raise InvariantError(f"unknown policy rule: {self.rule}")
+        if self.endpoint is not None and self.route != "phase0":
+            raise InvariantError(f"endpoint is only for route=phase0: {self.route}")
 
 
 @dataclass(frozen=True)

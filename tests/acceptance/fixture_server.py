@@ -105,6 +105,8 @@ API_STEP1 = {
     "mismatch": {"crate": {"max_stable_version": "latest-and-greatest"}},
     # AC-B-010-11: 경로 세그먼트를 벗어나는 값 — 패턴과 별개로 이중 거부
     "slashy": {"crate": {"max_stable_version": "1.0.229/../../norobots/doc"}},
+    # AC-B-010-11: 상대 경로 세그먼트 자체 — 점을 문자로 허용해도 이것은 막아야 한다
+    "dotdot": {"crate": {"max_stable_version": ".."}},
     # AC-B-010-13: 조립 결과가 robots Disallow 경로가 되는 값
     "norobots": {"crate": {"max_stable_version": "doc"}},
 }

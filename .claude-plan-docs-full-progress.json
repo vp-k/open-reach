@@ -271,6 +271,27 @@
               "acceptance": "total=9 passed=8 failed=1 — 의도된 RED (R2 미구현)",
               "regression": "기존 8종 전부 PASS"
             }
+          },
+          {
+            "at": "2026-09-01T13:43:04Z",
+            "approvedByUser": true,
+            "trigger": "사용자 승인 — 리뷰 라운드 2 HIGH-2(SPEC:274 endpoints 병렬/순차 모순) + 라운드 6 HIGH-1(AC-B-010-11 점 금지가 2-hop 을 정의상 불가능하게 만듦)",
+            "changes": [
+              "SPEC:274 endpoints 행: '병렬' 서술을 '순차로 시도하고 첫 유효 본문에서 멈춘다' 로 교체 — 구현(_run_endpoints)·요청 예산(REQUEST_BUDGET=3)과 정합",
+              "SPEC:190 AC-B-010-11: 점을 세그먼트 이탈 **문자** 목록에서 제외하고, 값 자체가 `.` 또는 `..` 인 경우를 거부 대상으로 명시"
+            ],
+            "note": "두 개정의 성격이 다르다. :274 는 **문서가 코드를 잘못 적은 것**이고(라운드 2부터 5라운드 동안 open 이었다), :190 은 **계약이 스스로의 목표를 막고 있던 것**이다 — R2 계약이 2-hop 을 허용해 놓고 AC-B-010-11 이 점을 문자 단위로 금지해 `1.0.229` 같은 버전 세그먼트를 정의상 불가능하게 만들었다. 완화가 경로 탈출을 열어 주지 않도록 `.`·`..` **세그먼트 자체** 거부를 같은 AC 에 함께 넣었고, 동결 인수 테스트에 음성 케이스(step1-dotdot.yaml)를 추가해 그 완화의 경계를 못 박았다. 개정의 원래 동기였던 crates.io 항목은 **이 개정으로도 출하되지 않는다** — 아래 knownGap 참조.",
+            "refrozen": true,
+            "specHashBefore": "6aed2d2741bc4fe9bcc01f94b7bd7f8f7355ee579ac7787bc2301a74580eb375",
+            "specHashAfter": "d80666c5d0fe7189e576099c13337cfbb95f0a374589bce0a0b3c6691cf1904b",
+            "codeChanges": [
+              "api_index.py:75 SEGMENT_FORBIDDEN 에서 '.' 제거 + SEGMENT_DOT_ONLY=('.','..') 신설, substitute() 에서 문자 검사 후 세그먼트 검사",
+              "tests/acceptance/fixture_server.py: API_STEP1 에 dotdot 변종({'crate':{'max_stable_version':'..'}}) 추가",
+              "tests/acceptance/us-b-010: '..' 세그먼트 음성 케이스 추가, ok2hop 체인을 점 포함 버전(value_pattern ^[0-9]+\\.[0-9]+\\.[0-9]+)으로 교체해 개정의 양성 경로도 동결",
+              "tests/unit/test_api_routing_guards.py: 'a.b' 를 이탈 문자 목록에서 제거, 상대 세그먼트 거부 2종·점 버전 허용 1종·상수 고정 1종 추가 (88 passed)"
+            ],
+            "verification": "재동결 PASS (13 files + docs/SPEC.md, specHash d80666c5…). 단위 88 passed. 동결 인수 ACCEPTANCE_RESULT: total=10 passed=10 failed=0. 변이 검증 2종: SEGMENT_FORBIDDEN 에 '.' 재삽입 → dotted/pinned 2종 red, SEGMENT_DOT_ONLY 검사 무력화 → relative_path 2종 red.",
+            "knownGap": "이 개정은 crates.io 를 **출하 가능하게 만들지 못했다**. 실측(2026-09-01, bench/evidence/r2-crates-2hop-live-2026-09-01.json): 1단 /api/v1/crates/serde 는 200 + max_stable_version='1.0.229' 로 성공하지만, 2단 /api/v1/crates/serde/1.0.229/readme 가 https://static.crates.io/readmes/serde/serde-1.0.229.html 로 **오리진을 벗어나 리디렉트**해 AC-B-010-12/NG-11 이 차단한다(policy_blocked/redirect_hop). r2-payload-probe.json 의 '200 / text/html / 3511B' 는 우리 오리진 가드 없이 리디렉션을 따라간 값이라 이 벽을 보여 주지 못했다. static.crates.io URL 을 인덱스 리터럴로 조립하면 AC-B-010-12 는 만족하지만 그 URL 형식이 공식 문서에 없어 AC-B-010-15 의 source 의무를 채울 수 없다 — 근거 없는 항목은 넣지 않는다(NG-10). 따라서 항목은 engine/api_index.yaml 에서 제거하고 '여기에 없는 것과 그 이유' 주석에 실측 근거와 함께 남겼다. 오리진 가드 완화는 윤리 경계라 선택지에서 제외했다."
           }
         ]
       }
@@ -1179,5 +1200,492 @@
         }
       ]
     }
+  },
+  "findingHistory": [
+    {
+      "id": "R2-R1-C1",
+      "round": 1,
+      "severity": "CRITICAL",
+      "title": "hop 가드가 robots를 재검사하지 않음 (AC-B-010-13)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-C1B",
+      "round": 1,
+      "severity": "CRITICAL",
+      "title": "API 체인 리디렉션이 오리진을 벗어날 수 있음 (AC-B-010-12/NG-11)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-C2",
+      "round": 1,
+      "severity": "CRITICAL",
+      "title": "AC-B-010-11 금지 문자에 역슬래시 누락",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-C3",
+      "round": 1,
+      "severity": "CRITICAL",
+      "title": "문서가 endpoints를 병렬이라 기술 — 코드는 순차 (NG-10)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-H1",
+      "round": 1,
+      "severity": "HIGH",
+      "title": "bench가 API 인덱스를 선검증하지 않아 요청 후 실패",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-H2",
+      "round": 1,
+      "severity": "HIGH",
+      "title": "요청 예산이 robots/리디렉션을 세지 않음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-H3",
+      "round": 1,
+      "severity": "HIGH",
+      "title": "SC-8을 출력만 하고 게이트로 쓰지 않음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-H4",
+      "round": 1,
+      "severity": "HIGH",
+      "title": "리디렉션 뒤 WAF 판정이 원 URL 실력으로 계상됨",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-M1",
+      "round": 1,
+      "severity": "MEDIUM",
+      "title": "expected.waf_vendor와 waf_expected 표기 불일치",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R1-M2",
+      "round": 1,
+      "severity": "MEDIUM",
+      "title": "us-b-009가 false_positive==0만 검사 (게이트 삭제해도 초록)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R2-H1",
+      "round": 2,
+      "severity": "HIGH",
+      "title": "same-origin 차단이 외부 robots 요청 뒤에 실행됨",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R2-M1",
+      "round": 2,
+      "severity": "MEDIUM",
+      "title": "hop_guard robots 검사 제거 변이를 잡는 테스트 없음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R2-M2",
+      "round": 2,
+      "severity": "MEDIUM",
+      "title": "역슬래시 금지 변이를 잡는 테스트 없음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R2-H2",
+      "round": 2,
+      "severity": "HIGH",
+      "title": "동결 SPEC:274가 endpoints를 병렬로 규정 — 구현과 충돌",
+      "status": "fixed",
+      "source": "codex",
+      "resolution": "사용자 승인 후 SPEC:274 를 순차 첫 성공으로 개정하고 재동결(specHash d80666c5…). 5라운드 동안 open 이었던 이유는 SPEC 이 해시 동결되어 승인 없이 고칠 수 없었기 때문이다.",
+      "closedAtRound": 6
+    },
+    {
+      "id": "R2-R2-H3",
+      "round": 2,
+      "severity": "HIGH",
+      "title": "예산이 실제 요청을 3회로 제한하지 않음 (3x6=18 증폭)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R2-H4",
+      "round": 2,
+      "severity": "HIGH",
+      "title": "same_site의 www 동치가 교차 호스트 판정을 correct로 되돌림",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R3-H1",
+      "round": 3,
+      "severity": "HIGH",
+      "title": "DISPATCH_BUDGET 산식의 전제(오리진 1·홈 1)를 코드가 강제하지 않음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R3-M1",
+      "round": 3,
+      "severity": "MEDIUM",
+      "title": "run()의 미터 배선을 지워도 초록 (테스트가 직접 CM을 염)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R3-M2",
+      "round": 3,
+      "severity": "MEDIUM",
+      "title": "request_budget이 POLICY_RULES 밖 값 — attempts[].rule=None (SPEC:229)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R4-H1",
+      "round": 4,
+      "severity": "HIGH",
+      "title": "robots 홉 상한 초과를 조회 실패로 삼켜 실제 Disallow 우회 (라운드3이 만든 결함)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R4-H2",
+      "round": 4,
+      "severity": "HIGH",
+      "title": "PHASE0_MAX_REDIRECTS=1 이 정상 2홉 정규화 API 를 차단 (라운드3이 만든 결함)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R4-M1",
+      "round": 4,
+      "severity": "MEDIUM",
+      "title": "예산 소진 뒤 _guard 가 먼저 돌아 '오리진 수 <= 요청 수' 전제가 거짓",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R5-H1",
+      "round": 5,
+      "severity": "HIGH",
+      "title": "robots 사슬 회귀 테스트가 2홉뿐 — 더 느슨한 상한 재도입 변이를 놓침",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R5-H2",
+      "round": 5,
+      "severity": "HIGH",
+      "title": "홉 테스트가 상수를 반복 횟수로 써서 PHASE0_MAX_REDIRECTS 회귀를 못 잡음",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R5-M1",
+      "round": 5,
+      "severity": "MEDIUM",
+      "title": "r2-contract §11-2 의 http→https 예시가 같은 절의 서술과 모순 (NG-10)",
+      "status": "fixed",
+      "source": "codex"
+    },
+    {
+      "id": "R2-R6-H1",
+      "round": 6,
+      "severity": "HIGH",
+      "status": "fixed",
+      "title": "SPEC:274 재동결 미완 — 개정안이 문서에만 있고 manifest 해시가 갱신되지 않음",
+      "file": "docs/SPEC.md:274",
+      "closedAtRound": 6,
+      "resolution": "acceptance-freeze --approved-by-user 실행, 13 files + SPEC 재동결 PASS."
+    },
+    {
+      "id": "R2-R6-H2",
+      "round": 6,
+      "severity": "HIGH",
+      "status": "fixed",
+      "title": "AC-B-010-11 개정과 단위 테스트 불일치 — parametrize 에 'a.b' 가 남아 점을 이탈 문자로 계속 단언",
+      "file": "tests/unit/test_api_routing_guards.py:148",
+      "closedAtRound": 6,
+      "resolution": "'a.b' 제거 + '.'/'..' 세그먼트 거부 2종, 점 버전 허용 1종, SEGMENT_* 상수 고정 1종 추가. 변이 2종으로 red 확인. (코드 절반은 codex 가 읽은 시점 이후 이미 반영돼 있었다 — 리뷰가 편집 중 스냅샷을 봤다.)"
+    },
+    {
+      "id": "R2-R6-N1",
+      "round": 6,
+      "severity": "HIGH",
+      "status": "fixed",
+      "title": "출하 인덱스의 crates.io 2-hop 항목이 실물에서 동작하지 않음 (오리진 이탈 리디렉트)",
+      "file": "skills/open-reach/engine/api_index.yaml",
+      "closedAtRound": 6,
+      "source": "self (실물 검증)",
+      "resolution": "항목 제거. 실측 근거를 bench/evidence/r2-crates-2hop-live-2026-09-01.json 로 남기고 '여기에 없는 것과 그 이유' 주석에 두 벽(①점 규칙-해소 ②오리진 이탈-미해소)을 분리 기록. AC-B-010-12 완화는 윤리 경계라 선택지 밖."
+    },
+    {
+      "id": "R2-R7-H1",
+      "round": 7,
+      "severity": "HIGH",
+      "status": "fixed",
+      "title": "AC-B-010-11 점 완화가 서버 정규화 우회를 열었다 — `..;a=b`(Tomcat 경로 파라미터), `.. `(IIS 후행 공백)",
+      "file": "skills/open-reach/open_reach/api_index.py:75",
+      "closedAtRound": 7,
+      "resolution": "SEGMENT_FORBIDDEN 에 ';' 추가 + 공백류를 any(ch.isspace()) 술어로 거부. `...` 는 일부러 허용 유지(어떤 서버도 `..` 로 정규화하지 않음 — 점 전면 금지로 도망가면 개정을 되돌린 것과 같다). SPEC 개정 불요 — 코드가 계약보다 좁게 동작하는 것이고 `\\` 가 같은 선례다. 단위 테스트 7종 추가, 변이 2종으로 7건 red 실증.",
+      "note": "내가 먼저 발견했고 codex 가 Tomcat 보안 문서를 근거로 HIGH 로 독립 확인했다."
+    },
+    {
+      "id": "R2-R7-M1",
+      "round": 7,
+      "severity": "MEDIUM",
+      "status": "deferred",
+      "title": "동결 ok2hop 양성 테스트가 치환된 값이 실제 URL 에 실렸는지 구별하지 못한다",
+      "file": "tests/acceptance/us-b-010-api-routing-negative.sh:335",
+      "deferReason": "동결 파일이라 사용자 승인 재동결이 필요하다. 정책상 MEDIUM 은 완료 비차단(라운드 3+ deferred). 다음 재동결 승인 기회에 `assert_hits \"/api/step2/1.0.229\" \"1\"` 로 묶는다.",
+      "note": "codex 가 인메모리 변이로 실증 — substitute() 호출을 빼도 ok=True·phase0_attempts=2 로 통과하고 /api/step2/1.0.229 hit 은 0. 가려지는 것은 '2-hop 이 도는가'가 아니라 '점이 든 값이 URL 에 실렸는가'다."
+    },
+    {
+      "id": "R2-R7-L1",
+      "round": 7,
+      "severity": "LOW",
+      "status": "fixed",
+      "title": "증적 파일 r2-crates-2hop-live-2026-09-01.json 앞에 stderr 가 붙어 json.load() 가 깨짐",
+      "file": "bench/evidence/r2-crates-2hop-live-2026-09-01.json",
+      "closedAtRound": 7,
+      "resolution": "stderr 를 동명의 .log 로 분리, JSON 은 순수 JSON 으로 복원. 파싱 검증: phase0 /api/v1/crates/serde 200 success → policy blocked rule=redirect_hop."
+    },
+    {
+      "id": "R2-R8-H1",
+      "round": 8,
+      "severity": "HIGH",
+      "status": "fixed",
+      "title": "템플릿의 리터럴 `%` 와 안전한 응답값이 결합해 퍼센트 인코딩 경로 탈출을 합성한다",
+      "file": "skills/open-reach/open_reach/api_index.py:133",
+      "pass": "A (프로덕션 보안 로직)",
+      "closedAtRound": 8,
+      "repro": "template `https://api.example/public/%{hex}%2e/readme` + hex=\"2e\" -> `/public/%2e%2e/readme`. 값에 `%` 가 없어 값 단위 검사를 통과한다. Tomcat 은 %xx 디코드 후 정규화하므로 `/readme` 로 처리 — robots 를 물어본 경로와 서버가 여는 경로가 갈라진다 (AC-B-010-13 무력화).",
+      "resolution": "검사 대상을 값에서 **렌더된 URL 의 경로 세그먼트**로 옮겼다. `_bad_path_segment()` 신설 후 (1) 로드 시점 `_check_request_template` 에서 치환자를 안전 토큰으로 치환해 선검사, (2) 요청 시점 `substitute()` 에서 치환 결과를 재검사. 같은 계열의 `{x};a=b` + x=\"1.0\" 도 함께 닫혔다.",
+      "mutationVerified": "E(로드 검사 제거) -> 1 red, F(치환 후 검사 제거) -> 2 red"
+    },
+    {
+      "id": "R2-R8-M1",
+      "round": 8,
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "title": "`source` 검증기가 http:// 를 받아 SPEC:278 의 https 요구와 어긋난다",
+      "file": "skills/open-reach/open_reach/api_index.py:212",
+      "pass": "B (계약·테스트 무결성)",
+      "closedAtRound": 8,
+      "resolution": "`startswith((\"http://\", \"https://\"))` -> `startswith(\"https://\")`. 출하 인덱스·동결 픽스처의 source 가 전부 https 임을 먼저 확인해 동결 스위트 무영향. 단위 테스트 `test_source_must_be_https` 가 https 로드 성공 + http 로드 실패를 함께 단언.",
+      "mutationVerified": "G(http 허용으로 되돌리기) -> 1 red"
+    },
+    {
+      "id": "R2-R8-M2",
+      "round": 8,
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "title": "요청 예산이 '정확히 3'인지 검증되지 않아 REQUEST_BUDGET=2 변이가 녹색으로 남는다",
+      "file": "tests/unit/test_api_routing_guards.py",
+      "pass": "B (계약·테스트 무결성)",
+      "closedAtRound": 8,
+      "resolution": "`test_request_budget_value_is_pinned`(상수 고정) + `test_endpoints_budget_reaches_exactly_the_third`(앞 둘 404, 세 번째가 본문 -> ep1~ep3 각 1회, ep4 0회). 인수 테스트 절반(`/api/ep3 == 1`, source 누락·http exit 3)은 동결 파일이라 R2-R8-M2-acc 로 이관.",
+      "mutationVerified": "H(REQUEST_BUDGET=2) -> 2 red"
+    },
+    {
+      "id": "R2-R8-M2-acc",
+      "round": 8,
+      "severity": "MEDIUM",
+      "status": "deferred",
+      "title": "동결 us-b-010 에 3번째 엔드포인트 성공 케이스와 source 누락/http 거부 단언이 없다",
+      "file": "tests/acceptance/us-b-010-api-routing-negative.sh:250,320",
+      "pass": "B (계약·테스트 무결성)",
+      "deferReason": "동결 파일이라 사용자 승인 재동결이 필요하다. 정책상 MEDIUM 은 완료 비차단(라운드 3+ deferred). 실질 동작은 R2-R8-M1/M2 의 단위 테스트가 이미 지킨다.",
+      "note": "다음 재동결 승인 기회에 R2-R7-M1 과 묶어 한 번에 처리한다."
+    },
+    {
+      "id": "R2-R8-L1",
+      "round": 8,
+      "severity": "LOW",
+      "status": "fixed",
+      "title": "`;` 무개정의 근거로 든 '역슬래시 선례'가 사실이 아니다 (내 기록의 NG-10 위반)",
+      "file": "docs/r2-contract.md:868, skills/open-reach/open_reach/api_index.py:72",
+      "pass": "B (계약·테스트 무결성)",
+      "closedAtRound": 8,
+      "repro": "docs/SPEC.md:190 은 `/`·`\\`·`%`·`:`·`?`·`#` 를 명시적으로 열거한다 — 역슬래시는 처음부터 계약 안에 있었고 '목록에 없는데 코드가 막는 선례' 는 존재하지 않는다.",
+      "resolution": "문서와 프로덕션 주석 양쪽에서 선례 주장 삭제, 실제 근거(계약이 허용한다고 적은 적 없는 것을 막는 fail-closed 제약이라 허용 집합을 넓히지 않는다)로 교체. r2-contract.md 에는 무엇이 틀렸는지 남기는 정정 블록을 명시.",
+      "note": "결론(개정 불필요)은 바뀌지 않는다. 위험한 것은 후속 검토자가 없는 선례를 재사용하는 것이다."
+    }
+  ],
+  "roundResults": [
+    {
+      "round": 1,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "pre-fix-round1",
+      "findings": {
+        "critical": 4,
+        "high": 4,
+        "medium": 2,
+        "low": 0
+      },
+      "note": "R2 구현 전수 리뷰. 9건 지적 중 8건 수정, H2는 반박(라운드 2에서 기각됨)."
+    },
+    {
+      "round": 2,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-dca2482851cdffb821bdc51915b24dbc9f8e216a",
+      "findings": {
+        "critical": 0,
+        "high": 4,
+        "medium": 2,
+        "low": 0
+      },
+      "note": "delta-only. 라운드1 closed=H1/H3/M1/M2, not closed=C1/C1B/C2/C3/H4. 5건 수정, SPEC:274 충돌은 사용자 승인 대기로 open."
+    },
+    {
+      "round": 3,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-498c69ab",
+      "findings": {
+        "critical": 0,
+        "high": 2,
+        "medium": 2,
+        "low": 0
+      },
+      "note": "delta-only. 라운드2 closed=#1/#2/#3/#6, not closed=#4(SPEC:274)/#5(예산). 신규 3건 수정. HIGH 2건 중 1건은 R2-R2-H2 이월(중복 계상하지 않음) — 여전히 open."
+    },
+    {
+      "round": 4,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-38e420e5a8618fd8d88e625b3ba07e421212468a",
+      "findings": {
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0
+      },
+      "note": "delta-only. 라운드3 closed=#2/#3, not closed=#1(예산 산식)/#4(SPEC:274). HIGH 3건 중 1건은 R2-R2-H2 이월(중복 계상하지 않음). 신규 3건 수정 — H1 은 라운드3 이 만든 robots Disallow 우회(윤리 경계)로 상한 전면 철회. 변이 사멸 2건 실증, unit 83 / acceptance 10 / bench rate=1.000 regression=none."
+    },
+    {
+      "round": 5,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-05bebc167306c2cc9bb31cd89c5901c52035943d",
+      "findings": {
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0
+      },
+      "note": "delta-only. 라운드4 closed=#3, not closed=#1/#2/#4. HIGH 3건 중 1건은 R2-R2-H2 이월(중복 계상하지 않음). 프로덕션 결함 0건 — 산식(27/18)·SSRF 홉 커버리지·예산 차감을 항별로 검증받음. 신규 3건은 전부 회귀 테스트 공백으로 수정. 변이 사멸 3건 실증, unit 85 / acceptance 10."
+    },
+    {
+      "round": 6,
+      "mode": "codex",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-05bebc167306c2cc9bb31cd89c5901c52035943d",
+      "findings": {
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 0
+      },
+      "fixesApplied": true,
+      "note": "델타 리뷰. 라운드 5 항목 1·2·3 을 codex 가 직접 변이를 주입해 closed 판정(공유 픽스처 상태로 인한 공허한 통과 없음도 확인). 항목 4(SPEC:274)는 재동결 전이라 미종결. HIGH 2건은 모두 편집 중 스냅샷 산물이었고, 그중 test_api_routing_guards.py:148 은 실제로 유효해 수정했다. 이와 별개로 자체 실물 검증에서 crates.io 항목 결함(R2-R6-N1)을 발견해 제거했다."
+    },
+    {
+      "round": 7,
+      "mode": "codex",
+      "roundType": "재기록(귀속) — 수정 라운드 상한 비포함",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-4e3dc06548a32a1d15c7cfef97388fa4dd6107e6",
+      "findings": {
+        "critical": 0,
+        "high": 1,
+        "medium": 1,
+        "low": 1
+      },
+      "fixesApplied": true,
+      "capAction": "예산(5) 소진 후 신규 HIGH → record-error --type REVIEW_ROUND_CAP --level L2 기록 (count: 1, escalation: L2). 라운드 8 을 dual 로 승격.",
+      "note": "라운드 6 항목 1·2 모두 closed 판정(codex 가 변이 직접 주입). 신규 HIGH 는 개정이 연 새 표면 — 점이 아니라 서버 정규화(`;` 경로 파라미터, 후행 공백)였다. MEDIUM 은 동결 파일이라 deferred. LOW 는 증적 파일 파싱 불가로 즉시 수정."
+    },
+    {
+      "round": 8,
+      "mode": "dual (에스컬레이션 승격 — 상한 예외)",
+      "roundType": "에스컬레이션 2자 독립 리뷰 (범위 분할)",
+      "verdict": "반려",
+      "sourceHash": "08889483169c0d48d0494b12ea89894d2f894fd4-2c6d748b9db009220c6795ea080ecb518ba5ba7a",
+      "passes": {
+        "A": {
+          "scope": "프로덕션 보안 로직 (substitute·가드)",
+          "critical": 0,
+          "high": 1,
+          "medium": 0,
+          "low": 0
+        },
+        "B": {
+          "scope": "계약·테스트 무결성·기록 정직성",
+          "critical": 0,
+          "high": 0,
+          "medium": 2,
+          "low": 1
+        }
+      },
+      "findings": {
+        "critical": 0,
+        "high": 1,
+        "medium": 3,
+        "low": 1
+      },
+      "fixesApplied": true,
+      "note": "pass A 의 HIGH 는 라운드 7 수정이 닫은 '값 단독' 정규화 계열의 남은 절반 — 값이 아니라 값과 리터럴이 만든 결과가 위험하다. 검사 대상을 렌더된 세그먼트로 옮겨 계열 전체를 한 곳에서 닫았다. pass B 는 신규 HIGH 없음, R2-R7-M1 deferred 를 '절차상 정당, severity laundering 아님' 으로 판정하되 동결 증거의 범위를 좁혀 읽으라고 못 박았다. MEDIUM 2건은 즉시 수정(동결 불가 절반만 M2-acc 로 이관), LOW 는 내 기록의 사실 오류라 정정.",
+      "deferredCarried": [
+        "R2-R7-M1",
+        "R2-R8-M2-acc"
+      ]
+    }
+  ],
+  "errorHistory": {
+    "currentError": {
+      "type": "REVIEW_ROUND_CAP",
+      "file": "skills/open-reach/open_reach/api_index.py",
+      "message": "R2 리뷰 수정 라운드 예산(5) 소진 후 라운드 7에서 신규 HIGH 1건 — AC-B-010-11 점 완화가 세미콜론 경로 파라미터 우회를 열었다. review-escalation 필요.",
+      "msgNormalized": "R 리뷰 수정 라운드 예산() 소진 후 라운드 에서 신규 HIGH 건 — AC-B-- 점 완화",
+      "count": 1,
+      "escalationLevel": "L2"
+    },
+    "attempts": [
+      "R2 리뷰 수정 라운드 예산(5) 소진 후 라운드 7에서 신규 HIGH 1건 — AC-B-010-11 점 완화가 세미콜론 경로 파라미터 우회를 열었다. review-escalation 필요."
+    ],
+    "escalationLevel": "L2",
+    "escalationBudget": 1,
+    "levelHistory": [
+      "L2"
+    ],
+    "escalationLog": [
+      {
+        "ts": "2026-09-01T13:58:03Z",
+        "level": "L2",
+        "attempt": 1,
+        "error": "R2 리뷰 수정 라운드 예산(5) 소진 후 라운드 7에서 신규 HIGH 1건 — AC-B-010-11 점 완화가 세미콜론 경로 파라미터 우회를 열었다. review-escalation 필요.",
+        "action": "라운드 8을 dual(codex 2회 분할 독립 리뷰)로 승격",
+        "result": "fail"
+      }
+    ]
   }
 }

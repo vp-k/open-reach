@@ -1,0 +1,70 @@
+# SC-8 게이트를 **실제로 닫히게 만드는** 픽스처 배터리 (us-b-009).
+#
+# battery-local.yaml 과 같은 6항목이되 `waf-challenge` 하나의 정답 라벨만
+# `cloudflare` 로 바꿔 두었다. 픽스처는 cloudflare 지문을 내보내지 않으므로 감지값은
+# `unknown_challenge` 가 되고, 그 조합은 미탐 1건 / 잴 수 있었던 6건 = 16.7% > 10% 다.
+#
+# 이 파일이 없으면 SC-8 게이트는 "통과하는 경로"로만 검증된다 — 게이트를 통째로
+# 지워도 인수 테스트가 초록으로 남는다.
+role: fixture
+entries:
+  - id: public-article
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    added_reason: 본문 추출과 잡음 제거의 기준선
+    negative_case: null
+    expected:
+      title_contains: 공개 기술 문서
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: redirect-public
+    url: __FIXTURE_BASE__/redir/public
+    tier: 1
+    waf_expected: none
+    added_reason: 공개→공개 리디렉션 추종이 성공으로 계상되는지
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: forbidden-but-real
+    url: __FIXTURE_BASE__/waf/forbidden-but-real
+    tier: 1
+    waf_expected: unknown_challenge
+    added_reason: 403이지만 정상 본문 — 상태 코드 단독 판정 금지의 반례
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: login-wall
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: 음성 케이스 — 로그인월을 success 로 계상하면 벤치 전체가 fail (G-3)
+    negative_case: auth_wall
+    expected: null
+
+  - id: paywall
+    url: __FIXTURE_BASE__/wall/paywall
+    tier: 1
+    waf_expected: none
+    added_reason: 음성 케이스 — 페이월 판정
+    negative_case: paywall
+    expected: null
+
+  - id: waf-challenge
+    url: __FIXTURE_BASE__/waf/challenge
+    tier: 1
+    # 의도적 오라벨 — 이 한 줄이 SC-8 미탐율을 한계 위로 올린다.
+    waf_expected: cloudflare
+    added_reason: 음성 케이스 — 200이지만 챌린지 페이지 (SC-8 미탐 유발용 라벨)
+    negative_case: waf_challenge
+    expected: null

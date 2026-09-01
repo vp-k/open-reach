@@ -12,6 +12,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from . import (
+    api_index as api_index_mod,
     bench as bench_mod,
     fetcher,
     observe,
@@ -79,6 +80,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_fetch.add_argument("--timeout", type=float, default=20.0)
     p_fetch.add_argument("--max-attempts", type=int, default=6)
     p_fetch.add_argument("--allow-browser", action="store_true")
+    # Phase 0 인덱스의 대체 경로. `bench --battery` 와 같은 구조다 — 인수 테스트가
+    # 픽스처 인덱스를 지정하는 통로이며, 지정하지 않으면 출하 인덱스를 쓴다.
+    p_fetch.add_argument("--api-index")
 
     p_bench = subs.add_parser("bench")
     p_bench.add_argument("--tier", type=int, default=1, choices=(1, 2))
@@ -181,6 +185,10 @@ def _same_file(a: Path, b: Path) -> bool:
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
+    # 인덱스는 **요청을 시작하기 전에** 검증한다 (AC-B-010-8·10·12·15). 실행 중에
+    # 발견하면 이미 나간 요청을 되돌릴 수 없고, "네트워크 요청 0건"이라는 계약이
+    # 지켜졌는지 출력만으로는 확인할 수 없게 된다.
+    api_index_mod.load_cached(args.api_index)
     result = fetcher.fetch(
         FetchRequest(
             url=args.url,
@@ -188,6 +196,7 @@ def cmd_fetch(args: argparse.Namespace) -> int:
             timeout_s=args.timeout,
             allow_browser=args.allow_browser,
             max_attempts=args.max_attempts,
+            api_index=args.api_index,
         )
     )
     _emit(result.to_dict())
@@ -203,6 +212,10 @@ def cmd_bench(args: argparse.Namespace) -> int:
     path, shipped = _battery_path(args)
     battery = bench_mod.load_battery(path)
     bench_mod.check_governance(battery, shipped=shipped)
+    # bench 도 Phase 0 을 탄다 — 인덱스가 깨져 있으면 배터리를 절반쯤 돈 뒤에야
+    # 알게 되고, 그때는 이미 나간 요청을 되돌릴 수 없다. fetch 와 같은 자리에서
+    # 같은 이유로 선검증한다 (AC-B-010-8·10·12·15, SPEC Response 3).
+    api_index_mod.load_cached(None)
 
     report = bench_mod.run_battery(
         battery,
@@ -217,12 +230,19 @@ def cmd_bench(args: argparse.Namespace) -> int:
         sys.stderr.write(f"[open-reach] G-3: 음성 케이스 오분류 — {violation}\n")
     for violation in report["measurement_violations"]:
         sys.stderr.write(f"[open-reach] G-3: 측정 불가 — {violation}\n")
+    # SC-8 은 하드 게이트다 — 오탐 0건, 미탐 <=10%, 그리고 **잴 수 있었어야 한다**.
+    sc8 = bench_mod.sc8_violations(
+        report.get("vendor_sc8", {}), attempted=report.get("total", 0) > 0
+    )
+    for violation in sc8:
+        sys.stderr.write("[open-reach] " + violation + "\n")
     if report["negative_violations"] or report["measurement_violations"]:
         return EXIT_GATE
 
+    # 기록은 남긴다 — SC-8 로 막히더라도 다음 실행이 회귀를 볼 수 있어야 한다.
     bench_mod.record_run(report, battery_path=path)
     sys.stdout.write(bench_mod.render(report) + "\n")
-    return EXIT_OK
+    return EXIT_GATE if sc8 else EXIT_OK
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
@@ -296,6 +316,12 @@ def main(argv: list[str] | None = None) -> int:
             raise bench_mod.UsageError("서브커맨드를 지정하라 (fetch/bench/compare/baseline/refresh/explain)")
         _check_common(args)
         return _COMMANDS[args.command](args)
+    except api_index_mod.IndexLoadError as exc:
+        # 인덱스를 신뢰할 수 없으면 한 건도 요청하지 않는다 (SPEC Response 3).
+        # yamlio.YamlError 도 ValueError 라 이 except 가 먼저 와야 한다.
+        sys.stderr.write(f"[open-reach] api_index: {exc}\n")
+        _emit({"error": {"code": "usage", "message": f"API 인덱스 로드 실패: {exc}"}})
+        return EXIT_GATE
     except bench_mod.UsageError as exc:
         return _fail_usage(str(exc))
     except bench_mod.GovernanceError as exc:

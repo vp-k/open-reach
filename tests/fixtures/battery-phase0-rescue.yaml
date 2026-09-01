@@ -1,0 +1,41 @@
+# AC-B-010-16 · AC-B-010-17 용 픽스처 배터리.
+#
+# 양성 두 건의 성격이 다르다는 것이 이 파일의 전부다:
+#   public-article  — HTTP 경로로 성공한다 (rate 와 rate_http_only 양쪽에 계상)
+#   api-rescue      — 원문이 403 이라 HTTP 로는 못 얻고 Phase 0 가 구제한다
+#                     (rate 에는 계상, rate_http_only 에는 계상되지 않음)
+# 두 값이 같은 실행에서 갈리지 않으면 "돌파율이 올랐다"가 전송 개선인지
+# API 구제인지 출력만 보고 구분할 수 없다.
+role: fixture
+entries:
+  - id: public-article
+    url: __FIXTURE_BASE__/public/article
+    tier: 1
+    waf_expected: none
+    added_reason: HTTP 경로 성공 — rate_http_only 의 분자
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: api-rescue
+    url: __FIXTURE_BASE__/api/origin/ok
+    tier: 1
+    waf_expected: unknown_challenge
+    added_reason: 원문 403 → Phase 0 구제. rescued_by_phase0 의 분자
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: OPENREACH-BODY-MARKER
+      min_chars: 200
+      normalized_hash: null
+
+  - id: login-wall
+    url: __FIXTURE_BASE__/wall/login
+    tier: 1
+    waf_expected: none
+    added_reason: 음성 케이스 — G-3 요건
+    negative_case: auth_wall
+    expected: null
