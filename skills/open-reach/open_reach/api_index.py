@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 from dataclasses import dataclass, field
@@ -87,6 +88,10 @@ SEGMENT_DOT_ONLY = (".", "..")
 # 공백류도 막는다. IIS 계열은 세그먼트 끝의 공백과 점을 떼어 내므로 `'.. '` 가
 # `..` 가 된다. 문자 목록이 아니라 술어로 검사한다 — 탭·개행·유니코드 공백까지.
 
+# R5 — 쿼리 값 위치의 금지 문자. 경로 금지 집합에 `&`·`=` 를 더한다. 값이 쿼리
+# **구조**(파라미터 경계·키/값 경계)를 바꿀 수 없게 하기 위해서다 (AC-B-010-11 R5).
+QUERY_FORBIDDEN = SEGMENT_FORBIDDEN + ("&", "=")
+
 _PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -160,11 +165,19 @@ def _bad_path_segment(url: str) -> str | None:
     return None
 
 
-def _check_request_template(template: str, what: str) -> None:
+def _check_request_template(
+    template: str, what: str, *, allow_query_placeholders: bool = False
+) -> None:
     """AC-B-010-12 — 스킴과 호스트는 응답에서 오지 않는다.
 
-    치환자는 **경로에만** 둔다. 쿼리에 두면 응답이 쿼리 구조를 바꿀 수 있고,
-    스킴·호스트에 두면 응답이 우리를 다른 서버로 보낼 수 있다.
+    치환자는 기본적으로 **경로에만** 둔다. 쿼리에 두면 응답이 쿼리 구조를 바꿀 수
+    있고, 스킴·호스트에 두면 응답이 우리를 다른 서버로 보낼 수 있다.
+
+    예외(AC-B-010-11 R5 개정): chain 없는 endpoints 템플릿의 치환 입력은 입력 URL
+    캡처 그룹뿐이라 "응답이 쿼리 구조를 바꾼다"가 성립하지 않는다 — 그 호출자만
+    allow_query_placeholders=True 를 넘긴다 (실측: Bluesky XRPC 는 쿼리 파라미터
+    전용이라 이 예외 없이는 표현할 수 없다). 값의 `&`·`=` 는 substitute 가
+    QUERY_FORBIDDEN 으로 막고, 프래그먼트는 어느 쪽이든 거부한다.
     """
     parts = urlsplit(template)
     if parts.scheme not in ("http", "https"):
@@ -176,7 +189,12 @@ def _check_request_template(template: str, what: str) -> None:
             raise IndexLoadError(
                 f"{what}: {field_name} 에 치환자를 쓸 수 없다 (AC-B-010-12) — {template!r}"
             )
-    for field_name, value in (("쿼리", parts.query), ("프래그먼트", parts.fragment)):
+    checked = [("프래그먼트", parts.fragment)]
+    if allow_query_placeholders:
+        _check_query_placeholders(parts.query, what, template)
+    else:
+        checked.append(("쿼리", parts.query))
+    for field_name, value in checked:
         if "{" in value or "}" in value:
             raise IndexLoadError(
                 f"{what}: {field_name} 에 치환자를 쓸 수 없다 (AC-B-010-11) — {template!r}"
@@ -190,6 +208,29 @@ def _check_request_template(template: str, what: str) -> None:
             f"{what}: 템플릿 경로가 세그먼트 규칙을 어긴다 — {problem} "
             f"(AC-B-010-11) — {template!r}"
         )
+
+
+def _check_query_placeholders(query: str, what: str, template: str) -> None:
+    """R5 예외의 폭 — 치환자는 쿼리 **값 위치**에만. 파라미터 이름은 정적이다.
+
+    이름 위치 치환자(`?{key}=1`)는 값의 금지 문자(`&`·`=`)와 무관하게, 캡처가
+    "어떤 파라미터를 세팅할지" 자체를 고르게 한다 — 요청 의미가 입력 URL 에
+    좌우된다. R5 가 연 것은 값 위치뿐이므로 이름 위치는 로드 시점에 거부한다.
+    치환자가 되다 만 중괄호(`{bad-name}` 등)도 리터럴로 새 나가기 전에 거부한다.
+    (codex 리뷰 R5-H2)
+    """
+    for param in query.split("&"):
+        name, _, value = param.partition("=")
+        if "{" in name or "}" in name:
+            raise IndexLoadError(
+                f"{what}: 쿼리 파라미터 이름 위치에 치환자·중괄호를 쓸 수 없다 — "
+                f"값 위치만 허용된다 (AC-B-010-11 R5) — {template!r}"
+            )
+        residue = _PLACEHOLDER.sub("", value)
+        if "{" in residue or "}" in residue:
+            raise IndexLoadError(
+                f"{what}: 쿼리 값의 중괄호가 올바른 치환자가 아니다 — {template!r}"
+            )
 
 
 def _check_pattern(raw: Any, what: str) -> None:
@@ -232,23 +273,13 @@ def _check_chain(chain: Any, what: str) -> None:
             raise IndexLoadError(f"{label}: 값을 뽑는 단계는 response_kind: json 이어야 한다")
 
 
-def _check_entry(entry: Any, index: int) -> None:
-    label = f"entries[{index}]"
-    if not isinstance(entry, dict):
-        raise IndexLoadError(f"{label}: 매핑이어야 한다")
+def _check_provenance(mapping: dict[str, Any], label: str) -> None:
+    """AC-B-010-15 — 출처와 확인 시점이 없는 항목은 검증할 수 없는 주장이다.
 
-    host = _require_str(entry.get("host"), f"{label}.host")
-    if "{" in host:
-        raise IndexLoadError(f"{label}.host: 치환자를 쓸 수 없다")
-
-    pattern = _require_str(entry.get("url_pattern"), f"{label}.url_pattern")
-    try:
-        re.compile(pattern)
-    except re.error as exc:
-        raise IndexLoadError(f"{label}.url_pattern: 컴파일 실패 — {exc}") from exc
-
-    # AC-B-010-15 — 출처와 확인 시점이 없는 항목은 검증할 수 없는 주장이다.
-    source = _require_str(entry.get("source"), f"{label}.source")
+    검색 선언(AC-B-014-4)도 같은 의무를 진다 — 요청을 만들지 않는 선언이라도
+    "이 URL 이 검색이다"는 주장이며, 주장은 출처 없이는 성립하지 않는다.
+    """
+    source = _require_str(mapping.get("source"), f"{label}.source")
     # SPEC:278 은 `https` URL 을 요구한다. `http://` 출처는 중간자가 바꿔 쓸 수 있어
     # "검증 가능한 주장"이 되지 못한다 — 계약대로 https 만 받는다 (라운드 8 MEDIUM).
     # 접두사가 아니라 **파싱해서** 본다. `"https://"` 는 접두사 검사를 통과하지만
@@ -269,9 +300,56 @@ def _check_entry(entry: Any, index: int) -> None:
         raise IndexLoadError(
             f"{label}.source: 포트가 범위(0..65535)를 벗어났다 (AC-B-010-15) — {source!r}"
         ) from None
-    verified_at = _require_str(entry.get("verified_at"), f"{label}.verified_at")
+    verified_at = _require_str(mapping.get("verified_at"), f"{label}.verified_at")
     if not _DATE.match(verified_at):
         raise IndexLoadError(f"{label}.verified_at: YYYY-MM-DD 여야 한다 — {verified_at!r}")
+
+
+def _check_host(value: Any, label: str) -> str:
+    """host 선언 공통 검사 — 치환자·userinfo 금지 (codex 리뷰 R5-M1 잔존 경로).
+
+    `user@h.invalid` 를 선언에 적으면 `_host_matches` 의 netloc 정확 일치 분기가
+    자격증명 실린 URL 을 통과시킨다 — 선언 쪽에서 로드 시점에 막아야 런타임
+    가드("@ 실린 URL 은 매치 안 됨")와 합쳐 경로가 완전히 닫힌다.
+    """
+    host = _require_str(value, f"{label}.host")
+    if "{" in host:
+        raise IndexLoadError(f"{label}.host: 치환자를 쓸 수 없다")
+    if "@" in host:
+        raise IndexLoadError(
+            f"{label}.host: userinfo(@)를 쓸 수 없다 — 이 도구는 자격증명을 취급하지 않는다"
+        )
+    return host
+
+
+def _check_search(decl: Any, index: int) -> None:
+    """AC-B-014 — 검색 선언. 판정 전용이라 요청을 만들지 않지만, 출처 의무는 진다."""
+    label = f"search[{index}]"
+    if not isinstance(decl, dict):
+        raise IndexLoadError(f"{label}: 매핑이어야 한다")
+    _check_host(decl.get("host"), label)
+    pattern = _require_str(decl.get("url_pattern"), f"{label}.url_pattern")
+    try:
+        re.compile(pattern)
+    except re.error as exc:
+        raise IndexLoadError(f"{label}.url_pattern: 컴파일 실패 — {exc}") from exc
+    _check_provenance(decl, label)
+
+
+def _check_entry(entry: Any, index: int) -> None:
+    label = f"entries[{index}]"
+    if not isinstance(entry, dict):
+        raise IndexLoadError(f"{label}: 매핑이어야 한다")
+
+    _check_host(entry.get("host"), label)
+
+    pattern = _require_str(entry.get("url_pattern"), f"{label}.url_pattern")
+    try:
+        re.compile(pattern)
+    except re.error as exc:
+        raise IndexLoadError(f"{label}.url_pattern: 컴파일 실패 — {exc}") from exc
+
+    _check_provenance(entry, label)
 
     has_endpoints = entry.get("endpoints") is not None
     has_chain = entry.get("chain") is not None
@@ -286,9 +364,12 @@ def _check_entry(entry: Any, index: int) -> None:
     if not isinstance(endpoints, list) or not endpoints:
         raise IndexLoadError(f"{label}.endpoints: 비어 있지 않은 리스트여야 한다")
     for position, endpoint in enumerate(endpoints):
+        # endpoints 항목에는 chain 이 없다(위 상호배타 검사) — 응답 유래 값이 섞일
+        # 수 없는 유일한 템플릿이라서만 쿼리 치환자를 허용한다 (AC-B-010-11 R5).
         _check_request_template(
             _require_str(endpoint, f"{label}.endpoints[{position}]"),
             f"{label}.endpoints[{position}]",
+            allow_query_placeholders=True,
         )
     kind = entry.get("response_kind")
     if kind not in RESPONSE_KINDS:
@@ -297,14 +378,26 @@ def _check_entry(entry: Any, index: int) -> None:
         _require_str(entry.get("content_pointer"), f"{label}.content_pointer")
 
 
-def load(path: Path | None = None) -> list[dict[str, Any]]:
+@dataclass(frozen=True)
+class ApiIndex:
+    """로드 검증을 통과한 인덱스 전체 — 라우팅 항목과 검색 선언 (R5).
+
+    검색 선언은 판정 전용이다(AC-B-014 — 요청을 만들지 않는다). entries 만 쓰던
+    호출자가 선언의 존재를 모른 채 지나치지 않도록 한 타입에 함께 담는다.
+    """
+
+    entries: tuple[dict[str, Any], ...] = ()
+    search: tuple[dict[str, Any], ...] = ()
+
+
+def load(path: Path | None = None) -> ApiIndex:
     """인덱스를 읽고 로드 시점 제약을 전부 확인한다. 위반은 IndexLoadError (exit 3).
 
-    출하 인덱스가 아직 없으면 빈 목록이다 — Phase 0 이 조용히 꺼질 뿐 실패가 아니다.
+    출하 인덱스가 아직 없으면 빈 인덱스다 — Phase 0 이 조용히 꺼질 뿐 실패가 아니다.
     """
     target = path or observe.api_index_path()
     if path is None and not target.exists():
-        return []
+        return ApiIndex()
     if not target.exists():
         raise IndexLoadError(f"API 인덱스가 없다: {target}")
 
@@ -313,27 +406,36 @@ def load(path: Path | None = None) -> list[dict[str, Any]]:
     except yamlio.YamlError as exc:
         raise IndexLoadError(f"API 인덱스 파싱 실패: {exc}") from exc
     if data is None:
-        return []
+        return ApiIndex()
     if not isinstance(data, dict) or not isinstance(data.get("entries"), list):
         raise IndexLoadError("API 인덱스 최상위는 `entries:` 리스트여야 한다")
 
     entries = data["entries"]
-    if len(entries) > MAX_ENTRIES:
-        # AC-B-010-15 — NG-9 가 지문표에서 막은 "사이트 목록의 무한 증식"을
-        # 인덱스에서는 상한으로 막는다. 인덱스는 호스트를 적는 것이 존재 이유라
-        # 리터럴 금지 린트를 쓸 수 없기 때문이다.
+    search = data.get("search")
+    if search is None:
+        search = []
+    if not isinstance(search, list):
+        raise IndexLoadError("API 인덱스 `search:` 는 리스트여야 한다")
+    if len(entries) + len(search) > MAX_ENTRIES:
+        # AC-B-010-15 (R5 개정) — 상한은 entries·search **합산**이다. NG-9 가
+        # 지문표에서 막은 "사이트 목록의 무한 증식"을 인덱스에서는 상한으로 막는데,
+        # 선언을 따로 세면 같은 증식이 search 쪽으로 우회한다. 인덱스는 호스트를
+        # 적는 것이 존재 이유라 리터럴 금지 린트를 쓸 수 없기 때문이다.
         raise IndexLoadError(
-            f"API 인덱스는 최대 {MAX_ENTRIES} 항목이다 (현재 {len(entries)}) — AC-B-010-15"
+            f"API 인덱스는 entries·search 합산 최대 {MAX_ENTRIES} 항목이다 "
+            f"(현재 {len(entries)}+{len(search)}) — AC-B-010-15"
         )
     for index, entry in enumerate(entries):
         _check_entry(entry, index)
-    return list(entries)
+    for index, decl in enumerate(search):
+        _check_search(decl, index)
+    return ApiIndex(entries=tuple(entries), search=tuple(search))
 
 
-_cache: dict[str, list[dict[str, Any]]] = {}
+_cache: dict[str, ApiIndex] = {}
 
 
-def load_cached(path: str | None) -> list[dict[str, Any]]:
+def load_cached(path: str | None) -> ApiIndex:
     """engine 이 선검증하고 fetcher 가 다시 부르는 구조라 같은 파일을 두 번 파싱하지 않는다.
 
     캐시 키에 mtime 을 섞지 않는다 — 한 프로세스 안에서 인덱스가 바뀌는 상황을
@@ -342,58 +444,135 @@ def load_cached(path: str | None) -> list[dict[str, Any]]:
     key = path or ""
     if key not in _cache:
         _cache[key] = load(Path(path) if path else None)
-    return _cache[key]
+    # 캐시 원본을 내주지 않는다 — entries·search 의 dict 는 가변이라, 원본을 돌리면
+    # 한 호출자의 변형이 검증·출처·상한을 거치지 않은 채 이후 판정(entry_for·
+    # nav_shell 면제)에 스며든다. 복사본 변형은 그 호출자 안에서 끝난다.
+    # (codex 리뷰 R5-L1. 항목 수 상한이 20이라 복사 비용은 무시할 수준이다.)
+    return copy.deepcopy(_cache[key])
 
 
 # ── 매칭 ────────────────────────────────────────────────────────────────
 
 
-def entry_for(entries: list[dict[str, Any]], url: str) -> tuple[dict[str, Any], dict[str, str]] | None:
-    """AC-B-010-2 — 인덱스에 항목이 없으면 시도하지 않는다. URL 을 추측하지 않는다."""
-    parts = urlsplit(url)
+def _match_target(parts) -> str:
+    """패턴 매칭 대상 — `경로?쿼리` (R5 개정).
+
+    HN `/item?id=N` 처럼 식별자가 쿼리에 있는 표현형을 담으려면 경로만으로는
+    부족하다. 쿼리 없는 URL 은 이전과 동일하게 경로만 남으므로 기존 패턴은
+    그대로 매치된다 (무회귀 — 출하 stackoverflow 패턴은 미앵커 prefix 매치).
+    """
+    path = parts.path or "/"
+    return path + ("?" + parts.query if parts.query else "")
+
+
+def _host_matches(declared: str, parts) -> bool:
+    """host 선언 대조 (codex 리뷰 R5-M1).
+
+    규칙은 둘이다:
+    ① 포트를 적은 선언(`127.0.0.1:8080`)은 netloc 정확 일치 — 다른 포트에
+       업히지 않는다.
+    ② 포트 없는 선언(`h.invalid`)은 그 호스트의 **모든 포트**를 뜻한다 — 동결
+       픽스처 인덱스(us-b-009, SPEC 「SSRF 예외」의 유일한 루프백 예외)가
+       `127.0.0.1` 로 선언하는데 픽스처 서버는 매 실행 임시 포트에 뜨므로
+       포트를 미리 적는 것이 불가능하다. 선언의 단위는 호스트(운영 주체)다.
+
+    어느 쪽이든 userinfo 실린 URL(`u:p@h.invalid`)은 매치하지 않는다 — 이 도구는
+    자격증명을 취급하지 않으므로(NG-1 인접) 인증 의미가 실린 URL 을 "확인된
+    선언 대상"으로 판정할 수 없다. hostname 은 urlsplit 이 userinfo 를 걷어낸
+    값이라, hostname 비교 단독으로는 이 케이스가 소리 없이 통과한다.
+    """
     netloc = (parts.netloc or "").lower()
     hostname = (parts.hostname or "").lower()
-    path = parts.path or "/"
+    if "@" in netloc:
+        # netloc 정확 일치 분기보다 먼저 — 선언 검사(_check_host)가 @ 를 거부하긴
+        # 하지만, 이 함수는 선언 출처를 가정하지 않고 스스로 fail-closed 여야 한다.
+        return False
+    if declared == netloc:
+        return True
+    return declared == hostname
+
+
+def entry_for(
+    entries: tuple[dict[str, Any], ...] | list[dict[str, Any]], url: str
+) -> tuple[dict[str, Any], dict[str, str]] | None:
+    """AC-B-010-2 — 인덱스에 항목이 없으면 시도하지 않는다. URL 을 추측하지 않는다."""
+    parts = urlsplit(url)
+    target = _match_target(parts)
     for entry in entries:
         host = str(entry.get("host", "")).lower()
-        if host not in (netloc, hostname):
+        if not _host_matches(host, parts):
             continue
-        match = re.search(str(entry["url_pattern"]), path)
+        match = re.search(str(entry["url_pattern"]), target)
         if match is None:
             continue
         return entry, {k: v for k, v in match.groupdict().items() if v is not None}
     return None
 
 
+def is_explicit_search(index: ApiIndex | None, url: str) -> bool:
+    """AC-B-014-1·2 — 주어진 URL 이 선언된 검색 엔드포인트인가. 판정 전용, 요청 없음.
+
+    호출자의 계약(AC-B-014-2, 양방향): 명시성을 **얻는** 판정은 입력 URL 로만
+    한다 — 리디렉트 도착 URL 로 얻으면 "우발적 검색 페이지 도착"이 명시가 된다.
+    반대로 **잃는** 판정에는 도착 URL 을 넣는다 — 선언된 검색 URL 이 선언 밖으로
+    리디렉트되면 도착지는 우발이라 면제가 꺼진다(codex 리뷰 R5-H1). 선언이 주는
+    것은 detect 의 nav_shell 면제 하나뿐이고, 챌린지 판별·길이 하한은
+    그대로다(AC-B-014-3).
+    """
+    if index is None:
+        return False
+    parts = urlsplit(url)
+    target = _match_target(parts)
+    for decl in index.search:
+        host = str(decl.get("host", "")).lower()
+        if not _host_matches(host, parts):
+            continue
+        if re.search(str(decl["url_pattern"]), target) is not None:
+            return True
+    return False
+
+
 # ── 조립 ────────────────────────────────────────────────────────────────
 
 
 def substitute(template: str, binds: dict[str, str]) -> str:
-    """치환자를 채운다. 세그먼트를 벗어나는 값은 거부한다 (AC-B-010-11)."""
+    """치환자를 채운다. 위치별 금지 문자를 어기는 값은 거부한다 (AC-B-010-11).
 
-    def _one(match: re.Match) -> str:
-        name = match.group(1)
-        if name not in binds:
-            raise Rejected(f"치환할 값이 없다: {{{name}}}")
-        value = binds[name]
-        if not value:
-            raise Rejected(f"빈 값으로 치환할 수 없다: {{{name}}}")
-        for bad in SEGMENT_FORBIDDEN:
-            if bad in value:
+    경로 위치의 값은 세그먼트 1개를 벗어날 수 없고, 쿼리 위치의 값(R5)은 거기에
+    `&`·`=` 가 더해진다. 템플릿의 첫 `?` 가 경로와 쿼리를 가르는데, 경로 값의
+    `?` 는 금지 문자이므로 이 분할은 치환 뒤에도 유지된다 — 값이 자신의 위치를
+    옮길 수 없다.
+    """
+
+    def _fill(where: str, forbidden: tuple[str, ...]):
+        def _one(match: re.Match) -> str:
+            name = match.group(1)
+            if name not in binds:
+                raise Rejected(f"치환할 값이 없다: {{{name}}}")
+            value = binds[name]
+            if not value:
+                raise Rejected(f"빈 값으로 치환할 수 없다: {{{name}}}")
+            for bad in forbidden:
+                if bad in value:
+                    raise Rejected(
+                        f"{{{name}}} 값에 {where} 를 벗어나는 문자 {bad!r} 가 있다 (AC-B-010-11)"
+                    )
+            if any(ch.isspace() for ch in value):
                 raise Rejected(
-                    f"{{{name}}} 값에 경로 세그먼트를 벗어나는 문자 {bad!r} 가 있다 (AC-B-010-11)"
+                    f"{{{name}}} 값에 공백류가 있다 — 서버가 떼어 내면 {where} 가 달라진다 (AC-B-010-11)"
                 )
-        if any(ch.isspace() for ch in value):
-            raise Rejected(
-                f"{{{name}}} 값에 공백류가 있다 — 서버가 떼어 내면 세그먼트가 달라진다 (AC-B-010-11)"
-            )
-        if value in SEGMENT_DOT_ONLY:
-            raise Rejected(
-                f"{{{name}}} 값이 상대 경로 세그먼트 {value!r} 다 (AC-B-010-11)"
-            )
-        return value
+            if value in SEGMENT_DOT_ONLY:
+                raise Rejected(
+                    f"{{{name}}} 값이 상대 경로 세그먼트 {value!r} 다 (AC-B-010-11)"
+                )
+            return value
 
-    rendered = _PLACEHOLDER.sub(_one, template)
+        return _one
+
+    prefix, sep, query = template.partition("?")
+    rendered = _PLACEHOLDER.sub(_fill("경로 세그먼트", SEGMENT_FORBIDDEN), prefix)
+    if sep:
+        rendered += "?" + _PLACEHOLDER.sub(_fill("쿼리 값", QUERY_FORBIDDEN), query)
     # 값 단위 검사를 통과한 값들이 리터럴과 붙어 만든 결과를 마지막으로 본다.
     # 로드 검사가 이미 걸렀더라도 이중으로 본다 — 값 검사와 같은 이유다.
     problem = _bad_path_segment(rendered)

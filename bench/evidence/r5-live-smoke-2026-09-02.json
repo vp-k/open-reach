@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-02",
+  "purpose": "R5 종료 조건 증적 — rate_http_only 무회귀(r5-contract §7) + 신규 어댑터 라이브 실증",
+  "bench": {
+    "battery": "bench/battery.yaml (Tier-1, 19 URL: 양성 12 + 음성 7)",
+    "rate": 1.0,
+    "rate_http_only": 1.0,
+    "passed": 12,
+    "total": 12,
+    "rescued_by_phase0": 0,
+    "by_route": {
+      "http": 12
+    },
+    "baseline": "R2/R3 실측 rate_median 1.0 (docs/r3-contract.md SC-2) — 동일값, 무회귀",
+    "structural_note": "explicit_search 는 검색 선언(hn.algolia.com) 매치 시에만 활성 — 그 외 URL 의 HTTP 경로는 항등. Phase 0 은 HTTP 가 본문을 못 얻은 뒤에만(AC-B-010-1), rate_http_only 는 정의상 HTTP 경로만 계상(AC-B-010-16). 성공→실패 방향 변화는 구조적으로 불가능하고, 실측이 이를 확인.",
+    "raw": "bench/evidence/r5-final-run1-2026-09-02.txt + bench/history.jsonl 2026-09-02T11:18:37Z"
+  },
+  "live_smoke": [
+    {
+      "url": "https://news.ycombinator.com/item?id=22918980",
+      "ok": true,
+      "final_route": "http",
+      "note": "HTTP 티어 자력 성공(서버 렌더 HTML, 241KB). Phase 0 은 HTTP 실패 뒤에만 개입(AC-B-010-1) — 어댑터 추가가 HTTP 실력을 가리지 않음을 실증"
+    },
+    {
+      "url": "https://bsky.app/profile/bsky.app/post/3mu3jzayuys2k",
+      "ok": true,
+      "final_route": "phase0",
+      "final_url": "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=at://bsky.app/app.bsky.feed.post/3mu3jzayuys2k",
+      "note": "HTTP 3회 실패(JS SPA) 후 쿼리 치환자 XRPC 어댑터가 실 포스트 본문 취득 — R5 쿼리 치환 개정의 엔드투엔드 라이브 실증"
+    },
+    {
+      "url": "https://hn.algolia.com/?q=rust",
+      "ok": false,
+      "failure_reason": "validation_failed",
+      "note": "검색 선언이 매치돼도 JS SPA 셸이라 길이 하한으로 실패 — 면제는 nav_shell 판정 하나뿐(AC-B-014 완화 폭 준수). 선언은 판정 전용이지 성공 약속이 아님(NG-10)"
+    },
+    {
+      "url": "https://hn.algolia.com/api/v1/search?query=rust&hitsPerPage=5",
+      "ok": true,
+      "final_route": "http",
+      "note": "API 검색 200 JSON(7.1KB) — §9 실측 재확인. 출하 선언 패턴은 UI·API 두 표현형을 다 담음"
+    }
+  ]
+}

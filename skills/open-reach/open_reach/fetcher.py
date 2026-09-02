@@ -148,6 +148,8 @@ def _attempt_step(
     deadline: float,
     attempts: list[Attempt],
     budget: dict[str, int],
+    *,
+    explicit_search: bool = False,
 ) -> tuple[transport.Response, str, str, str | None, detect.ContentVerdict] | None:
     """지문 1개로 한 번 시도한다. 429 면 예산 안에서 같은 지문으로 재시도한다.
 
@@ -198,7 +200,16 @@ def _attempt_step(
 
         html = response.text()
         markdown, title = extract.extract_for(request.intent, html, response.final_url)
-        verdict = detect.classify(response.status, html, markdown)
+        # AC-B-014-2 (양방향) — 면제는 입력 URL 이 선언과 매치하고 **도착 URL 도
+        # 여전히 선언 안**일 때만 산다. 선언된 검색 URL 이 비선언 페이지로
+        # 리디렉트되면 도착지는 우발이다 — nav_shell 판정이 원래대로 돌아온다.
+        # (codex 리뷰 R5-H1. is_explicit_search 는 판정 전용이라 요청이 없다.)
+        explicit_here = explicit_search and api_index.is_explicit_search(
+            api_index.load_cached(request.api_index), response.final_url or request.url
+        )
+        verdict = detect.classify(
+            response.status, html, markdown, explicit_search=explicit_here
+        )
 
         attempts.append(
             Attempt(
@@ -232,10 +243,10 @@ def _attempt_step(
 
 def _try_phase0(request: FetchRequest, attempts: list[Attempt]) -> api_index.Phase0Outcome | None:
     """인덱스에 항목이 있을 때만 Phase 0 을 돌린다. 없으면 None — 추측하지 않는다 (AC-B-010-2)."""
-    entries = api_index.load_cached(request.api_index)
-    if not entries:
+    index = api_index.load_cached(request.api_index)
+    if index is None or not index.entries:
         return None
-    found = api_index.entry_for(entries, request.url)
+    found = api_index.entry_for(index.entries, request.url)
     if found is None:
         return None
     entry, captures = found
@@ -326,6 +337,16 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
         attempts.append(_policy_attempt(rule=robots.rule))
         return _failure(url, "policy_blocked", attempts)
 
+    # ── 2.5 명시적 검색 판정 (AC-B-014) ──────────────────────────────────
+    # 입력 URL 판정은 여기서 한 번뿐이다 — 리디렉트 도착 URL 로 명시성을 **얻을**
+    # 수는 없다("우발적 검색 페이지 도착"이 명시가 되어 버린다, AC-B-014-2).
+    # 반대로 **잃을** 수는 있다: 각 응답 판정 직전에 도착 URL 이 선언 안인지
+    # 재확인해, 선언 밖으로 리디렉트된 도착지는 면제를 받지 못한다 (R5-H1).
+    # 선언은 판정 전용이라 어느 쪽에서도 요청이 생기지 않는다 (AC-B-014-1).
+    explicit_search = api_index.is_explicit_search(
+        api_index.load_cached(request.api_index), url
+    )
+
     # ── 3. 시도 계획 ────────────────────────────────────────────────────
     steps, _, table, _ = build_plan(url, max_attempts=request.max_attempts)
 
@@ -356,7 +377,10 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
             break
 
         try:
-            outcome = _attempt_step(request, step, deadline, attempts, budget)
+            outcome = _attempt_step(
+                request, step, deadline, attempts, budget,
+                explicit_search=explicit_search,
+            )
         except transport.PolicyBlocked as exc:
             # 여기가 redirect_hop 이 나오는 유일한 자리다 — 선요청 후 차단이라
             # 규칙 ID 를 버리면 세 SSRF 차단이 출력에서 구분되지 않는다.
@@ -479,7 +503,14 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
             return _failure(url, "policy_blocked", attempts)
 
         markdown, title = extract.extract_for(request.intent, outcome.html, outcome.final_url)
-        content_verdict = detect.classify(outcome.status, outcome.html, markdown)
+        # HTTP 티어와 같은 이유(AC-B-014-2 양방향) — 브라우저 리디렉트 도착지도
+        # 선언 밖이면 면제를 잃는다 (codex 리뷰 R5-H1).
+        explicit_here = explicit_search and api_index.is_explicit_search(
+            api_index.load_cached(request.api_index), outcome.final_url or url
+        )
+        content_verdict = detect.classify(
+            outcome.status, outcome.html, markdown, explicit_search=explicit_here
+        )
         # 벤더 판정은 HTTP 티어와 동일하게 성공·차단을 가리지 않고 한다 (SC-8 표본 편향 방지).
         waf = detect.waf_verdict(outcome.status, outcome.headers, outcome.html, table)
         _note_vendor(trace, waf, outcome.final_url)

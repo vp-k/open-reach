@@ -119,3 +119,36 @@ R5는 이 결론을 **뒤집지 않는다.** 다음을 구분한다:
 | 로그인 필요 Threads/X 콘텐츠 우회 | NG-1, 경계③ |
 | Jina Reader 기본 활성 | 경계② — opt-in만 |
 | xAI x_search 등 키 필요 검색 | NG-4/NG-6(키 발급·저장 금지) |
+
+## §9 실측 확정 (2026-09-02, 구현 대화 — `bench/evidence/r5-adapter-probe-2026-09-02.json`)
+
+§6의 열린 질문과 §5 후보표를 정직한 UA 실측 + robots.txt 전수 확인으로 확정한다.
+
+| 후보 | 실측 | 확정 |
+|------|------|------|
+| Naver 통합검색 | 정직한 UA 로 200 이지만 `search.naver.com/robots.txt` 가 `User-agent: *` **전면 Disallow** (AI/RAG 접근 명시 금지) | **미등재** — robots 존중은 fail-closed 정책 계층. 엔진 실주행도 `policy_blocked/robots` 로 올바르게 차단 |
+| Reddit `.rss` | 정직한 UA 로 200 이지만 `www.reddit.com/robots.txt` 가 `*` **전면 Disallow** | **미등재** — 같은 근거. 엔진 실주행 `policy_blocked/robots` 확인 |
+| HN Algolia | items·search 모두 200 JSON, `hn.algolia.com/robots.txt` **404(부재=허용)**, `news.ycombinator.com` robots 는 `/item` 허용 | **등재** (items 어댑터 + search 선언) |
+| Bluesky | `getPostThread?uri=at://{handle}/…` 가 핸들 그대로 **1-hop 200**(응답이 DID 정규화 — §6-2 해소, 2-hop 불요), `public.api.bsky.app/robots.txt` **Allow: / 명시** | **등재** — 단 XRPC 는 쿼리 파라미터 전용이라 AC-B-010-11 에 "chain 없는 endpoints 항목 한정 쿼리 치환자" 좁은 개정 필요(개정됨) |
+| Threads | 프로필 200 이지만 게시물 데이터가 초기 HTML 에 없는 **로그아웃 셸**(게시물 링크 0건, 콘텐츠는 비공개 GraphQL 후속 로드) | **미등재** — URL 템플릿 인덱스로 표현 불가 (NG-8/NG-10) |
+| Mastodon | (실측 불요) 인스턴스 호스트 가변 | **미등재** — `host` 정확 일치 인덱스로 표현 불가 |
+| Jina Reader | 200 마크다운이지만 `r.jina.ai/robots.txt` 가 특정 AI UA 만 허용하고 `*` **전면 Disallow** | **US-B-013 철회** — 우리 UA 는 `*` 그룹. 허용 목록 UA 로 신원을 바꾸지 않는다(정직한 UA 원칙). robots 가 바뀌면 재실측 후 재개 |
+
+§6-1 답: 전송 계층 이전에 robots 가 결론 — 권고안("정직한 UA 로 열리는 것만")의 상위 원칙인 "정책이 허용하는 것만"이 적용됐다. §6-2 답: 2-hop 불요, 쿼리 치환자 개정으로 1-hop 표현. §6-3 답: 예(리더 자체가 철회되어 무의미해졌으나 원칙은 US-B-014 의 "챌린지 판별 유지"로 승계).
+
+**§7 종료 조건 재조정**: US-B-013 인수 테스트는 철회로 제외. 나머지(US-B-012·014 green, `rate_http_only` 무회귀, codex 리뷰 C/H 0, source+verified_at+상한, 경계 음성 케이스)는 유지.
+
+## §10 종료 조건 검증 (2026-09-02, 구현 완료 시점)
+
+| §7 항목 | 결과 | 증적 |
+|---------|------|------|
+| US-B-012·014 인수 green | **PASS** — 동결 인수 13/13 (기존 11 무회귀 포함), 유닛 184/184 (리뷰 수정 변이 사멸 8종 포함) | `tests/acceptance/run.sh` |
+| `rate_http_only` 무회귀 | **PASS** — Tier-1 배터리 실주행 `rate_http_only=1.000`(12/12, `rescued_by_phase0=0`), R2/R3 rate_median 1.0 과 동일 | `bench/evidence/r5-final-run1-2026-09-02.txt`, `bench/history.jsonl` |
+| source+verified_at+합산 20 상한 | **PASS** — 출하 entries 3 + search 1 = 4/20, 전 항목 출처·확인일 보유. 로더가 합산 상한·출처 의무를 exit 3 으로 강제 | `engine/api_index.yaml`, `test_r5_query_and_search.py` |
+| 경계 음성 케이스 | **PASS** — 우발 검색 실패(us-b-014 AC-B-008-1)·어댑터 401→auth_wall(us-b-012 AC-B-012-3)·chain 쿼리 치환자 거부·리디렉트 도착 비면제 전부 요청 부재(hits=0)까지 단언 | `us-b-012`·`us-b-014` |
+| codex 리뷰 C/H 0 | **PASS** — 3라운드 종결, open C/H 0. R1: H2(리디렉트 이탈 면제 잔존, 쿼리 이름 위치 치환자)·M1(host 대조)·L2 발견 → H2·M1·L1 수정, L2 는 no_change_needed(내부 전용 모듈, 전 호출자 이행 — R2 타당 판정). R2: H 2건·L1 resolved, 신규 C/H 없음, M1 잔존 경로(선언 host 의 `@`) 지적 → `_check_host` 로드 거부 + `_host_matches` 가드 선행으로 수정. R3(확인 전용): resolved, 신규 C/H 없음. 포트 없는 선언=모든 포트 의미론은 R2 에서 "동결 인수 계약과 일관된 명시적 정책 선택" 판정 | scratchpad `r5-codex-review.txt`·`r5-codex-delta.txt`·`r5-codex-round3.txt` |
+
+라이브 실증(고정 픽스처 밖 실세계 확인): Bluesky 실 포스트가 HTTP 3회 실패(JS SPA) 후
+**phase0 쿼리 치환 어댑터로 실제 본문 취득**, HN 아이템은 HTTP 티어 자력 성공(Phase 0 은
+HTTP 실패 뒤에만 — AC-B-010-1 준수 실증), 선언된 검색 URL 의 UI 표현형은 JS 셸이라 길이
+하한으로 정직하게 실패(면제 폭 준수). `bench/evidence/r5-live-smoke-2026-09-02.json`.

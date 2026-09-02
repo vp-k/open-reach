@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "date": "2026-09-02",
+    "purpose": "R5(us-b-012/013/014) 어댑터 후보 공개성 실측 — 정직한 UA로 200 직접 확인(r5-contract §5 등재 의무)",
+    "user_agent": "open-reach/1.0.0 (+https://github.com/vp-k/open-reach)",
+    "method": "curl, 임퍼소네이션 없음, 리디렉션 미추적(threads 제외)"
+  },
+  "reddit_permalink_rss": {
+    "url": "https://www.reddit.com/r/rust/comments/1w4gxgf/sonora_native_crossplatform_music_player_with/.rss",
+    "status": 200, "ctype": "application/atom+xml; charset=UTF-8", "bytes": 92500,
+    "note": "연속 요청 시 429(대략 분당 한 자릿수 추정) — 70초 간격 후 200. 인덱스 등재 OK"
+  },
+  "reddit_permalink_rss_no_slug": {
+    "url": "https://www.reddit.com/r/rust/comments/1w4gxgf/.rss",
+    "status": 200, "ctype": "application/atom+xml; charset=UTF-8", "bytes": 92362,
+    "note": "slug 없이도 동일 피드 — 템플릿은 {sub}/{id}만 필요"
+  },
+  "hn_algolia_item": {
+    "url": "https://hn.algolia.com/api/v1/items/45042888",
+    "status": 200, "ctype": "application/json", "note": "text/title/children 필드. 공식 문서 hn.algolia.com/api"
+  },
+  "bluesky_get_post_thread": {
+    "url": "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=at://bsky.app/app.bsky.feed.post/3l6oveex3ii2l",
+    "status": 200, "ctype": "application/json", "bytes": 744000,
+    "note": "핸들 그대로 1-hop 200(응답이 DID로 정규화) — 2-hop 불필요(§6-2 해소). 단 uri가 쿼리 파라미터 → 쿼리 치환자 필요"
+  },
+  "naver_search": {
+    "url": "https://search.naver.com/search.naver?query=rust+tokio",
+    "status": 200, "ctype": "text/html; charset=UTF-8", "bytes": 1130000,
+    "note": "정직한 UA·임퍼소네이션 없음으로 200(§6-1 해소 — 권고안 성립). 검색 URL은 US-B-014 선언으로 처리"
+  },
+  "jina_reader": {
+    "url": "https://r.jina.ai/https://example.com/",
+    "status": 200, "ctype": "text/plain; charset=utf-8",
+    "note": "키 없이 마크다운 반환. opt-in --allow-reader 전용(US-B-013)"
+  },
+  "threads_profile": {
+    "url": "https://www.threads.com/@zuck",
+    "status": 200, "ctype": "text/html", "bytes": 579167,
+    "note": "미등재 확정 — 200이지만 게시물 데이터가 초기 HTML에 없음(로그아웃 셸, 게시물 링크 0건). 콘텐츠는 비공개 GraphQL 후속 로드로 URL 템플릿 인덱스로 표현 불가(NG-8/NG-10)"
+  },
+  "mastodon": {
+    "note": "미등재 확정 — 인스턴스 호스트 가변이라 host 정확 일치 인덱스(ApiIndexEntry.host)로 표현 불가(r5-contract §5 비고)"
+  }
+}

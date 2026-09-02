@@ -496,7 +496,7 @@ def test_source_must_be_https(tmp_path):
     """
     good = tmp_path / "good.yaml"
     good.write_text(_INDEX_YAML.format(source="https://ok.invalid/docs"), encoding="utf-8")
-    assert len(api_index.load(good)) == 1        # https 는 그대로 로드된다
+    assert len(api_index.load(good).entries) == 1        # https 는 그대로 로드된다
 
     bad = tmp_path / "bad.yaml"
     bad.write_text(_INDEX_YAML.format(source="http://attacker.invalid/docs"), encoding="utf-8")
@@ -624,13 +624,13 @@ def test_source_port_must_be_in_range(tmp_path):
     """
     ok = tmp_path / "port-ok.yaml"
     ok.write_text(_INDEX_YAML.format(source="https://ok.invalid:8443/docs"), encoding="utf-8")
-    assert len(api_index.load(ok)) == 1          # 범위 안 포트는 그대로 로드된다
+    assert len(api_index.load(ok).entries) == 1          # 범위 안 포트는 그대로 로드된다
 
     # 경계(65535)는 유효하다. 이 케이스가 없으면 "65535 를 거부"하는 회귀가
     # 조용히 통과한다 (codex LOW).
     edge = tmp_path / "port-edge.yaml"
     edge.write_text(_INDEX_YAML.format(source="https://ok.invalid:65535/docs"), encoding="utf-8")
-    assert len(api_index.load(edge)) == 1
+    assert len(api_index.load(edge).entries) == 1
 
     bad = tmp_path / "port-bad.yaml"
     bad.write_text(_INDEX_YAML.format(source="https://ok.invalid:99999/docs"), encoding="utf-8")

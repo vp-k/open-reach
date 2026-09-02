@@ -40,6 +40,13 @@ patchright + Chromium)로 폴백해 HTML 을 실제로 렌더한 뒤 공개 본�
 환경에서는 그 사실을 `browser_disabled` 사유로 강등할 뿐 없는 돌파를 지어내지 않는다(NG-10). 이
 티어는 매 호출 임시 프로필을 쓰고 지문 위조·행동 시뮬·쿠키 취급을 하지 않는다(A8 준수 — ADR-006).
 
+HTTP 티어가 본문을 못 얻으면 **Phase 0 공개 API 라우팅**이 개입한다(R5): 출하 인덱스
+(`engine/api_index.yaml`)에 실측·출처가 기록된 호스트 — Hacker News(`/item?id=N` → Algolia items
+API), Bluesky(`/profile/{handle}/post/{rkey}` → 공개 XRPC) — 는 플랫폼이 스스로 공개한 JSON
+엔드포인트로 같은 본문을 가져온다. 인덱스에 없는 호스트는 시도하지 않는다(URL 추측 금지). 또한
+사용자가 **검색 URL 을 직접 입력**한 경우(선언된 검색 엔드포인트: hn.algolia.com)는 결과 목록을
+본문으로 인정한다 — 면제는 nav_shell 판정 하나뿐이고 길이 하한·챌린지 판별은 그대로다(US-B-014).
+
 ### 서브커맨드
 
 | 명령 | 용도 |

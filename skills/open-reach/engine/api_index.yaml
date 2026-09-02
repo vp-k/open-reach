@@ -5,7 +5,7 @@
 # 문서화한 페이지이고, `verified_at` 은 우리가 직접 요청해 200 과 본문을 확인한
 # 날짜다. 증적은 bench/evidence/r2-payload-probe.json · r2-rescue-probe.json.
 #
-# 상한은 20 항목이다 (AC-B-010-15). 이 파일은 NG-9(지문표에 호스트 리터럴 금지)의
+# 상한은 entries·search 합산 20 항목이다 (AC-B-010-15, R5 개정). 이 파일은 NG-9(지문표에 호스트 리터럴 금지)의
 # 예외다 — 호스트를 적는 것이 존재 이유이기 때문이다. 대신 상한과 출처 의무가
 # 그 자리를 대신한다.
 #
@@ -48,3 +48,45 @@ entries:
     content_pointer: "items.0.body"
     endpoints:
       - "https://api.stackexchange.com/2.3/questions/{id}?site=stackoverflow&filter=withbody"
+
+  # 실측(2026-09-02, R5 §9): news.ycombinator.com robots 는 /item 허용, HN Algolia
+  # items API 는 200 JSON. 식별자가 쿼리에 있는 표현형이라 url_pattern 은
+  # `경로?쿼리` 를 매치한다 (R5 개정). content_pointer `text` 는 코멘트·Ask HN 류의
+  # 본문이다 — 링크 스토리는 text 가 null 이라 구제되지 않으며, 그것이 맞다
+  # (그 본문은 외부 링크에 있고, 없는 본문을 지어내지 않는다 — NG-10).
+  - host: news.ycombinator.com
+    url_pattern: '^/item\?id=(?P<id>[0-9]+)$'
+    source: "https://hn.algolia.com/api"
+    verified_at: "2026-09-02"
+    response_kind: json
+    content_pointer: "text"
+    endpoints:
+      - "https://hn.algolia.com/api/v1/items/{id}"
+
+  # 실측(2026-09-02, R5 §9): bsky.app robots 는 Allow: / 명시(Disallow 는
+  # /intent/compose 뿐), public.api.bsky.app robots 도 Allow: / 명시.
+  # getPostThread 는 핸들 그대로 1-hop 200 (응답이 DID 로 정규화 — 2-hop 불요).
+  # XRPC 는 쿼리 파라미터 전용이라 이 항목이 "chain 없는 endpoints 한정 쿼리
+  # 치환자" (AC-B-010-11 R5 개정) 의 실측 근거다. did:plc:… 핸들은 값의 `:` 가
+  # 금지 문자라 구제되지 않는다 — 좁게 열고 fail-closed 로 남긴다.
+  - host: bsky.app
+    url_pattern: '^/profile/(?P<handle>[A-Za-z0-9.-]+)/post/(?P<rkey>[a-z0-9]+)$'
+    source: "https://docs.bsky.app/docs/api/app-bsky-feed-get-post-thread"
+    verified_at: "2026-09-02"
+    response_kind: json
+    content_pointer: "thread.post.record.text"
+    endpoints:
+      - "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=at://{handle}/app.bsky.feed.post/{rkey}"
+
+# 검색 선언 (AC-B-014, R5) — 요청을 만들지 않는 판정 전용. 여기 적힌 URL 을
+# 사용자가 직접 입력했을 때만 검색 결과 목록(짧은 블록의 나열)을 본문으로
+# 인정한다(nav_shell 면제). 리디렉트로 도착한 경우는 해당 없다 (AC-B-014-2).
+search:
+  # 실측(2026-09-02, R5 §9): hn.algolia.com robots 404(부재=허용), search API 200 JSON.
+  # 패턴은 실측된 두 검색 표현형을 다 담는다 — UI(`/?q=…`)와 API(`/api/v1/search?query=…`).
+  # UI 는 JS SPA 라 T1 에서 길이 하한으로 실패할 수 있다 — 선언은 판정 전용이지
+  # 성공 약속이 아니다(NG-10: 없는 돌파를 지어내지 않는다).
+  - host: hn.algolia.com
+    url_pattern: '^/(?:api/v1/search\?query=|\?q=).+'
+    source: "https://hn.algolia.com/api"
+    verified_at: "2026-09-02"

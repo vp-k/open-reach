@@ -260,7 +260,9 @@ def _is_nav_shell(extracted: str) -> bool:
     return True
 
 
-def classify(status: int, html: str, extracted: str) -> ContentVerdict:
+def classify(
+    status: int, html: str, extracted: str, *, explicit_search: bool = False
+) -> ContentVerdict:
     """상태 코드·본문·신호를 함께 보고 최종 판정한다.
 
     403 이지만 본문이 실제로 있는 경우를 성공으로 인정하는 것이 이 함수의 요점이다.
@@ -284,7 +286,12 @@ def classify(status: int, html: str, extracted: str) -> ContentVerdict:
     if status == 401:
         return ContentVerdict("auth_wall", "wall", ("http_401",), True)
 
-    substantial = len(extracted) >= MIN_ARTICLE_CHARS and not _is_nav_shell(extracted)
+    # R5(AC-B-014-1): 선언된 검색 URL 은 결과 목록(짧은 블록의 나열)이 곧 본문이므로
+    # nav_shell 판정만 면제한다. 완화는 정확히 그 하나다 — 위의 wall·challenge 판별과
+    # 길이 하한(MIN_ARTICLE_CHARS)은 검색 URL 이라도 그대로 적용된다 (AC-B-014-3).
+    substantial = len(extracted) >= MIN_ARTICLE_CHARS and (
+        explicit_search or not _is_nav_shell(extracted)
+    )
     if substantial and not _is_js_notice(extracted, html):
         return ContentVerdict(None, "success", (), False)
 

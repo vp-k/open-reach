@@ -1,0 +1,12 @@
+tier=1 runs=1 negatives_checked=7
+vendor_scope: ["cloudflare", "akamai", "fastly", "imperva", "datadome"] out_of_scope: ["aws_waf", "f5", "kasada", "perimeterx"]
+by_vendor: {"akamai": 4, "cloudflare": 4, "datadome": 2, "fastly": 2}
+by_route: {"http": 12}
+by_reason: {}
+rate_http_only=1.000 rescued_by_phase0=0
+vendor_accuracy: {"correct": 16, "false_negative": 0, "false_positive": 0, "unmeasured": 0, "unresolved": 3}
+vendor_sc8: {"false_negative": 0, "false_positive": 0, "measurable": 19, "miss_rate": 0.0, "unmeasured": 0}
+vendor_misses: []
+vendor_unresolved: ["dd-neg-002: 기대 datadome · 감지 datadome (귀속 실패, 출처 https://www.saksfifthavenue.com/)", "cf-003: 기대 cloudflare · 감지 cloudflare (귀속 실패, 출처 https://fr.shopping.rakuten.com/)", "fa-002: 기대 fastly · 감지 fastly (귀속 실패, 출처 https://rust-lang.org/)"]
+regression=incomparable truncated=false
+BENCH_RESULT: rate=1.000 total=12 passed=12 failed=0

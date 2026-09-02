@@ -138,6 +138,25 @@ for _v in API_STEP1.values():
     _v["host"] = "evil.invalid"
 
 
+# ── US-B-012 / US-B-014 (R5) 대역 ──────────────────────────────────────────
+# 검색 결과 페이지의 최소 재현(NG-12): 짧은 블록(<80자) 다수, 합계 200~999자.
+# 명시 선언 없이 닿으면 nav_shell 로 validation_failed 가 되고, 선언된 검색
+# URL 로 닿으면 nav_shell 판정만 면제되어 성공해야 한다 (AC-B-014-1).
+# 문구는 wall(_로그인_·sign in·continue reading)·challenge·captcha 신호어를 피한다.
+_SEARCH_ITEMS = "".join(
+    f"<p>항목 {i} — rust 주제를 다루는 공개 문서의 한 줄 요약이 여기에 놓인다.</p>"
+    for i in range(1, 11)
+)
+SEARCH_RESULTS = f"""<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>검색 — open-reach fixture</title></head>
+<body><main><h1>검색</h1>{_SEARCH_ITEMS}</main></body></html>"""
+
+# 결과 0건 — 선언된 검색 URL 이라도 길이 하한(200자)은 유지되어야 한다 (AC-B-014-1).
+SEARCH_EMPTY = """<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>검색 — open-reach fixture</title></head>
+<body><main><h1>검색</h1><p>결과 0건.</p></main></body></html>"""
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     server_version = "open-reach-fixture/1"
@@ -162,6 +181,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib signature
         path = self.path.split("?", 1)[0]
+        # 히트 카운터는 쿼리를 떼고 세므로, "치환된 쿼리 값이 실제 요청에 실렸는가"는
+        # 응답 본문에 쿼리를 되비추는 라우트(RAWQ 마커)로만 구분한다 (US-B-012).
+        query = self.path.split("?", 1)[1] if "?" in self.path else ""
         _record_hit(path)
 
         # ── US-B-010 대역 ──────────────────────────────────────────────
@@ -195,6 +217,37 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/evil":
             # 응답이 지시한 목적지. 요청되면 그 자체로 계약 위반이다.
             self._send(200, API_README)
+            return
+
+        # ── US-B-012 / US-B-014 (R5) 대역 ─────────────────────────────
+        if path == "/q/item":
+            # 쿼리 캡처 원문 경로 — HTTP 티어를 실패시켜 Phase 0 로 넘긴다
+            self._send(403, CHALLENGE_403)
+            return
+        if path == "/api/qitem":
+            # 수신한 쿼리를 본문에 그대로 되비춘다 — 치환값 실림 단언용
+            self._send_json(200, {"item": {"text": f"{BODY_MARKER} RAWQ[{query}] {_LOREM}"}})
+            return
+        if path == "/api/auth401":
+            # 인증을 요구하는 어댑터 엔드포인트 — 돌파 없이 auth_wall 보고 (AC-B-012-3)
+            self._send(401, LOGIN_WALL)
+            return
+        if path == "/search/results":
+            if query == "q=none":
+                self._send(200, SEARCH_EMPTY)
+            else:
+                self._send(200, SEARCH_RESULTS)
+            return
+        if path == "/search/challenge":
+            # 선언된 검색 URL 이라도 챌린지 판정은 유지되어야 한다 (AC-B-014-3)
+            self._send(200, CHALLENGE_200)
+            return
+        if path == "/redir/tosearch":
+            # 리디렉트로 검색 페이지에 "도착"한 경우 — 명시 판정은 입력 URL 로만 (AC-B-014-2)
+            self.send_response(302)
+            self.send_header("Location", "/search/results?q=rust")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
             return
 
         if path == "/public/article":
