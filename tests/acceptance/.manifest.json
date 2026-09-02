@@ -1,6 +1,6 @@
 {
-  "frozenAt": "2026-09-02T07:26:31Z",
-  "gitHead": "7855e0391ee9461df223f42ce0bf1257651e4fcb",
+  "frozenAt": "2026-09-02T08:59:26Z",
+  "gitHead": "524ded6a2f5187a6447beeeb7d69036fa9c9483c",
   "hashAlgo": "sha256sum",
   "files": {
     "tests/acceptance/_lib.sh": "982af7e790b002b71fae0a405465457a3d487f07accb790376a0822975c9d9b4",
@@ -20,7 +20,7 @@
   },
   "specFile": {
     "path": "docs/SPEC.md",
-    "hash": "0c474d29f415b21b15f4fbdba4ba0f2c357c3895c56349e8ccbd0e8f35af9be7"
+    "hash": "983e73c2522d56375667460f2c39929d689ca633c20394243a705659c1655051"
   },
   "refreezeHistory": []
 }
