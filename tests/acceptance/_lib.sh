@@ -21,7 +21,18 @@ if [ -z "$PY" ]; then
   exit 1
 fi
 
-export PYTHONPATH="$ROOT/skills/open-reach${PYTHONPATH:+:$PYTHONPATH}"
+# 인터프리터가 실제로 쓰는 구분자로 잇는다. `:` 하드코딩은 Windows Python(구분자 `;`)에서
+# 기존 PYTHONPATH 를 `C:\...:C:/...` 로 만들어 전체를 존재하지 않는 한 경로로 붕괴시킨다
+# (R2-R9-L2-acc). 값이 비어 있으면 구분자 없이 우리 경로만 넣는다.
+# Git Bash 로 Windows Python 을 부르면 stdout 의 `\n` 이 `\r\n` 으로 나오고 `$(...)` 는
+# 끝의 `\n` 만 벗겨 `\r` 이 남는다 → `_PYSEP` 가 `;\r` 이 되어 PYTHONPATH 를 다시
+# 오염시킨다. CR/LF 를 모두 제거한다 (codex MEDIUM, R2-R9-L2-acc 후속).
+_PYSEP="$("$PY" -c 'import os; print(os.pathsep)' | tr -d '\r\n')"
+if [ -n "${PYTHONPATH:-}" ]; then
+  export PYTHONPATH="$ROOT/skills/open-reach${_PYSEP}${PYTHONPATH}"
+else
+  export PYTHONPATH="$ROOT/skills/open-reach"
+fi
 
 FAILURES=0
 ENG_OUT=""

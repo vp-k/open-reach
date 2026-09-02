@@ -1,6 +1,6 @@
 {
   "name": "open-reach",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "공개 웹 소스가 표준 fetch로 막혔을 때, 정책상 허용되는 공개 접근 경로를 순서대로 시도하고 결과·한계·근거를 재현 가능하게 남긴다. JS 챌린지는 지연 설치 브라우저 티어(T2·A8 준수)로 폴백. 로그인월·페이월 미돌파, 인증 우회·CAPTCHA·프록시 로테이션·지문 위조 없음. SSRF fail-closed.",
   "author": {
     "name": "user01"

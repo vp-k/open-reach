@@ -257,6 +257,43 @@ entries:
       - "__BASE__/api/step2/{name}"
 YAML
 
+# source 필드가 아예 없다 — "검증 가능한 출처"의 존재 의무를 어긴다 (R2-R8-M2-acc).
+write_index nosource.yaml <<'YAML'
+entries:
+  - host: __NETLOC__
+    url_pattern: "^/api/origin/(?P<name>[a-z]+)$"
+    verified_at: "2026-08-30"
+    response_kind: html
+    endpoints:
+      - "__BASE__/api/step2/{name}"
+YAML
+
+# source 가 http:// — 중간자가 바꿔 쓸 수 있어 검증 가능한 주장이 못 된다. https 만 받는다
+# (R2-R8-M2-acc).
+write_index httpsource.yaml <<'YAML'
+entries:
+  - host: __NETLOC__
+    url_pattern: "^/api/origin/(?P<name>[a-z]+)$"
+    source: "http://example.invalid/api-docs"
+    verified_at: "2026-08-30"
+    response_kind: html
+    endpoints:
+      - "__BASE__/api/step2/{name}"
+YAML
+
+# source 포트가 범위(0..65535)를 벗어났다 — 열 수 없는 주소는 출처가 되지 못한다
+# (R2-R10-M1). 스킴·호스트 검사는 통과하지만 포트 검사가 로드 시점에 막아야 한다.
+write_index badportsource.yaml <<'YAML'
+entries:
+  - host: __NETLOC__
+    url_pattern: "^/api/origin/(?P<name>[a-z]+)$"
+    source: "https://example.invalid:99999/api-docs"
+    verified_at: "2026-08-30"
+    response_kind: html
+    endpoints:
+      - "__BASE__/api/step2/{name}"
+YAML
+
 note "AC-B-010-15: 21항목 인덱스 → 로드 실패, 요청 없음"
 reset_hits
 run_engine fetch --api-index "$IDX/oversize.yaml" "$BASE/api/origin/ok"
@@ -268,6 +305,24 @@ reset_hits
 run_engine fetch --api-index "$IDX/noprov.yaml" "$BASE/api/origin/ok"
 assert_code 3 "확인일 없는 항목은 로드 실패(종료 코드 3)"
 assert_hits "/api/step" "0" "AC-B-010-15 출처 미검증 인덱스로 요청이 나감"
+
+note "AC-B-010-15: source 누락 → 로드 실패, 요청 없음 (R2-R8-M2-acc)"
+reset_hits
+run_engine fetch --api-index "$IDX/nosource.yaml" "$BASE/api/origin/ok"
+assert_code 3 "source 없는 항목은 로드 실패(종료 코드 3)"
+assert_hits "/api/step" "0" "R2-R8-M2-acc source 없는 인덱스로 요청이 나감"
+
+note "AC-B-010-15: source 가 http:// → 로드 실패, 요청 없음 (R2-R8-M2-acc)"
+reset_hits
+run_engine fetch --api-index "$IDX/httpsource.yaml" "$BASE/api/origin/ok"
+assert_code 3 "http source 는 로드 실패(종료 코드 3)"
+assert_hits "/api/step" "0" "R2-R8-M2-acc http source 인덱스로 요청이 나감"
+
+note "AC-B-010-15: source 포트 범위 밖 → 로드 실패, 요청 없음 (R2-R10-M1)"
+reset_hits
+run_engine fetch --api-index "$IDX/badportsource.yaml" "$BASE/api/origin/ok"
+assert_code 3 "열 수 없는 포트의 source 는 로드 실패(종료 코드 3)"
+assert_hits "/api/step" "0" "R2-R10-M1 포트 범위 밖 source 인덱스로 요청이 나감"
 
 # ── 1단은 정상이나 2단으로 넘어가면 안 되는 것 ──────────────────────────────
 
@@ -321,6 +376,12 @@ note "AC-B-010-14: 항목당 요청 예산 3회 — 4번째 엔드포인트는 �
 reset_hits
 run_engine fetch --api-index "$IDX/budget.yaml" "$BASE/api/origin/ok"
 assert_expr "d.get('ok')" "False" "본문 없는 엔드포인트만으로는 구제 실패"
+# R2-R8-M2-acc: ep4=0 만으로는 예산이 3인지 1인지 구분되지 않는다 — 앞 셋이 실제로
+# 각각 한 번씩 요청됐고 넷째만 안 됐다는 것을 못 박아야 예산이 **정확히** 3임을 증명한다.
+# 예산을 2 로 줄이는 변이는 ep3=0 으로 red 가 된다.
+assert_hits "/api/ep1" "1" "R2-R8-M2-acc 예산이 1번째 엔드포인트에 닿지 않음"
+assert_hits "/api/ep2" "1" "R2-R8-M2-acc 예산이 2번째 엔드포인트에 닿지 않음"
+assert_hits "/api/ep3" "1" "R2-R8-M2-acc 예산이 정확히 3번째 엔드포인트에 닿지 않음"
 assert_hits "/api/ep4" "0" "AC-B-010-14 예산 3회를 넘겨 4번째가 요청됨"
 assert_no_evil "budget"
 
@@ -350,6 +411,13 @@ assert_expr \
 # 2단이 실제로 돌았다는 것 — 감사가 1단짜리 성공을 2-hop 으로 착각하지 않게
 assert_expr "sum(1 for a in d['attempts'] if a['route'] == 'phase0')" "2" \
   "SC-9 감사 대상이 2-hop 이 아니다"
+
+# R2-R7-M1: **치환된 값이 실제 요청 URL 에 실렸는가.** 위 두 단언은 phase0 시도가 2건
+# 이라는 개수만 본다 — substitute() 를 통째로 빼도 `/api/step2/{version}` 리터럴을 2번째
+# 로 요청하며 개수는 그대로 2이고, step2 는 어떤 경로든 200 을 주므로 ok=True 까지 통과했다.
+# step1/ok 의 max_stable_version 은 `1.0.229` 다. 치환이 일어났다면 이 경로가 정확히 한 번
+# 요청되고, 일어나지 않았다면 0 이다. 이 단언이 그 맹점을 닫는다.
+assert_hits "/api/step2/1.0.229" "1" "R2-R7-M1 치환된 버전이 2단 URL 에 실리지 않았다"
 
 # robots 미검사 0건 — 규칙은 오리진당 한 번만 **가져오고**(캐시) 판정은 URL 마다 다시 한다.
 # 그래서 조회 횟수는 1 이다. "판정을 다시 한다"는 쪽은 위 norobots 케이스가 증명한다 —

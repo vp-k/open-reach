@@ -1,9 +1,9 @@
 {
-  "frozenAt": "2026-09-02T06:15:42Z",
-  "gitHead": "327e9365c7e6fbfa71d2e3fb5623dcb3cc0dd06a",
+  "frozenAt": "2026-09-02T07:26:31Z",
+  "gitHead": "7855e0391ee9461df223f42ce0bf1257651e4fcb",
   "hashAlgo": "sha256sum",
   "files": {
-    "tests/acceptance/_lib.sh": "6a1a608a6d9c72759abec3bd23179d653320096b7512523db42d2bb6a543964c",
+    "tests/acceptance/_lib.sh": "982af7e790b002b71fae0a405465457a3d487f07accb790376a0822975c9d9b4",
     "tests/acceptance/fixture_server.py": "cf0f3bddf359b6fb9774f00339a8fb43a56efe681b4d305f05227a361cd7e9a3",
     "tests/acceptance/run.sh": "5cfd61b90ddf8e736e5d356eb0d2c320b39f04c5cfbc530c1e7ac258ed395fa4",
     "tests/acceptance/us-b-001-public-fetch.sh": "9660cd9c8409f04dca8b3f4da57720cbba93c96a7117641e98ba12fa471a419e",
@@ -15,7 +15,7 @@
     "tests/acceptance/us-b-007-refresh.sh": "b84039d83e102e6a1d5a57735815a14241ece8c14aba096413e61446adfa496e",
     "tests/acceptance/us-b-008-response-validation.sh": "6eb0ec35302d70a69e37d83b487bef8b30a5476942efd50a8d4c76d5663ee5f1",
     "tests/acceptance/us-b-009-vendor-accuracy.sh": "eca0ea2fa269635b29559bab113888859272e660de7f28a5951bc2f6f07da1bf",
-    "tests/acceptance/us-b-010-api-routing-negative.sh": "5fd53d55192d52897a6e166571b0fdfb05acd8cb629769794f33913bde176a41",
+    "tests/acceptance/us-b-010-api-routing-negative.sh": "cad738a2b92fbc87126a62f17f7e993078a06401b37dc2040ff64f77b0207564",
     "tests/acceptance/us-b-011-browser-tier.sh": "bcfdb6049b6e1edb0c95cba5ce18518308aade93dbfae66bef4d5fcb19884f71"
   },
   "specFile": {

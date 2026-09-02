@@ -612,3 +612,27 @@ def test_source_must_have_a_host(tmp_path):
     bad.write_text(_INDEX_YAML.format(source="https://"), encoding="utf-8")
     with pytest.raises(api_index.IndexLoadError):
         api_index.load(bad)
+
+
+def test_source_port_must_be_in_range(tmp_path):
+    """죽여야 할 변이: `source_parts.port` 검사를 지우기.
+
+    `https://example.invalid:99999/docs` 는 스킴·호스트 검사를 통과하지만 포트가
+    범위(0..65535) 밖이라 **열 수 없는** 주소다. 출처는 사람이 확인하러 가는
+    주소이므로 열리지 않으면 "검증 가능한 주장"이 성립하지 않는다 (라운드 10 MEDIUM,
+    R2-R10-M1). 포트 검사를 지우면 이 인덱스가 그대로 로드되어 이 테스트가 red 가 된다.
+    """
+    ok = tmp_path / "port-ok.yaml"
+    ok.write_text(_INDEX_YAML.format(source="https://ok.invalid:8443/docs"), encoding="utf-8")
+    assert len(api_index.load(ok)) == 1          # 범위 안 포트는 그대로 로드된다
+
+    # 경계(65535)는 유효하다. 이 케이스가 없으면 "65535 를 거부"하는 회귀가
+    # 조용히 통과한다 (codex LOW).
+    edge = tmp_path / "port-edge.yaml"
+    edge.write_text(_INDEX_YAML.format(source="https://ok.invalid:65535/docs"), encoding="utf-8")
+    assert len(api_index.load(edge)) == 1
+
+    bad = tmp_path / "port-bad.yaml"
+    bad.write_text(_INDEX_YAML.format(source="https://ok.invalid:99999/docs"), encoding="utf-8")
+    with pytest.raises(api_index.IndexLoadError):
+        api_index.load(bad)

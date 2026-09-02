@@ -259,6 +259,16 @@ def _check_entry(entry: Any, index: int) -> None:
             f"{label}.source: 공식 문서는 호스트가 있는 https URL 이어야 한다 "
             f"(AC-B-010-15) — {source!r}"
         )
+    # 포트가 범위(0..65535)를 벗어나면 `.port` 접근이 ValueError 를 낸다. 이 검사를
+    # 빼면 `https://example.invalid:99999/docs` 처럼 **열 수 없는** URL 이 "검증 가능한
+    # 출처"로 통과한다 — 출처는 사람이 확인하러 가는 주소이므로 열리지 않으면 주장이
+    # 성립하지 않는다 (라운드 10 MEDIUM, R2-R10-M1).
+    try:
+        source_parts.port
+    except ValueError:
+        raise IndexLoadError(
+            f"{label}.source: 포트가 범위(0..65535)를 벗어났다 (AC-B-010-15) — {source!r}"
+        ) from None
     verified_at = _require_str(entry.get("verified_at"), f"{label}.verified_at")
     if not _DATE.match(verified_at):
         raise IndexLoadError(f"{label}.verified_at: YYYY-MM-DD 여야 한다 — {verified_at!r}")
