@@ -213,7 +213,7 @@ As a 리서처, I want to 원문 HTML로 본문을 얻지 못한 사이트가 �
 | url | str | 필수, 스킴 `http` 또는 `https`, 길이 2048 이하 | 대상 URL |
 | intent | str | `article`/`media`/`raw`, 기본 `article` | 추출 방식 선택 |
 | timeout_s | float | `0 < t <= 60`, 기본 `20` | 요청 1건 상한 |
-| allow_browser | bool | 기본 `false` | 브라우저 티어 허용 여부 (R1에서는 항상 `false`로 강제) |
+| allow_browser | bool | 기본 `false` | 브라우저 티어 허용 여부 (R1·R2에서는 `false` 강제, R3부터 `--allow-browser`로 opt-in) |
 | max_attempts | int | `1..12`, 기본 `6` | 격자 시도 상한 |
 
 ### Attempt
