@@ -21,13 +21,21 @@
 #        /api/v1/crates/serde        -> 200, max_stable_version="1.0.229"  (1단 성공)
 #        /api/v1/crates/serde/1.0.229/readme
 #          -> https://static.crates.io/readmes/serde/serde-1.0.229.html   (오리진 이탈)
-#      AC-B-010-12/NG-11 이 이를 막는다 — 응답이 우리를 다른 호스트로 보낼 수 없다.
 #      증거: bench/evidence/r2-crates-2hop-live-2026-09-01.json
-#      (r2-payload-probe.json 의 "200 / text/html / 3511B" 는 우리 오리진 가드 없이
-#       리디렉션을 따라간 값이라 이 벽을 보여 주지 못했다.)
-#   static.crates.io URL 을 인덱스 리터럴로 조립하면 AC-B-010-12 는 만족하지만,
-#   그 URL 형식은 공식 문서에 없어 AC-B-010-15 의 `source` 의무를 채울 수 없다.
-#   근거 없는 항목은 넣지 않는다 (NG-10). 이 항목은 여전히 여기에 없다.
+#
+#   ── 정정(R3): 이 항목이 여기에 없는 진짜 이유 ──
+#   /api/v1/crates/{name}/{version}/readme 자체는 crates.io 와 **동일 오리진**의
+#   문서화된 엔드포인트다. 도달 불가라서 빠진 게 아니다 — 일반 HTTP 티어는 이 302 를
+#   홉별 SSRF·robots 재검사와 함께 따라가 readme 본문을 실제로 받아 온다(2026-09-01
+#   실측: ok, final_route=http, static.crates.io 본문). AC-B-010-12(다른 호스트로
+#   보낼 수 없다)는 **Phase 0 인덱스 조립 체인에만** 걸리는 규칙이고, 일반 fetch 의
+#   리디렉션 추종에는 걸리지 않는다.
+#   따라서 Phase 0 인덱스에서 크레이트 readme 를 라우팅하려면 리터럴을 조립해야 하는데,
+#   ㉠ readme API 를 그대로 넣으면 인덱스 체인이 오리진을 이탈(AC-B-010-12 위반),
+#   ㉡ static.crates.io URL 형식을 직접 조립하면 공식 문서에 그 형식이 없어
+#      AC-B-010-15 의 `source` 의무를 못 채운다.
+#   Phase 0 체인은 동일 오리진 유지가 설계 결정이므로(Q1: 현행 유지) 이 항목은 인덱스에
+#   넣지 않는다 — 그러나 이는 '도달 불가'가 아니라 '일반 티어의 몫'이라는 뜻이다 (NG-10).
 
 entries:
   # 실측: 원문 HTML 은 403 (r2-rescue-probe.json), 공개 API 는 200 에

@@ -11,11 +11,24 @@ import time
 from email.utils import parsedate_to_datetime
 from typing import Any
 
-from . import api_index, detect, extract, observe, policy, profiles as profiles_mod, transport
+from . import api_index, browser as browser_mod, detect, extract, observe, policy, profiles as profiles_mod, transport
 from .models import POLICY_RULES, WAF_VENDORS, Attempt, FetchRequest, FetchResult, WafVerdict, utc_now
 
 # 계획 단계를 더 밟아도 결과가 달라지지 않는 판정들
 _TERMINAL_REASONS = frozenset({"auth_wall", "paywall", "rate_limited", "not_found"})
+
+# 브라우저 티어(T2)가 오를 자리. curl_cffi 가 JS 를 실행하지 못해 막힌 두 경우만 대상이다:
+#   ① waf_challenge — 클라이언트 사이드 챌린지(예: aws_waf·kasada·f5).
+#   ② validation_failed + js_shell 신호 — 본문을 JS 가 클라이언트에서 렌더하는 SPA.
+# 경계(auth_wall·paywall)·rate_limited·not_found 는 대상이 아니다 — 렌더한다고
+# 로그인·구독·속도제한·부재가 뒤집히지 않으며 그 시도 자체가 NG-1/NG-6 이다. 같은
+# validation_failed 라도 empty_body·nav_shell 은 브라우저로 안 넘긴다(원인이 렌더가 아니다).
+def _browser_worthy(reason: str, signals: tuple) -> bool:
+    if reason == "waf_challenge":
+        return True
+    if reason == "validation_failed" and "js_shell" in signals:
+        return True
+    return False
 
 # Phase 0 을 **쓰면 안 되는** 판정들.
 #   auth_wall·paywall — HTML 이 로그인·구독을 요구해서 못 준 본문을 API 로 대신
@@ -292,13 +305,6 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
     attempts: list[Attempt] = []
 
     # ── 1. 정책 가드 (요청 전) ───────────────────────────────────────────
-    if request.allow_browser:
-        # R1 에는 브라우저 경로가 없다. 있는 척하지 않고 정책 사유로 명시한다 (NG-10)
-        sys.stderr.write(
-            "[open-reach] browser_disabled: R1 에는 브라우저 폴백 경로가 없다 — "
-            "--allow-browser 는 무시된다\n"
-        )
-
     try:
         verdict = policy.check_url(url)
     except policy.UnresolvableHost:
@@ -338,6 +344,10 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
 
     deadline = time.monotonic() + request.timeout_s * max(1, request.max_attempts)
     last_reason = "unknown"
+    # 마지막 판정의 신호까지 들고 있는다. `validation_failed` 는 원인이 js_shell(클라이언트
+    # 렌더)·empty_body·nav_shell 로 갈리는데, 브라우저 티어가 답인 것은 js_shell 뿐이다.
+    # 사유 문자열만으로는 그 셋을 구분할 수 없어 신호를 함께 남긴다.
+    last_signals: tuple = ()
     budget = {"used": 0}
 
     for step in steps:
@@ -393,6 +403,7 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
             )
 
         last_reason = content_verdict.reason
+        last_signals = tuple(content_verdict.signals)
         if content_verdict.terminal or last_reason in _TERMINAL_REASONS:
             # 경계·CAPTCHA·레이트리밋은 다음 지문으로 바꿔 다시 두드릴 대상이 아니다
             break
@@ -431,5 +442,75 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
                 return _failure(url, "policy_blocked", attempts)
             if phase0.reason is not None:
                 last_reason = phase0.reason
+                # Phase 0 은 JSON API 라 js_shell 신호가 없다 — 신호를 물려주지 않는다.
+                last_signals = ()
+
+    # ── 5. 브라우저 티어 (T2, R3) — JS 챌린지에서만 오른다 (ADR-004) ──
+    #   HTTP·Phase 0 가 모두 실패하고 마지막 판정이 waf_challenge 일 때만. curl_cffi 가
+    #   JS 를 못 돌려 막힌 자리를 실제 렌더로 넘는다. 경계·레이트리밋은 대상이 아니다.
+    if request.allow_browser and _browser_worthy(last_reason, last_signals):
+        available, why = browser_mod.browser_available()
+        if not available:
+            # 지연 설치 대상이 없다 — 없는 돌파를 지어내지 않고 정책 사유로 명시한다 (NG-10)
+            sys.stderr.write(
+                f"[open-reach] browser_disabled: 브라우저 티어 미설치 — {why}. "
+                "설치: python -m patchright install chromium\n"
+            )
+            attempts.append(_policy_attempt(rule="browser_disabled"))
+            return _failure(url, last_reason, attempts)
+
+        outcome = browser_mod.browser_fetch(url, timeout_s=request.timeout_s)
+        if not outcome.ok:
+            attempts.append(
+                Attempt("browser", None, None, "original", None, outcome.elapsed_ms, "error")
+            )
+            return _failure(url, outcome.error or last_reason, attempts)
+
+        # NG-11 재검사(2차 방어): 브라우저 route 가드가 홉별로 사설 대역을 이미 막지만,
+        # 최종 도착지도 한 번 더 본다. UnresolvableHost 는 fail-closed 로 차단한다 —
+        # 코드베이스 전역(hop_check·robots 프리체크)이 DNS 실패를 막는 것과 같은 관례다.
+        try:
+            final_verdict = policy.check_url(outcome.final_url)
+        except policy.UnresolvableHost as exc:
+            final_verdict = policy.PolicyVerdict(False, "private_range", str(exc))
+        if not final_verdict.allowed:
+            _explain_block(final_verdict.rule, final_verdict.detail)
+            attempts.append(_policy_attempt(rule=final_verdict.rule))
+            return _failure(url, "policy_blocked", attempts)
+
+        markdown, title = extract.extract_for(request.intent, outcome.html, outcome.final_url)
+        content_verdict = detect.classify(outcome.status, outcome.html, markdown)
+        # 벤더 판정은 HTTP 티어와 동일하게 성공·차단을 가리지 않고 한다 (SC-8 표본 편향 방지).
+        waf = detect.waf_verdict(outcome.status, outcome.headers, outcome.html, table)
+        _note_vendor(trace, waf, outcome.final_url)
+        attempts.append(
+            Attempt(
+                "browser", None, None, "original",
+                outcome.status, outcome.elapsed_ms, content_verdict.outcome,
+            )
+        )
+        if content_verdict.reason is None:
+            _record_success_safely(
+                url,
+                waf_vendor=waf.vendor,
+                route="browser",
+                impersonate=None,
+                url_variant="original",
+            )
+            return FetchResult(
+                url=url,
+                ok=True,
+                content_markdown=markdown,
+                metadata={
+                    "title": title,
+                    "final_url": outcome.final_url,
+                    "content_type": outcome.headers.get("content-type", "text/html"),
+                    "fetched_at": utc_now(),
+                },
+                failure_reason=None,
+                attempts=attempts,
+                final_route="browser",
+            )
+        last_reason = content_verdict.reason
 
     return _failure(url, last_reason, attempts)

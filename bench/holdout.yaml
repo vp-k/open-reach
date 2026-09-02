@@ -1,0 +1,146 @@
+# open-reach R3 홀드아웃 배터리 (SC-6) — 과적합 방지용 '보류 집합'
+#
+# 목적: 출하 배터리(bench/battery.yaml)의 특정 도메인에 fetcher 가 과적합했는지를
+# 잰다. 개발·튜닝에 **한 번도 쓰지 않은** 도메인만 모아, 같은 방법론으로 골라 돌파
+# 율을 측정한다. SC-6 은 battery 돌파율 − holdout 돌파율 ≤ 15%p(dead-band 3%p)를
+# 요구한다 — 낙폭이 크면 배터리 도메인에만 맞춰졌다는 뜻이다.
+#
+# 선정 방법론은 battery 와 **동일**하다: r2-vendor-probe.json 에서 감지기가 신뢰도
+# 1.0 으로 벤더를 지목한 URL 만 쓰고, battery 의 18개 등록가능도메인과 **겹치지
+# 않는다**(집합상 disjoint — 아래 added_reason 에 실측 근거). 양성은 실측 본문
+# 취득이 확인된 URL, 음성은 R1 HTTP 티어로 뚫리지 않음이 확인된 403 챌린지다.
+#
+# 범위를 cloudflare·akamai 로 한정한 이유(G-8 명시): battery 양성 12건은 cloudflare
+# 4·akamai 4·fastly 2·datadome 2 다. r2 재실측 신뢰도 1.0 **본문 취득** 후보 중
+# battery 밖 신규 도메인은 cloudflare·akamai 에는 넉넉하나(각 5·6건), fastly 는
+# pypi 1건뿐이고 datadome 은 0건이라 양성 2건을 채울 수 없다. 없는 후보를 추측으로
+# 만들지 않고(NG-10), 대신 battery 양성의 67%(8/12)를 차지하는 두 지배 벤더의
+# cf 4·akamai 4 구성을 **정확히 그대로** 복제해 like-for-like 일반화만 측정한다.
+role: production
+vendor_scope:
+  - cloudflare
+  - akamai
+vendor_scope_reason: "battery 양성의 지배 두 벤더(cf 4·akamai 4 = 12건 중 8건)를 battery 와 disjoint 한 신규 도메인으로 정확히 복제한 홀드아웃. fastly·datadome 은 r2 재실측에 battery 밖 신뢰도 1.0 본문취득 후보가 각 1·0건뿐이라 양성 2건 하한을 채울 수 없어 제외(G-1 하향 아님 — 채울 수 있는 만큼만 선언, G-8)."
+
+entries:
+  # ── cloudflare 양성 4 (battery cf 양성 4 복제) ──────────────────────
+  # 양성 — 신규 도메인, 실측 2997자
+  - id: ho-cf-001
+    url: https://www.commbank.com.au/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 호주 대형은행 — 벤더 자사 도메인 밖 (battery 밖 신규, 실측 2997자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1200
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 3218자
+  - id: ho-cf-002
+    url: https://www.epicgames.com/store/en-US/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 게임 스토어 — 다른 업종/오리진 (battery 밖 신규, 실측 3218자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1200
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 2383자
+  - id: ho-cf-003
+    url: https://www.patreon.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 크리에이터 플랫폼 (battery 밖 신규, 실측 2383자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1200
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 5592자
+  - id: ho-cf-004
+    url: https://www.crunchbase.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: 기업 DB — 단일 특성 의존 방지 (battery 밖 신규, 실측 5592자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1500
+      normalized_hash: null
+  # ── akamai 양성 4 (battery ak 양성 4 복제) ─────────────────────────
+  # 양성 — 신규 도메인, 실측 1571자
+  - id: ho-ak-001
+    url: https://www.fidelity.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 금융 — akamai 대표 업종 (battery 밖 신규, 실측 1571자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1100
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 3599자
+  - id: ho-ak-002
+    url: https://www.lloydsbank.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 영국 은행 — 지역 다양화 (battery 밖 신규, 실측 3599자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1500
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 3578자
+  - id: ho-ak-003
+    url: https://www.usbank.com/index.html
+    tier: 1
+    waf_expected: akamai
+    added_reason: 미국 은행 (battery 밖 신규, 실측 3578자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1500
+      normalized_hash: null
+  # 양성 — 신규 도메인, 실측 2207자
+  - id: ho-ak-004
+    url: https://www.walmart.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: 대형 리테일 — 업종 다양화 (battery 밖 신규, 실측 2207자, r2-probe 신뢰도 1.0)
+    negative_case: null
+    expected:
+      title_contains: null
+      body_contains: null
+      min_chars: 1200
+      normalized_hash: null
+  # ── cloudflare 음성 2 (battery cf 음성 2 복제) — 403 챌린지 ────────
+  - id: ho-cf-neg-001
+    url: https://www.petco.com/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: cloudflare 403 챌린지 — R1 HTTP 티어로 뚫리지 않음 확인 (battery 밖 신규, G-2)
+    negative_case: waf_challenge
+    expected: null
+  - id: ho-cf-neg-002
+    url: https://www.bunnings.com.au/
+    tier: 1
+    waf_expected: cloudflare
+    added_reason: cloudflare 403 챌린지 — 같은 벤더 다른 오리진 (battery 밖 신규, G-2)
+    negative_case: waf_challenge
+    expected: null
+  # ── akamai 음성 1 (battery ak 음성 1 복제) — 403 챌린지 ────────────
+  - id: ho-ak-neg-001
+    url: https://www.aa.com/
+    tier: 1
+    waf_expected: akamai
+    added_reason: akamai 403 챌린지 — R1 HTTP 티어로 뚫리지 않음 확인 (battery 밖 신규, G-2)
+    negative_case: waf_challenge
+    expected: null

@@ -1,0 +1,13 @@
+tier=1 runs=3 negatives_checked=3
+vendor_scope: ["cloudflare", "akamai"] out_of_scope: ["aws_waf", "datadome", "f5", "fastly", "imperva", "kasada", "perimeterx"]
+by_vendor: {"akamai": 12, "cloudflare": 12}
+by_route: {"http": 24}
+by_reason: {}
+rate_http_only=1.000 rescued_by_phase0=0
+vendor_accuracy: {"correct": 10, "false_negative": 0, "false_positive": 0, "unmeasured": 0, "unresolved": 1}
+vendor_sc8: {"false_negative": 0, "false_positive": 0, "measurable": 11, "miss_rate": 0.0, "unmeasured": 0}
+vendor_misses: []
+vendor_unresolved: ["ho-cf-002: 기대 cloudflare · 감지 cloudflare (귀속 실패, 출처 https://store.epicgames.com/?lang=en-US)"]
+regression=incomparable truncated=false
+BENCH_RESULT: rate=1.000 total=24 passed=24 failed=0
+EXIT=0

@@ -82,6 +82,26 @@ CHALLENGE_403 = """<!doctype html>
 <html><head><meta charset="utf-8"><title>Access denied</title></head>
 <body><h1>Access denied</h1><p>Your request has been blocked.</p></body></html>"""
 
+# 브라우저 티어(T2) 대역 — JS 를 실행해야만 본문이 드러나는 챌린지.
+# 비-JS 클라이언트(curl_cffi=HTTP 티어)에게는 challenge 신호만 보여 waf_challenge 로
+# 막히고, 실제 브라우저가 스크립트를 실행하면 title·body 가 공개 기사로 교체되어
+# 어떤 challenge 신호도 남지 않는다 → detect.classify 가 success 로 판정한다.
+# 실제 챌린지의 복사본이 아니라 "JS 실행 시에만 본문이 나타난다"는 판정 신호의 최소
+# 재현이다 (NG-12). 스크립트·기사 문면에 challenge/ captcha 키워드를 넣지 않는다.
+JS_CHALLENGE = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Just a moment...</title></head>
+<body>
+<div id="challenge-running">Checking your browser before accessing the site.
+Please enable JavaScript and cookies to continue.</div>
+<script>
+document.title = "공개 기술 문서";
+document.body.innerHTML =
+  "<article><h1>공개 기술 문서</h1>" +
+  "<p>{BODY_MARKER}</p>" +
+  "<p>{_LOREM}</p></article>";
+</script>
+</body></html>"""
+
 # 403이지만 정상 본문인 케이스 — 상태 코드 단독 판정 금지의 반례
 FORBIDDEN_BUT_REAL = f"""<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><title>정상 본문 (403)</title></head>
@@ -188,6 +208,9 @@ class Handler(BaseHTTPRequestHandler):
                        extra={"Set-Cookie": "fixture_clearance=abc123; Path=/"})
         elif path == "/waf/challenge-403":
             self._send(403, CHALLENGE_403)
+        elif path == "/waf/js-challenge":
+            # 200 + challenge 신호 → HTTP 티어는 waf_challenge. JS 실행 시에만 본문 등장.
+            self._send(200, JS_CHALLENGE)
         elif path == "/waf/captcha":
             self._send(403, CAPTCHA_PAGE)
         elif path == "/waf/forbidden-but-real":

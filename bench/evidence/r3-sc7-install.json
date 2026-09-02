@@ -1,0 +1,31 @@
+{
+  "probe": "sc7-clean-env-stdlib-only",
+  "optional_deps_blocked": [
+    "curl_cffi",
+    "patchright"
+  ],
+  "browser_available": false,
+  "results": [
+    {
+      "url": "https://docs.python.org/3/library/json.html",
+      "ok": true,
+      "final_route": "http",
+      "reason": null,
+      "md_len": 25138,
+      "routes": [
+        "http"
+      ]
+    },
+    {
+      "url": "https://www.rust-lang.org/",
+      "ok": true,
+      "final_route": "http",
+      "reason": null,
+      "md_len": 2692,
+      "routes": [
+        "http",
+        "http"
+      ]
+    }
+  ]
+}

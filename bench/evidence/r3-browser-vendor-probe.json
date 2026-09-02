@@ -1,0 +1,61 @@
+{
+  "probe": "r3-browser-vendor",
+  "cases": [
+    {
+      "target_vendor": "perimeterx",
+      "url": "https://www.zillow.com/homes/",
+      "ok": false,
+      "final_route": "policy",
+      "reason": "policy_blocked",
+      "md_len": 0,
+      "detected_vendor": null,
+      "routes": [
+        "policy"
+      ]
+    },
+    {
+      "target_vendor": "aws_waf",
+      "url": "https://www.imdb.com/chart/top/",
+      "ok": false,
+      "final_route": "policy",
+      "reason": "policy_blocked",
+      "md_len": 0,
+      "detected_vendor": null,
+      "routes": [
+        "policy"
+      ]
+    },
+    {
+      "target_vendor": "kasada",
+      "url": "https://www.canadagoose.com/us/en/home",
+      "ok": false,
+      "final_route": "http",
+      "reason": "rate_limited",
+      "md_len": 0,
+      "detected_vendor": null,
+      "routes": [
+        "http",
+        "http",
+        "http",
+        "http"
+      ]
+    },
+    {
+      "target_vendor": "f5",
+      "url": "https://www.aa.com/homePage.do",
+      "ok": false,
+      "final_route": "browser",
+      "reason": "waf_challenge",
+      "md_len": 0,
+      "detected_vendor": "akamai",
+      "routes": [
+        "http",
+        "http",
+        "http",
+        "http",
+        "http",
+        "browser"
+      ]
+    }
+  ]
+}

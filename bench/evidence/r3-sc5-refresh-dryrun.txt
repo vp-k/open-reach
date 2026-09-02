@@ -1,0 +1,108 @@
+observations=1991 profiles_path=C:\Users\user01\Desktop\code\claude-code\open-reach\skills\open-reach\engine\profiles.yaml
+mode=dry-run
+--- profiles.yaml (before)
++++ profiles.yaml (after)
+@@ -38,7 +38,7 @@
+         weight: 1.0
+       - id: cf-server
+         kind: header
+-        pattern: 'server: cloudflare'
++        pattern: "server: cloudflare"
+         weight: 0.6
+       - id: cf-interstitial
+         kind: body
+@@ -53,8 +53,9 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-07-20
+-    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    last_reviewed: 2026-09-02
++    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    observed_success: 457
+   - vendor: akamai
+     detectors:
+       - id: abck-cookie
+@@ -115,8 +116,9 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-07-20
+-    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    last_reviewed: 2026-09-02
++    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    observed_success: 174
+   - vendor: datadome
+     detectors:
+       - id: datadome-cookie
+@@ -136,8 +138,9 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-07-20
+-    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    last_reviewed: 2026-09-02
++    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    observed_success: 69
+   - vendor: perimeterx
+     detectors:
+       - id: px3-cookie
+@@ -169,8 +172,9 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-07-20
+-    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    last_reviewed: 2026-09-02
++    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    observed_success: 15
+   - vendor: imperva
+     detectors:
+       - id: incap-session-cookie
+@@ -219,7 +223,7 @@
+         weight: 1.0
+       - id: f5-support-id
+         kind: body
+-        pattern: 'support id is:'
++        pattern: "support id is:"
+         weight: 0.6
+       - id: f5-ts-cookie
+         kind: cookie
+@@ -315,13 +319,14 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-08-25
++    last_reviewed: 2026-09-02
+     seeded_from: null
++    observed_success: 127
+   - vendor: unknown_challenge
+     detectors: []
+     impersonate_candidates:
+-      - safari
+-      - chrome
++      - chrome
++      - safari
+       - firefox
+       - safari_ios
+       - chrome_android
+@@ -331,8 +336,9 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-07-20
+-    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    last_reviewed: 2026-09-02
++    seeded_from: insane-search@d74ffff9830ba11b485ba948c198e3b5177d4308
++    observed_success: 56
+   - vendor: none
+     detectors: []
+     impersonate_candidates:
+@@ -345,5 +351,6 @@
+     fallback_order:
+       - http
+       - browser
+-    last_reviewed: 2026-08-25
++    last_reviewed: 2026-09-02
+     seeded_from: null
++    observed_success: 1093

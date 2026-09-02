@@ -35,6 +35,11 @@ python -m open_reach.engine fetch "<URL>"
 동작한다(설치 개입 0회 — P2 계약). 성공하면 본문 마크다운을 stdout 으로, 실패하면 분류된 실패 사유와
 시도 이력(attempts)을 낸다.
 
+`--allow-browser` 를 주면, HTTP 티어(T1)가 JS 챌린지에 막힐 때만 지연 설치 브라우저 티어(T2 ·
+patchright + Chromium)로 폴백해 HTML 을 실제로 렌더한 뒤 공개 본문을 취득한다. patchright 미설치
+환경에서는 그 사실을 `browser_disabled` 사유로 강등할 뿐 없는 돌파를 지어내지 않는다(NG-10). 이
+티어는 매 호출 임시 프로필을 쓰고 지문 위조·행동 시뮬·쿠키 취급을 하지 않는다(A8 준수 — ADR-006).
+
 ### 서브커맨드
 
 | 명령 | 용도 |
