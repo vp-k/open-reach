@@ -44,6 +44,7 @@ python -m open_reach.engine explain "https://example.com/article"   # 정책 판
 
 - [`docs/overview.md`](docs/overview.md) — 문제 정의·Non-Goals(헌법)
 - [`docs/SPEC.md`](docs/SPEC.md) — 데이터 모델·인수 기준·실패 사유 분류
+- [`docs/operations.md`](docs/operations.md) — 운영·유지보수 런북(정기 점검·노후 경고·회귀 감지)
 - [`docs/adr/`](docs/adr/) — 주요 설계 결정
 - [`docs/policy-boundaries.md`](docs/policy-boundaries.md) — 경계 상세
 

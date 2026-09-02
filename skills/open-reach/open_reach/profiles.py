@@ -6,13 +6,21 @@ R1 은 URL 변형을 아직 구현하지 않으므로 실행 가능한 변형은
 
 from __future__ import annotations
 
+import datetime as _dt
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
 from . import observe, transport, yamlio
+from .models import utc_today
 
 SUPPORTED_VARIANTS = ("original",)
+
+# SPEC §263: `last_reviewed` 가 이 일수를 넘기면 경고한다 (fail-closed 가 아니라 경고).
+STALE_THRESHOLD_DAYS = 90
+
+_warned_stale = False
 
 # `example.com`·`www.site.co.kr` 같은 호스트/도메인 리터럴 (NG-9)
 _HOST_LITERAL = re.compile(r"\b[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]{2,})+\b", re.I)
@@ -43,6 +51,70 @@ def lint(profiles: list[dict[str, Any]]) -> list[str]:
     return violations
 
 
+def stale_profiles(
+    profiles: list[dict[str, Any]],
+    *,
+    today: _dt.date,
+    threshold_days: int = STALE_THRESHOLD_DAYS,
+) -> list[dict[str, Any]]:
+    """`last_reviewed` 로 신선도를 증명하지 못하는 벤더를 돌려준다 (SPEC §263).
+
+    - 파싱 가능한 날짜이고 `(today - 날짜) > threshold` → 노후 (`days_since` = 일수).
+    - 날짜가 없거나 파싱 불가 → 신선도를 증명할 수 없으므로 함께 경고 (`days_since=None`).
+      검토되지 않은 지문을 조용히 통과시키면 무기한 산다 (NG-10 정신).
+
+    순수 함수다 — `today` 를 주입받아 결정적이고 부작용이 없다(단위테스트 대상).
+    """
+    stale: list[dict[str, Any]] = []
+    for profile in profiles:
+        vendor = profile.get("vendor", "?")
+        raw = profile.get("last_reviewed")
+        if raw is None:
+            stale.append({"vendor": vendor, "last_reviewed": None, "days_since": None})
+            continue
+        try:
+            reviewed = _dt.date.fromisoformat(str(raw))
+        except ValueError:
+            stale.append({"vendor": vendor, "last_reviewed": str(raw), "days_since": None})
+            continue
+        days = (today - reviewed).days
+        if days > threshold_days:
+            stale.append({"vendor": vendor, "last_reviewed": str(raw), "days_since": days})
+    return stale
+
+
+def warn_stale(
+    profiles: list[dict[str, Any]],
+    *,
+    today: _dt.date | None = None,
+    threshold_days: int = STALE_THRESHOLD_DAYS,
+    stream: Any | None = None,
+) -> list[dict[str, Any]]:
+    """노후 지문이 있으면 stderr 로 한 번만 경고한다 (조용한 노후 방지).
+
+    `transport.warn_if_degraded` 와 같은 관례: 능력·데이터 저하를 조용히 두지 않는다.
+    돌려주는 값은 `stale_profiles` 결과라 호출부·테스트가 확인할 수 있다.
+    """
+    global _warned_stale
+    if today is None:
+        today = _dt.date.fromisoformat(utc_today())
+    stale = stale_profiles(profiles, today=today, threshold_days=threshold_days)
+    if not stale or _warned_stale:
+        return stale
+    _warned_stale = True
+    parts = [
+        f"{e['vendor']}(검토 날짜 불명)" if e["days_since"] is None
+        else f"{e['vendor']}({e['days_since']}일)"
+        for e in stale
+    ]
+    (stream or sys.stderr).write(
+        f"[open-reach] 지문 노후 경고 — {threshold_days}일 초과: "
+        + ", ".join(parts)
+        + ". `refresh` 로 갱신을 검토하라.\n"
+    )
+    return stale
+
+
 def load(path: Path | None = None) -> list[dict[str, Any]]:
     target = path or observe.profiles_path()
     if not target.exists():
@@ -57,6 +129,7 @@ def load(path: Path | None = None) -> list[dict[str, Any]]:
     violations = lint(profiles)
     if violations:
         raise ProfilesError("지문표 린트 위반 (NG-9):\n  " + "\n  ".join(violations))
+    warn_stale(profiles)  # SPEC §263: 노후 지문을 조용히 통과시키지 않는다
     return profiles
 
 
