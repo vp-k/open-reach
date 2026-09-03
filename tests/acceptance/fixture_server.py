@@ -157,6 +157,109 @@ SEARCH_EMPTY = """<!doctype html>
 <body><main><h1>검색</h1><p>결과 0건.</p></main></body></html>"""
 
 
+# ── R6 (US-B-015~018) 대역 ────────────────────────────────────────────────
+# 메뉴 껍데기 — 짧은 블록만 있고 합계가 1,000자 미만이라 nav_shell 로 떨어진다.
+# 자기선언 티어(US-B-018)의 진입 조건("바이트는 받았는데 본문이 못 쓸 때")을 만드는
+# 최소 형태다. head 에 무엇을 선언하느냐만 바꿔 가며 이 셸을 재사용한다.
+_SHELL_ITEMS = "".join(
+    f"<p>항목 {i} — 목록 껍데기의 한 줄이다. 본문이 아니다.</p>" for i in range(1, 11)
+)
+
+
+def _shell(head_extra: str = "") -> str:
+    return f"""<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>목록 셸</title>
+{head_extra}</head>
+<body><main><h1>목록</h1>{_SHELL_ITEMS}</main></body></html>"""
+
+
+# JSON-LD articleBody — **요청 0건**으로 얻는 본문. 길이 하한과 nav_shell 을 모두
+# 넘도록 충분히 길게 둔다 (이 티어는 판정을 느슨하게 하지 않는다).
+_JSONLD_BODY = (
+    f"{BODY_MARKER} 이 문단은 페이지가 JSON-LD 로 스스로 실어 둔 본문이다. "
+    "발행자가 적어 둔 것을 읽는 일이라 추측이 아니며, 회선에 요청이 한 건도 나가지 않는다. "
+) * 12
+
+JSONLD_SHELL = _shell(
+    '<script type="application/ld+json">'
+    + json.dumps(
+        {
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            "headline": "자기선언 본문",
+            "articleBody": _JSONLD_BODY,
+        },
+        ensure_ascii=False,
+    )
+    + "</script>"
+    # 미끼: JSON-LD 가 이겼다면 이 피드는 끝까지 0회여야 한다 (우선순위 + 예산).
+    + '<link rel="alternate" type="application/rss+xml" href="/altdecoy/feed.xml">'
+)
+
+FEED_SHELL = _shell(
+    '<link rel="alternate" type="application/rss+xml" href="/alt/feed.xml">'
+)
+MISMATCH_SHELL = _shell(
+    '<link rel="alternate" type="application/rss+xml" href="/alt/others.xml">'
+)
+# 선언되어 있다는 사실은 안전을 보증하지 않는다 — 후보도 SSRF 가드를 새로 통과해야
+# 한다 (NG-11). 포트가 달라 픽스처 예외 오리진에 해당하지 않는다.
+SSRF_SHELL = _shell('<link rel="amphtml" href="http://127.0.0.1:1/x">')
+# 선언이 하나도 없는 셸 — 이 티어가 요청을 0건 내는 것이 정상이며, 그 사실이
+# "맹목 변형(m./amp. 접두 부착)이 부활하지 않았다"의 증거다.
+BARE_SHELL = _shell()
+
+
+# US-B-018 — 부피만 크고 수확이 없는 문서. 안내문 한 문단은 문장 형태라 문단 검사와
+# 길이 하한을 통과하지만, 받은 바이트 대비 건진 양이 바닥이라 성공이 아니다.
+_STARVE_NOTICE = "AI가 생성한 결과는 정확하지 않거나 최신 정보가 아닐 수 있습니다. " * 6
+STARVE_PAGE = (
+    "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\">"
+    "<title>부피만 큰 문서</title></head><body>"
+    + "<!--" + ("x" * 200_000) + "-->"
+    + f"<div><p>{_STARVE_NOTICE}</p></div></body></html>"
+)
+
+# US-B-018 — main/article 선언이 없는 문서. 밀도 폴백이 본문 컨테이너를 골라야 하고,
+# 메뉴는 본문에 섞이면 안 된다.
+_DENSE_LINKS = "".join(f'<a href="/x/{i}">{NAV_MARKER}{i}</a> ' for i in range(20))
+DENSE_PAGE = f"""<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>선언 없는 문서</title></head>
+<body><div id="menu">{_DENSE_LINKS}</div>
+<div id="content"><p>{BODY_MARKER}</p><p>{_LOREM}</p></div></body></html>"""
+
+
+def _feed_item(link: str, title: str) -> str:
+    return (
+        f"<item><title>{title}</title><link>{link}</link>"
+        f"<description><![CDATA[<p>{BODY_MARKER}</p><p>{_LOREM}</p>]]></description></item>"
+    )
+
+
+def _feed(items: list[str]) -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<rss version=\"2.0\"><channel><title>fixture feed</title>"
+        + "".join(items)
+        + "</channel></rss>"
+    )
+
+
+# 검색 후보로 회수되는 실제 문서. 본문 안에 링크를 심어 둔다 — 검색 계층이 취득
+# 본문에서 링크를 뽑아 다시 큐에 넣지 않는다는 것(무재귀, NG-5 개정판의 방벽)은
+# /trap/ 히트 0 으로만 증명된다.
+SEARCH_DOC_COUNT = 12
+
+
+def _doc_article(slug: str) -> str:
+    return f"""<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>문서 {slug}</title></head>
+<body><nav>{NAV_MARKER}</nav>
+<article><h1>문서 {slug}</h1><p>{BODY_MARKER}</p><p>{_LOREM}</p>
+<p><a href="/trap/{slug}">이어지는 문서</a></p></article>
+</body></html>"""
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     server_version = "open-reach-fixture/1"
@@ -248,6 +351,68 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Location", "/search/results?q=rust")
             self.send_header("Content-Length", "0")
             self.end_headers()
+            return
+
+        # ── R6 (US-B-015~018) 대역 ────────────────────────────────────
+        host = self.headers.get("Host") or "127.0.0.1"
+        if path.startswith("/doc/a"):
+            self._send(200, _doc_article(path.rsplit("/", 1)[-1]))
+            return
+        if path == "/srch/json":
+            self._send_json(200, {"hits": [
+                {"link": f"http://{host}/doc/a{i}", "name": f"결과 {i}"}
+                for i in range(1, SEARCH_DOC_COUNT + 1)
+            ]})
+            return
+        if path == "/srch/json2":
+            # 앞 소스와 겹치는 후보 — dedupe 단언용
+            self._send_json(200, {"hits": [
+                {"link": f"http://{host}/doc/a{i}", "name": f"중복 {i}"}
+                for i in (1, 2, 3)
+            ]})
+            return
+        if path == "/srch/html":
+            links = "".join(
+                f'<a class="r" href="http://{host}/doc/a{i}">결과 {i}</a>'
+                for i in range(1, 6)
+            )
+            self._send(200,
+                       f"<!doctype html><html><body><ol>{links}</ol></body></html>")
+            return
+        if path == "/srch/empty":
+            self._send_json(200, {"hits": []})
+            return
+        if path == "/alt/none":
+            self._send(200, BARE_SHELL)
+            return
+        if path == "/alt/jsonld":
+            self._send(200, JSONLD_SHELL)
+            return
+        if path == "/alt/feed":
+            self._send(200, FEED_SHELL)
+            return
+        if path == "/alt/feed.xml":
+            self._send(200, _feed([_feed_item(f"http://{host}/alt/feed", "단일 항목")]),
+                       ctype="application/rss+xml; charset=utf-8")
+            return
+        if path == "/alt/mismatch":
+            self._send(200, MISMATCH_SHELL)
+            return
+        if path == "/alt/others.xml":
+            # 두 항목 어느 쪽도 요청한 문서가 아니다 — 다른 글을 성공이라 부르지 않는다
+            self._send(200, _feed([
+                _feed_item(f"http://{host}/alt/other-1", "다른 글 1"),
+                _feed_item(f"http://{host}/alt/other-2", "다른 글 2"),
+            ]), ctype="application/rss+xml; charset=utf-8")
+            return
+        if path == "/starve/page":
+            self._send(200, STARVE_PAGE)
+            return
+        if path == "/dense/article":
+            self._send(200, DENSE_PAGE)
+            return
+        if path == "/alt/ssrf":
+            self._send(200, SSRF_SHELL)
             return
 
         if path == "/public/article":

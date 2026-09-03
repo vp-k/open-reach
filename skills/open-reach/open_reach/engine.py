@@ -13,15 +13,24 @@ from pathlib import Path
 
 from . import (
     api_index as api_index_mod,
+    batch as batch_mod,
     bench as bench_mod,
     fetcher,
     observe,
     policy,
     profiles as profiles_mod,
     refresh as refresh_mod,
+    search as search_mod,
     yamlio,
 )
-from .models import FetchRequest, InvariantError, ObservationSchemaError, utc_now
+from . import models
+from .models import (
+    FetchRequest,
+    FetchResult,
+    InvariantError,
+    ObservationSchemaError,
+    utc_now,
+)
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -75,7 +84,10 @@ def build_parser() -> argparse.ArgumentParser:
     subs = parser.add_subparsers(dest="command")
 
     p_fetch = subs.add_parser("fetch")
-    p_fetch.add_argument("url")
+    # 단건이 기본이다. `--batch` 를 쓰면 위치 인자는 비운다 (상호 배타, R6/W4).
+    p_fetch.add_argument("url", nargs="?")
+    p_fetch.add_argument("--batch", help="URL 목록 파일. '-' 는 표준 입력")
+    p_fetch.add_argument("--concurrency", type=int, default=batch_mod.DEFAULT_CONCURRENCY)
     p_fetch.add_argument("--intent", choices=("article", "media", "raw"), default="article")
     p_fetch.add_argument("--timeout", type=float, default=20.0)
     p_fetch.add_argument("--max-attempts", type=int, default=6)
@@ -83,6 +95,27 @@ def build_parser() -> argparse.ArgumentParser:
     # Phase 0 인덱스의 대체 경로. `bench --battery` 와 같은 구조다 — 인수 테스트가
     # 픽스처 인덱스를 지정하는 통로이며, 지정하지 않으면 출하 인덱스를 쓴다.
     p_fetch.add_argument("--api-index")
+    # robots.txt 모드 (R6). 기본은 off — 조회하지 않는다.
+    # `--respect-robots` 는 `--robots enforce` 의 별칭이며, 둘 다 주면 사용 오류다.
+    p_fetch.add_argument("--robots", choices=models.ROBOTS_MODES, default=None)
+    p_fetch.add_argument("--respect-robots", action="store_true")
+
+    # `search` (R6/W5) — 질의 → 후보 URL → 병렬 취득. fetch 와 옵션을 공유하는 것은
+    # 후보 취득이 결국 `fetch --batch` 와 같은 경로이기 때문이다.
+    p_search = subs.add_parser("search")
+    p_search.add_argument("query")
+    p_search.add_argument("--sources", help="쉼표로 구분한 소스 이름. 기본은 선언된 전부")
+    p_search.add_argument("--max-results", type=int, default=search_mod.DEFAULT_MAX_RESULTS)
+    # 후보 URL 만 내고 **한 건도 취득하지 않는다**. 무엇이 걸렸는지 먼저 보고 싶을 때.
+    p_search.add_argument("--urls-only", action="store_true")
+    p_search.add_argument("--concurrency", type=int, default=batch_mod.DEFAULT_CONCURRENCY)
+    p_search.add_argument("--intent", choices=("article", "media", "raw"), default="article")
+    p_search.add_argument("--timeout", type=float, default=20.0)
+    p_search.add_argument("--max-attempts", type=int, default=6)
+    p_search.add_argument("--allow-browser", action="store_true")
+    p_search.add_argument("--api-index")
+    p_search.add_argument("--robots", choices=models.ROBOTS_MODES, default=None)
+    p_search.add_argument("--respect-robots", action="store_true")
 
     p_bench = subs.add_parser("bench")
     p_bench.add_argument("--tier", type=int, default=1, choices=(1, 2))
@@ -128,6 +161,64 @@ def _check_common(args: argparse.Namespace) -> None:
     url = getattr(args, "url", None)
     if url is not None and len(url) > policy.MAX_URL_LENGTH:
         raise bench_mod.UsageError(f"URL 이 {policy.MAX_URL_LENGTH} 자를 초과했다")
+    _check_batch(args)
+    _check_search(args)
+    _resolve_robots_mode(args)
+
+
+def _check_batch(args: argparse.Namespace) -> None:
+    """단건과 배치는 정확히 하나여야 한다 (R6/W4).
+
+    둘 다 주면 어느 쪽을 실행할지 우리가 정하게 되는데, 그 선택을 조용히 하면 사용자는
+    두드리지 않으려던 목록을 두드리게 된다. 둘 다 없으면 실행할 대상이 없다.
+    """
+    if not hasattr(args, "batch"):
+        return
+    has_url = bool(getattr(args, "url", None))
+    has_batch = bool(getattr(args, "batch", None))
+    if has_url and has_batch:
+        raise bench_mod.UsageError("url 위치 인자와 --batch 는 함께 쓸 수 없다")
+    if not has_url and not has_batch:
+        raise bench_mod.UsageError("url 또는 --batch 중 하나가 필요하다")
+    if has_batch:
+        try:
+            batch_mod.check_concurrency(args.concurrency)
+        except batch_mod.BatchError as exc:
+            raise bench_mod.UsageError(str(exc)) from exc
+
+
+def _check_search(args: argparse.Namespace) -> None:
+    """검색 입력도 **요청을 시작하기 전에** 확정한다 (R6/W5)."""
+    if getattr(args, "command", None) != "search":
+        return
+    try:
+        args.query = search_mod.check_query(args.query)
+        search_mod.check_max_results(args.max_results)
+    except search_mod.SearchError as exc:
+        raise bench_mod.UsageError(str(exc)) from exc
+    try:
+        batch_mod.check_concurrency(args.concurrency)
+    except batch_mod.BatchError as exc:
+        raise bench_mod.UsageError(str(exc)) from exc
+
+
+def _resolve_robots_mode(args: argparse.Namespace) -> None:
+    """`--robots` 와 `--respect-robots` 를 하나의 모드로 합친다 (R6).
+
+    둘을 동시에 주면 **사용 오류**다. `--robots off --respect-robots` 를 조용히 한쪽으로
+    해석하면 사용자는 robots 를 켠 줄 알고 끈 채로 돌게 된다 — 모드는 요청이 나가기
+    전에 확정되어야 하고, 모호한 입력은 요청 없이 거절하는 편이 옳다.
+    """
+    if not hasattr(args, "robots"):
+        return
+    explicit = getattr(args, "robots", None)
+    respect = getattr(args, "respect_robots", False)
+    if explicit is not None and respect and explicit != "enforce":
+        raise bench_mod.UsageError(
+            "--robots 와 --respect-robots 가 서로 다른 모드를 가리킨다 "
+            "(--respect-robots 는 --robots enforce 의 별칭이다)"
+        )
+    args.robots = explicit or ("enforce" if respect else policy.DEFAULT_ROBOTS_MODE)
 
 
 def _shipped_paths() -> tuple[Path, Path]:
@@ -189,18 +280,116 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     # 발견하면 이미 나간 요청을 되돌릴 수 없고, "네트워크 요청 0건"이라는 계약이
     # 지켜졌는지 출력만으로는 확인할 수 없게 된다.
     api_index_mod.load_cached(args.api_index)
-    result = fetcher.fetch(
-        FetchRequest(
-            url=args.url,
-            intent=args.intent,
-            timeout_s=args.timeout,
-            allow_browser=args.allow_browser,
-            max_attempts=args.max_attempts,
-            api_index=args.api_index,
-        )
+
+    # 배치 목록은 **요청을 시작하기 전에** 읽고 검증한다 — 인덱스 선검증과 같은 이유다.
+    # 20번째 줄이 상한 위반인 것을 19건 두드린 뒤에 알면 되돌릴 수 없다.
+    urls = _batch_urls(args) if args.batch else [args.url]
+
+    template = FetchRequest(
+        url=urls[0],
+        intent=args.intent,
+        timeout_s=args.timeout,
+        allow_browser=args.allow_browser,
+        max_attempts=args.max_attempts,
+        api_index=args.api_index,
+        robots_mode=args.robots,
     )
-    _emit(result.to_dict())
-    return result.exit_code()
+
+    if not args.batch:
+        result = fetcher.fetch(template)
+        _emit(result.to_dict())
+        return result.exit_code()
+
+    results: list[FetchResult] = []
+    for result in batch_mod.run(urls, template, concurrency=args.concurrency):
+        results.append(result)
+        # NDJSON — 한 줄에 하나. 줄 단위로 흘려보내야 긴 배치에서 소비자가 기다리지
+        # 않는다. 단건의 indent 출력과 형식이 다른 것은 의도다.
+        sys.stdout.write(json.dumps(result.to_dict(), ensure_ascii=True) + "\n")
+        sys.stdout.flush()
+    return batch_mod.exit_code(results)
+
+
+def _batch_urls(args: argparse.Namespace) -> list[str]:
+    if args.batch == "-":
+        text = sys.stdin.read()
+    else:
+        try:
+            text = Path(args.batch).read_text(encoding="utf-8")
+        except OSError as exc:
+            raise bench_mod.UsageError(f"배치 목록을 읽을 수 없다: {exc}") from exc
+    try:
+        urls = batch_mod.parse_urls(text)
+    except batch_mod.BatchError as exc:
+        raise bench_mod.UsageError(str(exc)) from exc
+    too_long = [u for u in urls if len(u) > policy.MAX_URL_LENGTH]
+    if too_long:
+        raise bench_mod.UsageError(
+            f"배치 목록에 {policy.MAX_URL_LENGTH} 자를 초과한 URL 이 있다"
+        )
+    return urls
+
+
+def cmd_search(args: argparse.Namespace) -> int:
+    """질의 → 후보 → (기본) 병렬 취득 (R6/W5).
+
+    출력은 NDJSON 이다. **첫 줄은 검색 요약**(소스별 성패·후보 목록)이고, 이어서
+    URL 당 FetchResult 한 줄이 온다. 요약을 stderr 로 빼지 않는 이유: "어느 소스가
+    무엇을 냈는가"는 결과를 해석하는 데 필요한 증적이지 로그가 아니다.
+
+    후보는 여기서 `batch` 로 넘어가고 **돌아오지 않는다**. 취득한 본문에서 링크를
+    뽑아 다시 검색에 넣는 경로는 없다 — NG-5 개정판의 유일한 방벽이다.
+    """
+    index = api_index_mod.load_cached(args.api_index)
+    try:
+        sources = search_mod.select_sources(index, args.sources)
+        candidates, outcomes = search_mod.run(
+            args.query,
+            sources,
+            timeout=args.timeout,
+            max_results=args.max_results,
+            robots_mode=args.robots,
+        )
+    except search_mod.SearchError as exc:
+        raise bench_mod.UsageError(str(exc)) from exc
+
+    summary = {
+        "search": {
+            "query": args.query,
+            "sources": [outcome.to_dict() for outcome in outcomes],
+            "candidates": [candidate.to_dict() for candidate in candidates],
+        }
+    }
+    sys.stdout.write(json.dumps(summary, ensure_ascii=True) + "\n")
+    sys.stdout.flush()
+
+    if not candidates:
+        # 후보가 없으면 실패다. 소스가 전부 200 이었어도 마찬가지 — 빈 결과를
+        # 성공으로 내면 "찾았는데 아무것도 없었다"와 "찾지 못했다"가 같아진다.
+        sys.stderr.write("[open-reach] search: 후보 URL 이 없다\n")
+        return EXIT_FAILED
+    if args.urls_only:
+        return EXIT_OK
+
+    template = FetchRequest(
+        url=candidates[0].url,
+        intent=args.intent,
+        timeout_s=args.timeout,
+        allow_browser=args.allow_browser,
+        max_attempts=args.max_attempts,
+        api_index=args.api_index,
+        robots_mode=args.robots,
+    )
+    results: list[FetchResult] = []
+    for result in batch_mod.run(
+        [candidate.url for candidate in candidates],
+        template,
+        concurrency=args.concurrency,
+    ):
+        results.append(result)
+        sys.stdout.write(json.dumps(result.to_dict(), ensure_ascii=True) + "\n")
+        sys.stdout.flush()
+    return batch_mod.exit_code(results)
 
 
 def cmd_bench(args: argparse.Namespace) -> int:
@@ -308,6 +497,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 _COMMANDS = {
     "fetch": cmd_fetch,
+    "search": cmd_search,
     "bench": cmd_bench,
     "compare": cmd_compare,
     "baseline": cmd_baseline,
@@ -322,7 +512,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = parser.parse_args(argv)
         if not args.command:
-            raise bench_mod.UsageError("서브커맨드를 지정하라 (fetch/bench/compare/baseline/refresh/explain)")
+            raise bench_mod.UsageError("서브커맨드를 지정하라 (fetch/search/bench/compare/baseline/refresh/explain)")
         _check_common(args)
         return _COMMANDS[args.command](args)
     except api_index_mod.IndexLoadError as exc:

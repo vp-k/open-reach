@@ -1,0 +1,57 @@
+{
+  "ua": "open-reach/1.0.0 (+https://github.com/vp-k/open-reach)",
+  "results": {
+    "reddit.listing.json": {
+      "status": 403,
+      "error": "http_error",
+      "head": "<body class=theme-beta><div><style>.theme-light,:root{--rem360:22.5rem;--rem320:20rem;--rem192:12rem;--rem144:9rem;--rem128:8rem;--rem96:6rem;--rem90:5.625rem;--rem88:5.5rem;--rem64:4rem;--rem56:3.5rem;--rem48:3rem;--rem40:2.5rem;--rem36:2.25rem;--rem32:2rem;--rem28:1.75rem;--rem26:1.625rem;--rem24:1.5rem;--rem22:1.375rem;--rem20:1.25rem;--rem18:1.125rem;--rem16:1rem;--rem15:0.9375rem;--rem14:0.87",
+      "url": "https://www.reddit.com/r/programming/hot.json?limit=2"
+    },
+    "reddit.subreddit.rss2": {
+      "status": 200,
+      "final_url": "https://www.reddit.com/r/programming.rss",
+      "content_type": "application/atom+xml; charset=UTF-8",
+      "bytes": 28146,
+      "head": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\" xmlns:media=\"http://search.yahoo.com/mrss/\"><category term=\"programming\" label=\"r/programming\"/><updated>2026-09-03T02:39:10+00:00</updated><icon>https://www.redditstatic.com/icon.png/</icon><id>/r/programming.rss</id><link rel=\"self\" href=\"https://www.reddit.com/r/programming.rss\" type=\"application/atom+xml\" /><link r",
+      "url": "https://www.reddit.com/r/programming.rss"
+    },
+    "reddit.old.json": {
+      "status": 403,
+      "error": "http_error",
+      "head": "<!doctype html>\n     <html>\n  <head>\n    <title>Blocked</title>\n    <style>\n      body {\n          font: small verdana, arial, helvetica, sans-serif;\n          width: 600px;\n          margin: 0 auto;\n      }\n\n      h1 {\n          height: 40px;\n          background: transparent url(//www.redditstatic.com/reddit.com.header.png) no-repeat scroll top right;\n      }\n    </style>\n  </head>\n  <body>\n    ",
+      "url": "https://old.reddit.com/r/programming/hot.json?limit=2"
+    },
+    "linkedin.company": {
+      "status": 200,
+      "final_url": "https://www.linkedin.com/company/anthropicresearch",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 335083,
+      "head": "<!DOCTYPE html>\n\n    \n    \n    \n    \n    \n    \n\n    \n    <html lang=\"en\">\n      <head>\n        <meta name=\"pageKey\" content=\"d_org_guest_company_overview\">\n          \n    <meta name=\"robots\" content=\"max-image-preview:large, noarchive\">\n    <meta name=\"bingbot\" content=\"max-image-preview:large, archive\">\n  \n<!---->          <meta name=\"linkedin:pageTag\" content=\"noncanonical_subdomain=control\">\n  ",
+      "url": "https://www.linkedin.com/company/anthropicresearch"
+    },
+    "linkedin.root": {
+      "status": 200,
+      "final_url": "https://www.linkedin.com/",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 139819,
+      "head": "<!DOCTYPE html>\n\n\n    \n    \n    \n    \n    \n    \n    \n    \n\n    \n    \n    \n    \n\n    \n    <html lang=\"en\">\n      <head>\n        <meta name=\"pageKey\" content=\"d_homepage-guest-home\">\n<!----><!----><!---->        <meta name=\"locale\" content=\"en_US\">\n<!---->        <meta id=\"config\" data-app-version=\"2.1.2991\" data-call-tree-id=\"AAZaiw6WI5mi68iei4D5jg==\" data-jet-tags=\"guest-homepage\" data-multiproduc",
+      "url": "https://www.linkedin.com/"
+    },
+    "ddg.html2": {
+      "status": 202,
+      "final_url": "https://html.duckduckgo.com/html/?q=claude+code",
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 14202,
+      "head": "<!-- <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"> -->\n<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n    <link rel=\"canonical\" href=\"https://duckduckgo.com/\">\n    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=1\">\n    <m",
+      "url": "https://html.duckduckgo.com/html/?q=claude+code"
+    },
+    "ddg.lite": {
+      "status": 200,
+      "final_url": "https://lite.duckduckgo.com/lite/?q=claude+code",
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 23128,
+      "head": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n<html>\n\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=1;\">\n  <meta name=\"referrer\" content=\"origin\">\n  <meta name=\"HandheldFriendly\" content=\"true\" />\n  <meta na",
+      "url": "https://lite.duckduckgo.com/lite/?q=claude+code"
+    }
+  }
+}

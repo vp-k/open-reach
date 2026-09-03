@@ -1,33 +1,48 @@
 {
-  "frozenAt": "2026-09-02T10:35:21Z",
-  "gitHead": "630977fcf040ad5d7d2606c27f6e06797ee8611c",
+  "frozenAt": "2026-09-03T04:24:07Z",
+  "gitHead": "2329d2c2822362bf50e9bc08455d538097614756",
   "hashAlgo": "sha256sum",
   "files": {
     "tests/acceptance/_lib.sh": "982af7e790b002b71fae0a405465457a3d487f07accb790376a0822975c9d9b4",
-    "tests/acceptance/fixture_server.py": "e1066b0821927f25badc6ca0dde65205ff3678378a2e33d69b6c5fa9024945b5",
+    "tests/acceptance/fixture_server.py": "3c88c0ed91a0da49e193e8d0aec124ab65e61bbbb0b80fa16fa606ee3736f4ab",
     "tests/acceptance/run.sh": "5cfd61b90ddf8e736e5d356eb0d2c320b39f04c5cfbc530c1e7ac258ed395fa4",
     "tests/acceptance/us-b-001-public-fetch.sh": "9660cd9c8409f04dca8b3f4da57720cbba93c96a7117641e98ba12fa471a419e",
     "tests/acceptance/us-b-002-failure-classification.sh": "5cd7aad40268d9fe29c0bff8ff25ca195db4ac1cf01fc84da6dee4939434c819",
-    "tests/acceptance/us-b-003-boundary-stop.sh": "ecd32603cc2102c8e12b001735a85ff08604b7a0bb73cf2eb8d548e5ae52ef1a",
+    "tests/acceptance/us-b-003-boundary-stop.sh": "d52c789b3bd5ce102825de3784480e5d2378801f3b09f1943fc0e9fad94ca4e1",
+    "tests/acceptance/us-b-003b-robots-modes.sh": "025f1db6e480e855fcfda90b257df4ef7067e6ab606be7424152d7b76e84d1d2",
     "tests/acceptance/us-b-004-bench-rate.sh": "d674d016f34016ed082074522f9e64bea6109e3e9e57e77ce57aff8f457682ef",
     "tests/acceptance/us-b-005-compare-evidence.sh": "64013f398b8516d46a95c2c2fe80f596c75b29201efe2f6e848bead89d23e1a1",
     "tests/acceptance/us-b-006-observation.sh": "86c35be40860a587d3e46bf463572d04a9360aac2d719bc4b748560dfc0e59fd",
     "tests/acceptance/us-b-007-refresh.sh": "b84039d83e102e6a1d5a57735815a14241ece8c14aba096413e61446adfa496e",
     "tests/acceptance/us-b-008-response-validation.sh": "6eb0ec35302d70a69e37d83b487bef8b30a5476942efd50a8d4c76d5663ee5f1",
     "tests/acceptance/us-b-009-vendor-accuracy.sh": "eca0ea2fa269635b29559bab113888859272e660de7f28a5951bc2f6f07da1bf",
-    "tests/acceptance/us-b-010-api-routing-negative.sh": "cad738a2b92fbc87126a62f17f7e993078a06401b37dc2040ff64f77b0207564",
+    "tests/acceptance/us-b-010-api-routing-negative.sh": "b6e4244d5709295cc2a7f9db3141c2891a35ff26363f6851d1bc1190428bcd79",
     "tests/acceptance/us-b-011-browser-tier.sh": "bcfdb6049b6e1edb0c95cba5ce18518308aade93dbfae66bef4d5fcb19884f71",
     "tests/acceptance/us-b-012-phase0-adapters.sh": "b20ad7b4936aa245a484cd94424068eef30c92b34d49951494f85ee08340bbf9",
-    "tests/acceptance/us-b-014-explicit-search.sh": "d70c8161e5f80db864cb647959bf2b5ecaad9083bd4a05d2e154f192bd254cfa"
+    "tests/acceptance/us-b-014-explicit-search.sh": "d70c8161e5f80db864cb647959bf2b5ecaad9083bd4a05d2e154f192bd254cfa",
+    "tests/acceptance/us-b-015-alternate-tier.sh": "4ab362f40926ada31d04a2a08f421a3c38f226f878c35ff22851a61f9b5ab8f4",
+    "tests/acceptance/us-b-016-batch.sh": "33f59004f13b4303cefcad88edc18643bf78c6d656f56780e8c083876a24bf06",
+    "tests/acceptance/us-b-017-search.sh": "5b6e75567f0669e40d0230553f1c33b3fa84960d17b4fc742c4d49723901a130",
+    "tests/acceptance/us-b-018-yield.sh": "953cdf2fffdfa328f6c7057b86972b9810b0d32cbf40469f31f129f7c8bbed4a"
   },
   "specFile": {
     "path": "docs/SPEC.md",
-    "hash": "ce4f7eb62e81592105b1da39ebc6b8a012f25eabd48aab9c80d51880b0061ed7"
+    "hash": "cea9d0368c2cd541e47bf67c4cde01de7fe18ee8b842272392682c519f67b7ce"
   },
   "refreezeHistory": [
     {
       "at": "2026-09-02T10:35:20Z",
       "gitHead": "630977fcf040ad5d7d2606c27f6e06797ee8611c",
+      "approvedByUser": true
+    },
+    {
+      "at": "2026-09-03T02:32:58Z",
+      "gitHead": "2329d2c2822362bf50e9bc08455d538097614756",
+      "approvedByUser": true
+    },
+    {
+      "at": "2026-09-03T04:24:06Z",
+      "gitHead": "2329d2c2822362bf50e9bc08455d538097614756",
       "approvedByUser": true
     }
   ]

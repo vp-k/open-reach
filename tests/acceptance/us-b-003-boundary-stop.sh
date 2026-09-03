@@ -41,10 +41,70 @@ run_engine fetch "$BASE/redir/private"
 assert_code 2 "리디렉션 차단 종료 코드 2"
 assert_expr "d.get('failure_reason')" "policy_blocked" "리디렉션 홉 차단"
 
-note "robots.txt Disallow 경로는 policy_blocked"
+# ── AC-B-003-6: robots 는 경계가 아니라 모드다 (R6 개정, 사용자 승인 재동결) ──
+#
+# 개정 전 이 자리는 "robots Disallow → policy_blocked" 한 방향만 못 박았다. 기본값이
+# 뒤집혔다고 그 단언을 지우면 enforce 경로가 인수 커버리지에서 통째로 사라져,
+# `--respect-robots` 가 조용히 무의미해지는 변이가 살아남는다. 그래서 **양쪽을 다** 고정한다.
+#
+# 위 AC-B-003-4/-5 (SSRF) 는 이 개정과 무관하다 — robots 만 빠지고 사설 대역·홉 재검사는
+# 어느 모드에서도 그대로다 (NG-11 은 개정 대상이 아니다). 그 증거는 바로 위 케이스들이다.
+
+# 픽스처가 센 경로별 요청 수. 선행 슬래시를 떼고 넘긴다 — Git Bash(MSYS)는 `/robots.txt`
+# 처럼 생긴 인자를 네이티브 프로그램에 넘길 때 경로로 **변환한다**. 그러면 접두가 영원히
+# 맞지 않아 항상 0 이 나오고, 0 을 기대하는 단언이 실패할 수 없는 단언이 된다.
+assert_hits() { # assert_hits <path-prefix> <expected> <label>
+  local actual
+  actual="$("$PY" - "$BASE" "${1#/}" <<'PY'
+import json, sys, urllib.request
+try:
+    raw = urllib.request.urlopen(sys.argv[1] + "/_hits", timeout=10).read()
+    data = json.loads(raw.decode("utf-8"))
+except Exception:
+    print("__HITS_ERROR__")
+    sys.exit(0)
+prefix = "/" + sys.argv[2]
+print(sum(v for k, v in data.items() if k.startswith(prefix)))
+PY
+)"
+  if [ "$actual" != "$2" ]; then
+    fail "$3 (path=$1 expected=$2 actual=$actual)"
+  fi
+}
+
+reset_hits() {
+  "$PY" - "$BASE" <<'PY' >/dev/null 2>&1 || true
+import sys, urllib.request
+urllib.request.urlopen(sys.argv[1] + "/_hits/reset", timeout=10).read()
+PY
+}
+
+note "AC-B-003-6: 기본 모드(off)는 robots.txt 를 조회하지 않고 Disallow 경로도 취득한다"
+reset_hits
 run_engine fetch "$BASE/norobots/doc"
+assert_code 0 "robots Disallow 경로가 기본값에서 취득되지 않았다"
+assert_expr "d.get('ok')" "True" "off 모드 취득 실패"
+# "따르지 않는다"가 아니라 "조회하지 않는다"가 약속이다. 판정을 받아 놓고 버리는 변이는
+# 동작이 같아서 결과만 보는 단언으로는 잡히지 않는다 — 요청이 이미 나갔고 상대 서버는
+# 그것을 봤기 때문이다. 히트 수 0 이 그 변이를 죽인다.
+assert_hits "/robots.txt" "0" "AC-B-003-6 off 인데 robots.txt 를 조회했다"
+
+note "AC-B-003-6: --respect-robots 는 R5 까지의 차단을 정확히 복원한다"
+reset_hits
+run_engine fetch --respect-robots "$BASE/norobots/doc"
 assert_code 2 "robots 차단 종료 코드 2"
 assert_expr "d.get('failure_reason')" "policy_blocked" "robots Disallow 차단"
 assert_expr "(d.get('attempts') or [{}])[0].get('route')" "policy" "robots 차단은 policy 경로"
+assert_expr "(d.get('attempts') or [{}])[0].get('rule')" "robots" "차단 규칙이 robots 로 표기되지 않았다"
+assert_hits "/robots.txt" "1" "enforce 인데 robots.txt 를 조회하지 않았다"
+assert_hits "/norobots" "0" "enforce 인데 차단 대상 본문을 두드렸다"
+
+note "AC-B-003-6: 두 플래그가 어긋나면 요청 전에 거절한다 (어느 한쪽으로 조용히 해석 금지)"
+reset_hits
+run_engine fetch --robots off --respect-robots "$BASE/norobots/doc"
+assert_code 4 "모순된 robots 지정은 사용 오류(종료 코드 4)"
+# 거절은 요청보다 **먼저** 일어나야 한다. 나중에 거절하면 이미 두드린 뒤다.
+assert_hits "/norobots" "0" "AC-B-003-6 모순 입력인데 요청이 먼저 나갔다"
+assert_hits "/robots.txt" "0" "AC-B-003-6 모순 입력인데 robots 를 먼저 조회했다"
 
 finish

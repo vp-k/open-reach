@@ -1,6 +1,6 @@
 ---
 name: open-reach
-description: "리서치 중 공개 웹 소스가 표준 fetch(WebFetch/curl)로 막혔을 때(403·WAF 챌린지·봇 차단) 사용한다. 정책상 허용되는 공개 접근 경로를 순서대로 시도하고, 성공하면 본문 마크다운을, 실패하면 분류된 사유와 시도 이력을 남긴다. 로그인월·페이월은 돌파하지 않고 감지·보고만 한다. 인증 우회·CAPTCHA 해결·프록시 로테이션 없음. SSRF는 fail-closed로 차단."
+description: "리서치 중 공개 웹 소스가 표준 fetch(WebFetch/curl)로 막혔을 때(403·WAF 챌린지·봇 차단) 사용한다. 정책상 허용되는 공개 접근 경로를 순서대로 시도하고, 성공하면 본문 마크다운을, 실패하면 분류된 사유와 시도 이력을 남긴다. 질의로 공개 검색 소스에 팬아웃하는 `search`, 명시한 URL 목록을 병렬 취득하는 `fetch --batch` 포함(재귀 링크 추적 없음). 로그인월·페이월은 돌파하지 않고 감지·보고만 한다. 인증 우회·CAPTCHA 해결·프록시 로테이션·신원 위장 없음. SSRF는 fail-closed로 차단. robots.txt는 v2.0.0부터 기본 미조회이며 `--respect-robots`로 준수를 켠다."
 ---
 
 # open-reach
@@ -47,11 +47,42 @@ API), Bluesky(`/profile/{handle}/post/{rkey}` → 공개 XRPC) — 는 플랫폼
 사용자가 **검색 URL 을 직접 입력**한 경우(선언된 검색 엔드포인트: hn.algolia.com)는 결과 목록을
 본문으로 인정한다 — 면제는 nav_shell 판정 하나뿐이고 길이 하한·챌린지 판별은 그대로다(US-B-014).
 
+HTTP 티어가 **바이트는 받았는데 본문이 못 쓸 때**(JS 셸·내비게이션 셸), Phase 0 앞에서
+**자기선언 열린문 티어**가 개입한다(R6): 받은 HTML 이 스스로 선언한 대체 표현만 따라간다 —
+JSON-LD `articleBody`(요청 없이 즉시 본문), RSS/Atom `<link rel=alternate>`, `amphtml`,
+JSON oEmbed, 다른 오리진의 `canonical`. **선언이 없으면 요청을 만들지 않는다** — `m.` 접두를
+붙여 보는 식의 URL 추측은 하지 않는다(R2 실측 0/12, NG-10).
+
+### 검색 (질의 → 후보 → 병렬 취득)
+
+```bash
+python -m open_reach.engine search "<질의>" --max-results 10
+python -m open_reach.engine search "<질의>" --urls-only        # 후보만, 취득 안 함
+python -m open_reach.engine search "<질의>" --sources ddg,hn
+```
+
+인덱스의 `search_sources:` 에 **정직한 UA 로 200 을 직접 실측한** 공개 검색 소스만 등재돼 있다
+(ddg lite · HN Algolia · StackExchange · GitHub · Wikipedia · Crossref · OpenAlex). 소스에 병렬로
+물어 후보를 라운드로빈으로 섞고, dedupe 후 `--max-results`(기본 10 · 상한 25)로 자른 다음 배치로
+가져온다. 출력은 NDJSON 이고 **첫 줄이 검색 요약**(소스별 성패 + 후보 목록)이다.
+
+**취득한 본문의 링크를 다시 후보로 넣지 않는다.** 이것이 이 도구가 크롤러가 되지 않는 유일한
+방벽이라(NG-5 개정판), 후보를 만드는 모듈은 취득 경로를 임포트조차 하지 않는다.
+
+**엔진 밖 경로 — 대개 이쪽이 더 강하다.** Claude 의 `WebSearch` 로 후보를 모아 파이프로 넘기면
+의존성·키 0으로 가장 넓은 검색과 이 도구의 돌파력을 합칠 수 있다:
+
+```bash
+printf '%s\n' "$URL1" "$URL2" "$URL3" | python -m open_reach.engine fetch --batch -
+```
+
 ### 서브커맨드
 
 | 명령 | 용도 |
 |------|------|
 | `fetch <url>` | 한 URL 을 가져온다. `--intent article\|media\|raw`, `--timeout`, `--allow-browser` |
+| `fetch --batch <파일\|->` | 명시한 URL 목록(상한 50)을 병렬 취득. `--concurrency N`(기본 4·상한 8). URL 당 NDJSON 한 줄 |
+| `search "<질의>"` | 질의로 후보 URL 을 모아 배치 취득. `--urls-only`, `--sources`, `--max-results` |
 | `explain <url>` | 실제 요청 없이 정책 판정(허용/차단·사유)만 미리 본다 |
 | `bench --tier 1\|2` | 벤치 배터리로 돌파율을 계측한다 |
 | `compare` | 원본(insane-search 등)과 돌파율을 대조한다 |
@@ -77,12 +108,29 @@ API), Bluesky(`/profile/{handle}/post/{rkey}` → 공개 XRPC) — 는 플랫폼
 
 - 로그인월·페이월 **미돌파**(401 포함, 감지·보고만)
 - 인증 우회 없음 · CAPTCHA 해결 없음 · 프록시 로테이션 없음
-- 지속 신원·행동 위장 없음 · rate limit 존중(호스트당 최소 간격 준수)
+- 지속 신원·행동 위장 없음 · rate limit 존중(호스트당 동시성 1 + 최소 간격 1.0초 — 배치·검색에서도 동일)
 - **SSRF 차단**: 사설 IP·루프백·메타데이터 엔드포인트 접근 금지(fail-closed)
 - 취득 본문을 디스크에 보관하지 않음
 
 경계를 넓히려면 `docs/overview.md`(헌법)와 `docs/SPEC.md` 를 먼저 고쳐야 한다. 코드가 임의로 벽을
 넘지 않는다.
+
+### robots.txt — v2.0.0 부터 기본 미조회
+
+v1.x 는 robots.txt 를 fail-closed 로 준수했다. v2.0.0 은 **기본값이 `off`**(조회하지 않음)다.
+이것은 사용자가 명시적으로 선택한 방침이며, 그 대가를 여기 적어 둔다: **사이트가 명시한 AI/RAG
+접근 거부 의사를 알고도 지나간다.** robots 는 법이 아니지만 의사 표시이고, 이 도구는 그것을
+"윤리 경계"로 내세우지 않는다.
+
+| 모드 | 동작 |
+|------|------|
+| `--robots off` (기본) | 조회하지 않는다. 오리진당 요청 1회 감소 |
+| `--robots advisory` | 조회해 판정을 남기되 차단하지 않는다. `Crawl-delay` 는 계속 반영한다 |
+| `--respect-robots` (= `enforce`) | v1.x 동작. Disallow 면 `policy_blocked` 로 차단 |
+
+바뀌지 않은 것: 로그인월·페이월 미돌파, 신원 위장 금지(허용 UA 참칭도 하지 않는다), 프록시
+로테이션 금지, SSRF fail-closed, 호스트당 최소 간격. robots 를 안 보는 것과 신원을 속이는 것은
+다른 일이다.
 
 ## 근거·설계 문서
 

@@ -1,0 +1,106 @@
+{
+  "measured_at": "2026-09-03",
+  "what": "R1 보고서 §3 격차 4건을 R6 코드로 재측정 (robots 기본 off, 브라우저 티어 미사용)",
+  "results": [
+    {
+      "url": "https://www.reddit.com/r/programming/",
+      "r1": "R1: policy_blocked/robots (윤리 경계)",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "waf_challenge",
+      "content_chars": 0,
+      "routes": [
+        [
+          "http",
+          "blocked"
+        ],
+        [
+          "http",
+          "blocked"
+        ],
+        [
+          "http",
+          "blocked"
+        ]
+      ]
+    },
+    {
+      "url": "https://www.linkedin.com/company/anthropicresearch",
+      "r1": "R1: policy_blocked/robots (윤리 경계)",
+      "exit": 0,
+      "ok": true,
+      "final_route": "http",
+      "failure_reason": null,
+      "content_chars": 11105,
+      "routes": [
+        [
+          "http",
+          "success"
+        ]
+      ]
+    },
+    {
+      "url": "https://crates.io/crates/serde",
+      "r1": "R1: 성공 정의 차이 (원본은 JS 안내문 73자를 성공으로 셈)",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "routes": [
+        [
+          "http",
+          "error"
+        ],
+        [
+          "http",
+          "error"
+        ],
+        [
+          "http",
+          "error"
+        ]
+      ]
+    },
+    {
+      "url": "https://netflixtechblog.com/",
+      "r1": "R1: 성공 정의 차이 (원본은 메뉴 껍데기 268자를 성공으로 셈)",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "waf_challenge",
+      "content_chars": 0,
+      "routes": [
+        [
+          "http",
+          "redirect"
+        ],
+        [
+          "http",
+          "redirect"
+        ],
+        [
+          "http",
+          "error"
+        ],
+        [
+          "http",
+          "redirect"
+        ],
+        [
+          "http",
+          "redirect"
+        ],
+        [
+          "http",
+          "error"
+        ],
+        [
+          "http",
+          "challenge"
+        ]
+      ]
+    }
+  ]
+}

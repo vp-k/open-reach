@@ -4,4 +4,8 @@
 자격증명을 취급하지 않으며, 취득 본문을 디스크에 남기지 않는다.
 """
 
-__version__ = "1.0.0"
+# 이 값은 두 곳에 실린다 — Phase 0 요청의 ``HONEST_UA`` (우리가 상대에게 밝히는 신원) 와
+# ``bench`` 증적의 ``engine`` 필드 (측정이 어느 버전의 것인지). 둘 다 사실 진술이므로
+# ``.claude-plugin/plugin.json`` 의 version 과 어긋나면 안 된다 (NG-10).
+# 어긋남은 tests/unit/test_version_consistency.py 가 잡는다.
+__version__ = "2.0.0"

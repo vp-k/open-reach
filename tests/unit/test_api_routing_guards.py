@@ -141,7 +141,11 @@ def test_foreign_origin_is_rejected_before_any_network_touch(monkeypatch):
     calls: list[str] = []
     monkeypatch.setattr(policy, "hop_guard", lambda url: calls.append(url))
 
-    check = api_index._same_origin_hop(policy.origin_of("https://api.example/v1"))
+    # R6: robots 를 두드리는 가드는 enforce 모드에만 존재한다. 이 테스트의 주장은
+    # "그 가드보다 오리진 검사가 먼저다"이므로 가드가 있는 모드에서 검증한다.
+    check = api_index._same_origin_hop(
+        policy.origin_of("https://api.example/v1"), "enforce"
+    )
     with pytest.raises(transport.PolicyBlocked) as caught:
         check("https://tracker.example/x")
 
@@ -291,7 +295,9 @@ def test_phase0_hop_cap_is_enforced_not_assumed(monkeypatch):
     `1 + PHASE0_MAX_REDIRECTS` 항이 거짓이 된다.
     """
     monkeypatch.setattr(policy, "hop_guard", lambda url: None)
-    check = api_index._same_origin_hop(policy.origin_of("https://api.example/v1"))
+    check = api_index._same_origin_hop(
+        policy.origin_of("https://api.example/v1"), "enforce"
+    )
     for i in range(api_index.PHASE0_MAX_REDIRECTS):
         check(f"https://api.example/a{i}")           # 상한까지는 허용
     with pytest.raises(transport.PolicyBlocked) as caught:
@@ -304,7 +310,7 @@ def test_hop_cap_counter_is_per_request(monkeypatch):
     monkeypatch.setattr(policy, "hop_guard", lambda url: None)
     origin = policy.origin_of("https://api.example/v1")
     for _ in range(2):
-        check = api_index._same_origin_hop(origin)
+        check = api_index._same_origin_hop(origin, "enforce")
         for i in range(api_index.PHASE0_MAX_REDIRECTS):
             check(f"https://api.example/a{i}")  # 새 요청마다 카운터가 0 부터다
 
@@ -343,9 +349,13 @@ def test_run_arms_the_dispatch_meter(server, monkeypatch):
     기존 미터 테스트는 컨텍스트 매니저를 **테스트가 직접** 열어서, 프로덕션 배선을
     지워도 전부 초록이었다 (라운드 3). 여기서는 `run()` 만 부른다.
     """
-    monkeypatch.setattr(api_index, "DISPATCH_BUDGET", 2)
+    # R6: 예산 1 로 잡는다. 이전에는 2 였고 "robots(1) + 본 요청(2) + 홉(3) > 2" 라는
+    # 산식에 기대고 있었는데, robots 기본 모드가 off 가 되면서 그 첫 항이 사라졌다.
+    # 이 테스트의 주장은 "미터가 run() 에서 무장되는가"이지 robots 가 몇 번 나가는가가
+    # 아니므로, robots 에 의존하지 않는 산식으로 바꾼다 — 본 요청(1) + 홉(2) > 1.
+    monkeypatch.setattr(api_index, "DISPATCH_BUDGET", 1)
     outcome = api_index.run(
-        _entry(server, "/hop2"),  # robots(1) + 본 요청(2) + 홉(3) > 2
+        _entry(server, "/hop2"),
         {},
         intent="research",
         timeout=5.0,

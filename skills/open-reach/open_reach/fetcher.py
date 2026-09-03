@@ -11,7 +11,7 @@ import time
 from email.utils import parsedate_to_datetime
 from typing import Any
 
-from . import api_index, browser as browser_mod, detect, extract, observe, policy, profiles as profiles_mod, transport
+from . import alternates, api_index, browser as browser_mod, detect, extract, observe, policy, profiles as profiles_mod, transport
 from .models import POLICY_RULES, WAF_VENDORS, Attempt, FetchRequest, FetchResult, WafVerdict, utc_now
 
 # 계획 단계를 더 밟아도 결과가 달라지지 않는 판정들
@@ -38,6 +38,16 @@ def _browser_worthy(reason: str, signals: tuple) -> bool:
 #   policy_blocked    — 이미 위에서 반환된다. 도달하지 않지만 의도를 남긴다.
 # 나머지(waf_challenge·not_found·server_error·network 등)에서만 시도한다 (AC-B-010-1).
 _PHASE0_NO_GO = frozenset({"auth_wall", "paywall", "rate_limited", "policy_blocked"})
+
+# 자기선언 열린문 티어(§3.5)의 선언 종류 → attempts 의 url_variant. URL_VARIANTS 는
+# 닫힌 집합이라 매핑에 없는 종류는 "original" 로 떨어진다.
+_ALT_VARIANT = {
+    alternates.KIND_JSONLD: "json",
+    alternates.KIND_FEED: "rss",
+    alternates.KIND_AMP: "amp",
+    alternates.KIND_OEMBED: "oembed",
+    alternates.KIND_CANONICAL: "original",
+}
 
 # 429 재시도 정책 (SPEC CLI 계약): Retry-After 우선, 없으면 지수 백오프
 _BACKOFF_BASE_S = 1.0
@@ -181,7 +191,7 @@ def _attempt_step(
                 request.url,
                 timeout=request.timeout_s,
                 impersonate=step["impersonate"],
-                hop_check=policy.hop_guard,
+                hop_check=policy.hop_guard_for(request.robots_mode),
                 on_dispatch=_record_redirect,
             )
         except transport.NetworkError:
@@ -271,6 +281,7 @@ def _try_phase0(request: FetchRequest, attempts: list[Attempt]) -> api_index.Pha
         intent=request.intent,
         timeout=request.timeout_s,
         on_attempt=on_attempt,
+        robots_mode=request.robots_mode,
     )
     for note in outcome.notes:
         sys.stderr.write(f"[open-reach] phase0: {note}\n")
@@ -331,7 +342,11 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
         return _failure(url, "policy_blocked", attempts)
 
     # ── 2. robots.txt ───────────────────────────────────────────────────
-    robots = policy.robots_verdict(url, timeout=request.timeout_s)
+    # R6: 기본 모드는 off 이며 이 자리에서 네트워크에 나가지 않는다.
+    # `enforce`(--respect-robots)에서만 allowed=False 가 나올 수 있다.
+    robots = policy.robots_gate(
+        url, timeout=request.timeout_s, mode=request.robots_mode
+    )
     if not robots.allowed:
         _explain_block(robots.rule, robots.detail)
         attempts.append(_policy_attempt(rule=robots.rule))
@@ -369,6 +384,10 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
     # 렌더)·empty_body·nav_shell 로 갈리는데, 브라우저 티어가 답인 것은 js_shell 뿐이다.
     # 사유 문자열만으로는 그 셋을 구분할 수 없어 신호를 함께 남긴다.
     last_signals: tuple = ()
+    # 마지막으로 받아 본 HTML 과 그 도착지. 자기선언 열린문 티어(§3.5)가 파싱할
+    # 대상이다 — 바이트를 못 받았으면 비어 있고, 그러면 그 티어는 뜨지 않는다.
+    last_html = ""
+    last_base = url
     budget = {"used": 0}
 
     for step in steps:
@@ -428,9 +447,67 @@ def fetch(request: FetchRequest, *, trace: dict[str, Any] | None = None) -> Fetc
 
         last_reason = content_verdict.reason
         last_signals = tuple(content_verdict.signals)
+        last_html = html
+        last_base = response.final_url or url
         if content_verdict.terminal or last_reason in _TERMINAL_REASONS:
             # 경계·CAPTCHA·레이트리밋은 다음 지문으로 바꿔 다시 두드릴 대상이 아니다
             break
+
+    # ── 3.5 자기선언 열린문 티어 (R6/W3) ────────────────────────────────
+    #   바이트는 받았는데 본문이 못 쓸 때(nav_shell·js_shell)만 뜬다. 페이지가 HTML
+    #   안에 **문자로 적어 둔** 다른 표현만 따라간다 — 접두를 붙여 보는 맹목 변형은
+    #   R2 에서 0/12 로 폐기됐고 부활시키지 않는다 (NG-10).
+    #   Phase 0 보다 **앞**에 두는 이유: 이 티어의 첫 후보(JSON-LD articleBody)는
+    #   요청 0건으로 끝나고, 나머지도 그 문서 자신이 가리킨 주소다. 인덱스에 우리가
+    #   적어 둔 API 보다 원본에 가깝다.
+    if last_html and alternates.worthy(last_reason, last_signals):
+        def _on_alt(
+            endpoint: str, kind: str, status: int | None, outcome: str, elapsed_ms: int
+        ) -> None:
+            attempts.append(
+                Attempt(
+                    "alternate",
+                    None,
+                    None,
+                    _ALT_VARIANT.get(kind, "original"),
+                    status,
+                    elapsed_ms,
+                    outcome,
+                    endpoint=endpoint,
+                )
+            )
+
+        alt = alternates.try_alternates(
+            request, last_html, last_base, on_attempt=_on_alt
+        )
+        if alt is not None:
+            for note in alt.notes:
+                sys.stderr.write(f"[open-reach] alternate: {note}\n")
+            if alt.ok:
+                return FetchResult(
+                    url=url,
+                    ok=True,
+                    content_markdown=alt.markdown,
+                    metadata={
+                        "title": alt.title,
+                        "final_url": alt.final_url,
+                        "content_type": alt.content_type,
+                        "fetched_at": utc_now(),
+                    },
+                    failure_reason=None,
+                    attempts=attempts,
+                    final_route="alternate",
+                )
+            if alt.reason == "policy_blocked":
+                # 선언된 주소가 SSRF 에 걸렸다 — 선언되어 있다고 안전한 것이 아니다 (NG-11)
+                rule = alt.policy_rule
+                attempts.append(_policy_attempt(rule=rule if rule in POLICY_RULES else None))
+                return _failure(url, "policy_blocked", attempts)
+            if alt.reason is not None:
+                # 선언을 따라간 자리에서 경계(auth_wall·paywall)나 CAPTCHA 를 만났다.
+                # 남은 티어로 흘려보내면 Phase 0·브라우저가 같은 벽을 다른 문으로
+                # 두드리고, 그 시도 자체가 NG-1/NG-2/NG-3 위반이다. 여기서 끝낸다.
+                return _failure(url, alt.reason, attempts)
 
     # ── 4. Phase 0 공개 API 라우팅 (AC-B-010-1: HTTP 가 본문을 못 얻은 뒤에만) ──
     if last_reason not in _PHASE0_NO_GO:

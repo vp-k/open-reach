@@ -21,6 +21,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from . import __version__, observe, policy, transport, yamlio
+from .policy import DEFAULT_ROBOTS_MODE
 
 # ── 로드 시점 상한 (AC-B-010-8·15) ───────────────────────────────────────
 MAX_ENTRIES = 20
@@ -336,6 +337,158 @@ def _check_search(decl: Any, index: int) -> None:
     _check_provenance(decl, label)
 
 
+_SOURCE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
+# 점 표기 경로 (select_scalar 규약). 대문자를 허용하는 것은 Crossref 의 `URL` 처럼
+# 실재하는 필드명 때문이다. 슬래시·중괄호는 허용하지 않는다 — 경로는 응답 안을
+# 가리킬 뿐, URL 을 만들거나 치환에 참여하지 않는다.
+_POINTER = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-]*$")
+LINK_TRANSFORMS = ("none", "percent")
+
+# 종류별로 의미 있는 키. 여기에 없는 키가 실리면 로드 시점에 거절한다 — html 소스에
+# `result_pointer` 를 붙여 놓고 "왜 결과가 안 나오지" 하는 조용한 무동작을 막는다.
+_SOURCE_COMMON = frozenset(
+    {
+        "name",
+        "host",
+        "kind",
+        "query_template",
+        "exclude_hosts",
+        "source",
+        "verified_at",
+        "note",
+    }
+)
+_SOURCE_BY_KIND = {
+    "json": frozenset({"result_pointer", "link_pointer", "title_pointer"}),
+    "html": frozenset({"result_link_pattern", "link_transform", "title_pattern"}),
+}
+
+
+def _check_pointer(value: Any, label: str) -> str:
+    pointer = _require_str(value, label)
+    if not _POINTER.match(pointer):
+        raise IndexLoadError(f"{label}: 점 표기 경로여야 한다 — {pointer!r}")
+    return pointer
+
+
+def _check_capture_pattern(raw: Any, label: str) -> None:
+    """캡처 그룹이 정확히 하나여야 한다 — 무엇을 링크로 볼지가 모호하면 안 된다."""
+    pattern = _require_str(raw, label)
+    try:
+        compiled = re.compile(pattern)
+    except re.error as exc:
+        raise IndexLoadError(f"{label}: 컴파일 실패 — {exc}") from exc
+    if compiled.groups != 1:
+        raise IndexLoadError(
+            f"{label}: 캡처 그룹이 정확히 1개여야 한다 (현재 {compiled.groups}개)"
+        )
+
+
+_EXCLUDE_HOST = re.compile(r"^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$")
+MAX_EXCLUDE_HOSTS = 8
+
+
+def _check_exclude_hosts(value: Any, label: str) -> tuple[str, ...]:
+    """후보에서 걷어낼 호스트 목록 — 소스가 **자기 기계장치를 결과처럼 내는** 경우용.
+
+    실측 계기: DuckDuckGo lite 는 광고를 유기적 결과와 **똑같은** `/l/?uddg=` 래퍼와
+    `class='result-link'` 로 감싸 내보낸다. 정규식으로는 갈라낼 수 없고, 갈라지는
+    지점은 래핑이 풀린 **목적지**다 — 광고의 목적지는 `duckduckgo.com/y.js` 로,
+    검색 엔진 자신이다. 광고를 검색 결과라고 내놓는 것은 사실이 아닌 주장이라
+    (NG-10) 걷어낸다.
+
+    코드에 벤더 이름을 박지 않고 **선언**으로 두는 이유: 이런 규칙은 벤더마다 다르고
+    시간이 지나면 바뀐다. 인덱스에 적혀 있으면 `source`·`verified_at` 과 같은 자리에서
+    함께 검토된다.
+    """
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise IndexLoadError(f"{label}.exclude_hosts: 리스트여야 한다")
+    if len(value) > MAX_EXCLUDE_HOSTS:
+        raise IndexLoadError(
+            f"{label}.exclude_hosts: 최대 {MAX_EXCLUDE_HOSTS} 개다 (현재 {len(value)})"
+        )
+    hosts: list[str] = []
+    for position, raw in enumerate(value):
+        host = _require_str(raw, f"{label}.exclude_hosts[{position}]")
+        if not _EXCLUDE_HOST.match(host):
+            raise IndexLoadError(
+                f"{label}.exclude_hosts[{position}]: 소문자 호스트명이어야 한다 "
+                f"(스킴·포트·경로 없이) — {host!r}"
+            )
+        hosts.append(host)
+    return tuple(hosts)
+
+
+def _check_search_source(decl: Any, index: int) -> None:
+    """R6/W5 — 질의를 URL 후보 목록으로 바꾸는 소스 선언.
+
+    기존 `search:` 와 **다른 섹션**이다. 그쪽은 "이 URL 은 검색 결과 페이지다"라는
+    판정 전용 선언이라 요청을 만들지 않는다(AC-B-014-1). 이쪽은 실제로 요청한다 —
+    한 섹션에 섞으면 "요청 없음" 계약이 어느 항목에 걸린 것인지 읽는 사람이 알 수 없다.
+
+    `query_template` 의 치환자는 **사용자 질의 하나뿐**이고, 값 위치에만 놓인다.
+    스킴·호스트·파라미터 이름에 치환자를 못 쓰는 것은 entries 와 같은 규칙이며
+    (AC-B-010-11·12), 런타임 치환은 `substitute` 가 아니라 퍼센트 인코딩이다 —
+    이유는 search.build_url 에 적었다.
+    """
+    label = f"search_sources[{index}]"
+    if not isinstance(decl, dict):
+        raise IndexLoadError(f"{label}: 매핑이어야 한다")
+
+    name = _require_str(decl.get("name"), f"{label}.name")
+    if not _SOURCE_NAME.match(name):
+        raise IndexLoadError(f"{label}.name: 소문자·숫자·-_ 로만 이뤄져야 한다 — {name!r}")
+
+    host = _check_host(decl.get("host"), label)
+    kind = _require_str(decl.get("kind"), f"{label}.kind")
+    if kind not in RESPONSE_KINDS:
+        raise IndexLoadError(f"{label}.kind: {RESPONSE_KINDS} 중 하나여야 한다 — {kind!r}")
+
+    allowed = _SOURCE_COMMON | _SOURCE_BY_KIND[kind]
+    extra = sorted(set(decl) - allowed)
+    if extra:
+        raise IndexLoadError(f"{label}: kind={kind} 에 쓰이지 않는 키가 있다 — {extra}")
+
+    template = _require_str(decl.get("query_template"), f"{label}.query_template")
+    _check_request_template(
+        template, f"{label}.query_template", allow_query_placeholders=True
+    )
+    names = set(_PLACEHOLDER.findall(template))
+    if names != {"query"}:
+        raise IndexLoadError(
+            f"{label}.query_template: 치환자는 {{query}} 하나뿐이어야 한다 — {sorted(names)}"
+        )
+    # 선언한 host 와 템플릿의 netloc 이 다르면 `--sources` 로 고른 것과 실제로
+    # 두드리는 곳이 갈린다. 정확 일치를 요구한다 — 포트를 쓰려면 host 에도 적는다.
+    if urlsplit(template).netloc.lower() != host.lower():
+        raise IndexLoadError(
+            f"{label}: query_template 의 호스트가 선언과 다르다 — "
+            f"{urlsplit(template).netloc!r} != {host!r}"
+        )
+
+    _check_exclude_hosts(decl.get("exclude_hosts"), label)
+
+    if kind == "json":
+        _check_pointer(decl.get("result_pointer"), f"{label}.result_pointer")
+        if "link_pointer" in decl:
+            _check_pointer(decl["link_pointer"], f"{label}.link_pointer")
+        if "title_pointer" in decl:
+            _check_pointer(decl["title_pointer"], f"{label}.title_pointer")
+    else:
+        _check_capture_pattern(decl.get("result_link_pattern"), f"{label}.result_link_pattern")
+        if "title_pattern" in decl:
+            _check_capture_pattern(decl["title_pattern"], f"{label}.title_pattern")
+        transform = decl.get("link_transform", "none")
+        if transform not in LINK_TRANSFORMS:
+            raise IndexLoadError(
+                f"{label}.link_transform: {LINK_TRANSFORMS} 중 하나여야 한다 — {transform!r}"
+            )
+
+    _check_provenance(decl, label)
+
+
 def _check_entry(entry: Any, index: int) -> None:
     label = f"entries[{index}]"
     if not isinstance(entry, dict):
@@ -388,6 +541,8 @@ class ApiIndex:
 
     entries: tuple[dict[str, Any], ...] = ()
     search: tuple[dict[str, Any], ...] = ()
+    # R6/W5 — 질의를 URL 후보로 바꾸는 소스. `search` 와 달리 실제로 요청한다.
+    search_sources: tuple[dict[str, Any], ...] = ()
 
 
 def load(path: Path | None = None) -> ApiIndex:
@@ -416,20 +571,34 @@ def load(path: Path | None = None) -> ApiIndex:
         search = []
     if not isinstance(search, list):
         raise IndexLoadError("API 인덱스 `search:` 는 리스트여야 한다")
-    if len(entries) + len(search) > MAX_ENTRIES:
+    sources = data.get("search_sources")
+    if sources is None:
+        sources = []
+    if not isinstance(sources, list):
+        raise IndexLoadError("API 인덱스 `search_sources:` 는 리스트여야 한다")
+    if len(entries) + len(search) + len(sources) > MAX_ENTRIES:
         # AC-B-010-15 (R5 개정) — 상한은 entries·search **합산**이다. NG-9 가
         # 지문표에서 막은 "사이트 목록의 무한 증식"을 인덱스에서는 상한으로 막는데,
         # 선언을 따로 세면 같은 증식이 search 쪽으로 우회한다. 인덱스는 호스트를
         # 적는 것이 존재 이유라 리터럴 금지 린트를 쓸 수 없기 때문이다.
         raise IndexLoadError(
-            f"API 인덱스는 entries·search 합산 최대 {MAX_ENTRIES} 항목이다 "
-            f"(현재 {len(entries)}+{len(search)}) — AC-B-010-15"
+            f"API 인덱스는 entries·search·search_sources 합산 최대 {MAX_ENTRIES} 항목이다 "
+            f"(현재 {len(entries)}+{len(search)}+{len(sources)}) — AC-B-010-15"
         )
     for index, entry in enumerate(entries):
         _check_entry(entry, index)
     for index, decl in enumerate(search):
         _check_search(decl, index)
-    return ApiIndex(entries=tuple(entries), search=tuple(search))
+    for index, decl in enumerate(sources):
+        _check_search_source(decl, index)
+    # 이름은 `--sources` 의 주소다. 중복되면 어느 선언이 선택된 것인지 알 수 없다.
+    names = [decl.get("name") for decl in sources]
+    duplicated = sorted({n for n in names if names.count(n) > 1})
+    if duplicated:
+        raise IndexLoadError(f"search_sources 이름이 중복됐다 — {duplicated}")
+    return ApiIndex(
+        entries=tuple(entries), search=tuple(search), search_sources=tuple(sources)
+    )
 
 
 _cache: dict[str, ApiIndex] = {}
@@ -628,11 +797,14 @@ class _Blocked(Exception):
         self.detail = detail
 
 
-def _guard(url: str, *, timeout: float) -> None:
+def _guard(url: str, *, timeout: float, robots_mode: str) -> None:
     """AC-B-010-13 — 조립된 URL 도 SSRF 가드와 robots 를 **새로** 통과해야 한다.
 
     첫 요청이 통과했다는 사실은 두 번째 요청의 근거가 아니다. 호스트가 다를 수 있고
     (AC-B-010-3), 같은 호스트라도 경로가 다르면 robots 판정이 다르다.
+
+    R6: SSRF 재검사는 모드와 무관하게 항상 돈다 (NG-11 은 개정 대상이 아니다).
+    robots 만 모드를 따르며, 기본 `off` 에서는 조회 요청이 나가지 않는다.
     """
     try:
         verdict = policy.check_url(url)
@@ -640,7 +812,7 @@ def _guard(url: str, *, timeout: float) -> None:
         raise _Blocked("private_range", str(exc)) from exc
     if not verdict.allowed:
         raise _Blocked(verdict.rule, verdict.detail)
-    robots = policy.robots_verdict(url, timeout=timeout)
+    robots = policy.robots_gate(url, timeout=timeout, mode=robots_mode)
     if not robots.allowed:
         raise _Blocked(robots.rule, robots.detail)
 
@@ -663,7 +835,7 @@ def _accept_for(kind: str) -> str:
     return "application/json,*/*;q=0.8" if kind == "json" else "text/html,*/*;q=0.8"
 
 
-def _same_origin_hop(origin: str):
+def _same_origin_hop(origin: str, robots_mode: str = DEFAULT_ROBOTS_MODE):
     """AC-B-010-12 — 리디렉션으로 오리진을 벗어나지 않는다.
 
     "스킴과 호스트는 응답에서 오지 않는다"는 계약은 **바인딩만** 두고 한 말이 아니다.
@@ -700,7 +872,7 @@ def _same_origin_hop(origin: str):
                 "redirect_hop",
                 f"Phase 0 리디렉션이 {PHASE0_MAX_REDIRECTS} 홉을 넘겼다: {next_url}",
             )
-        policy.hop_guard(next_url)
+        policy.hop_guard_for(robots_mode)(next_url)
 
     return _check
 
@@ -712,7 +884,13 @@ def _reserve(budget: list[int]) -> None:
 
 
 def _request(
-    url: str, *, kind: str, timeout: float, budget: list[int], on_attempt=None
+    url: str,
+    *,
+    kind: str,
+    timeout: float,
+    budget: list[int],
+    on_attempt=None,
+    robots_mode: str = DEFAULT_ROBOTS_MODE,
 ) -> transport.Response:
     _reserve(budget)
     budget[0] -= 1
@@ -733,7 +911,7 @@ def _request(
         impersonate=None,          # AC-B-010-4 — 임퍼소네이션 없음
         user_agent=HONEST_UA,
         accept=_accept_for(kind),
-        hop_check=_same_origin_hop(origin),
+        hop_check=_same_origin_hop(origin, robots_mode),
         on_dispatch=_on_dispatch,
     )
 
@@ -783,6 +961,7 @@ def run(
     intent: str,
     timeout: float,
     on_attempt,
+    robots_mode: str = DEFAULT_ROBOTS_MODE,
 ) -> Phase0Outcome:
     """항목 하나를 실행한다. `on_attempt(status, elapsed_ms, outcome)` 로 시도를 알린다."""
     budget = [REQUEST_BUDGET]
@@ -792,9 +971,11 @@ def run(
         with transport.dispatch_budget(DISPATCH_BUDGET):
             if entry.get("chain") is not None:
                 return _run_chain(entry, captures, intent=intent, timeout=timeout,
-                                  budget=budget, on_attempt=on_attempt, outcome=outcome)
+                                  budget=budget, on_attempt=on_attempt, outcome=outcome,
+                                  robots_mode=robots_mode)
             return _run_endpoints(entry, captures, intent=intent, timeout=timeout,
-                                  budget=budget, on_attempt=on_attempt, outcome=outcome)
+                                  budget=budget, on_attempt=on_attempt, outcome=outcome,
+                                  robots_mode=robots_mode)
     except Rejected as exc:
         # 요청하지 않고 중단한 경우다 — 무엇이 막았는지는 남긴다.
         outcome.notes.append(f"rejected: {exc}")
@@ -845,15 +1026,17 @@ def _emit_attempt(on_attempt, outcome, url, response, kind, blocked) -> None:
                "success" if 200 <= response.status < 300 else "error")
 
 
-def _run_chain(entry, captures, *, intent, timeout, budget, on_attempt, outcome):
+def _run_chain(entry, captures, *, intent, timeout, budget, on_attempt, outcome,
+               robots_mode=DEFAULT_ROBOTS_MODE):
     chain = entry["chain"]
     binds = dict(captures)
     for index, step in enumerate(chain):
         url = substitute(str(step["request"]), binds)
         _reserve(budget)          # 라운드 4 — `_guard` 의 robots 요청보다 먼저 센다
-        _guard(url, timeout=timeout)
+        _guard(url, timeout=timeout, robots_mode=robots_mode)
         kind = str(step.get("response_kind") or entry.get("response_kind") or "html")
-        response = _request(url, kind=kind, timeout=timeout, budget=budget, on_attempt=on_attempt)
+        response = _request(url, kind=kind, timeout=timeout, budget=budget,
+                            on_attempt=on_attempt, robots_mode=robots_mode)
         blocked = _classify_block(response.status, response.text(), response.headers)
         _emit_attempt(on_attempt, outcome, url, response, kind, blocked)
         if blocked is not None:
@@ -889,7 +1072,8 @@ def _run_chain(entry, captures, *, intent, timeout, budget, on_attempt, outcome)
     return outcome
 
 
-def _run_endpoints(entry, captures, *, intent, timeout, budget, on_attempt, outcome):
+def _run_endpoints(entry, captures, *, intent, timeout, budget, on_attempt, outcome,
+                   robots_mode=DEFAULT_ROBOTS_MODE):
     kind = str(entry["response_kind"])
     pointer = entry.get("content_pointer")
     for endpoint in entry["endpoints"]:
@@ -899,8 +1083,9 @@ def _run_endpoints(entry, captures, *, intent, timeout, budget, on_attempt, outc
         # 두드린 뒤에야 예산 소진을 알린다 — "오리진 수 <= 요청 수"가 거짓이 되고,
         # 쏘지 않기로 한 엔드포인트의 정책 판정이 항목의 결과로 보고된다 (라운드 4).
         _reserve(budget)
-        _guard(url, timeout=timeout)
-        response = _request(url, kind=kind, timeout=timeout, budget=budget, on_attempt=on_attempt)
+        _guard(url, timeout=timeout, robots_mode=robots_mode)
+        response = _request(url, kind=kind, timeout=timeout, budget=budget,
+                            on_attempt=on_attempt, robots_mode=robots_mode)
         blocked = _classify_block(response.status, response.text(), response.headers)
         _emit_attempt(on_attempt, outcome, url, response, kind, blocked)
         if blocked is not None:

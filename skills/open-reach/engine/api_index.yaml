@@ -90,3 +90,107 @@ search:
     url_pattern: '^/(?:api/v1/search\?query=|\?q=).+'
     source: "https://hn.algolia.com/api"
     verified_at: "2026-09-02"
+
+# ── 검색 소스 (R6/W5) ──────────────────────────────────────────────────────
+# 위의 `search:` 와 다른 섹션이다. 그쪽은 **판정 전용**(요청 없음, AC-B-014-1)이고,
+# 이쪽은 질의를 실제로 던져 URL 후보를 받아 온다.
+#
+# 등재 조건은 entries 와 같다 — `HONEST_UA` 로 직접 두드려 **200 과 실제 결과를
+# 확인**한 것만 적는다 (AC-B-012-6 R6). 브라우저 UA 를 요구하는 SERP 는 등재하지
+# 않는다: 등재해 놓고 런타임에만 다른 신원을 쓰면 실측이 거짓말이 된다 (NG-13).
+#
+# ── 여기에 없는 것과 그 이유 (2026-09-03 실측) ────────────────────────────
+#   www.bing.com/search   200 이고 `b_algo` 10건이 실재하지만, 링크가
+#                         `bing.com/ck/a?...&u=a1<base64url>` 로 감싸여 있어
+#                         bing 전용 base64 디코더가 필요하다. ddg 로 같은 종류의
+#                         결과(일반 웹 검색)를 이미 얻으므로 전용 변환을 추가하지
+#                         않는다 — `link_transform` 은 percent 만 둔다.
+#   export.arxiv.org      2026-09-03 실측 429. 200 을 못 봤으므로 등재하지 않는다.
+#   search.naver.com      200 이지만 본문이 "검색 이용이 제한되었습니다" 안내
+#                         328자다 (r6-contract §5). 결과가 없다.
+search_sources:
+  # 일반 웹 검색. 정직한 UA 로 200 + result-link 10건 (2026-09-03 실측).
+  # 링크는 `//duckduckgo.com/l/?uddg=<퍼센트 인코딩된 실제 URL>` 로 감싸여 있어
+  # `link_transform: percent` 로 푼다. 제목은 뽑지 않는다 — 링크와 제목을 각각
+  # 별도 정규식으로 세어 위치로 짝지으면 개수가 어긋나는 순간 **틀린 제목**이
+  # 붙는데, 그것은 없는 정보보다 나쁘다 (NG-10).
+  - name: ddg
+    host: lite.duckduckgo.com
+    kind: html
+    query_template: "https://lite.duckduckgo.com/lite/?q={query}"
+    result_link_pattern: 'href="//duckduckgo\.com/l/\?uddg=([^"&]+)'
+    link_transform: percent
+    # 광고("Sponsored result")는 유기적 결과와 **같은** 래퍼·같은 class 로 나와
+    # 정규식으로는 갈라낼 수 없다. 갈라지는 곳은 래핑을 푼 목적지다 —
+    # 광고는 `duckduckgo.com/y.js?ad_domain=…` 로, 검색 엔진 자신을 가리킨다.
+    # (2026-09-03 실측: 결과 11건 = 유기적 10 + 광고 1)
+    exclude_hosts:
+      - duckduckgo.com
+    source: "https://duckduckgo.com/duckduckgo-help-pages/company/"
+    verified_at: "2026-09-03"
+
+  # 기술 토론. url 이 null 인 항목(Ask HN·자체 글)은 건너뛴다.
+  - name: hn
+    host: hn.algolia.com
+    kind: json
+    query_template: "https://hn.algolia.com/api/v1/search?query={query}"
+    result_pointer: hits
+    link_pointer: url
+    title_pointer: title
+    source: "https://hn.algolia.com/api"
+    verified_at: "2026-09-03"
+
+  # 프로그래밍 Q&A. 원문 HTML 은 403 인 경우가 있으나(entries 의 stackoverflow.com
+  # 항목 참조) 검색 API 는 키 없이 200 이다.
+  - name: stackexchange
+    host: api.stackexchange.com
+    kind: json
+    query_template: "https://api.stackexchange.com/2.3/search/advanced?site=stackoverflow&pagesize=25&order=desc&sort=relevance&q={query}"
+    result_pointer: items
+    link_pointer: link
+    title_pointer: title
+    source: "https://api.stackexchange.com/docs/advanced-search"
+    verified_at: "2026-09-03"
+
+  # 공개 저장소. 미인증 검색은 분당 10회 제한이라 429 가 나오면 그대로 보고된다.
+  - name: github
+    host: api.github.com
+    kind: json
+    query_template: "https://api.github.com/search/repositories?per_page=25&q={query}"
+    result_pointer: items
+    link_pointer: html_url
+    title_pointer: full_name
+    source: "https://docs.github.com/en/rest/search/search"
+    verified_at: "2026-09-03"
+
+  # 백과. opensearch 는 [질의, [제목], [설명], [URL]] 의 **평행 배열**이라 항목당
+  # 상대 포인터로 제목을 짝지을 수 없다 — URL 목록(`3`)만 쓰고 제목은 비운다.
+  - name: wikipedia
+    host: en.wikipedia.org
+    kind: json
+    query_template: "https://en.wikipedia.org/w/api.php?action=opensearch&format=json&limit=25&search={query}"
+    result_pointer: "3"
+    source: "https://www.mediawiki.org/wiki/API:Opensearch"
+    verified_at: "2026-09-03"
+
+  # 학술 메타데이터. DOI 해석 URL 을 그대로 준다.
+  - name: crossref
+    host: api.crossref.org
+    kind: json
+    query_template: "https://api.crossref.org/works?rows=25&query={query}"
+    result_pointer: message.items
+    link_pointer: URL
+    title_pointer: title.0
+    source: "https://api.crossref.org/swagger-ui/index.html"
+    verified_at: "2026-09-03"
+
+  # 학술 색인. `id` 는 openalex.org 랜딩 URL 이다 (doi 는 없는 항목이 있다).
+  - name: openalex
+    host: api.openalex.org
+    kind: json
+    query_template: "https://api.openalex.org/works?per-page=25&search={query}"
+    result_pointer: results
+    link_pointer: id
+    title_pointer: title
+    source: "https://docs.openalex.org/how-to-use-the-api/get-lists-of-entities/search-entities"
+    verified_at: "2026-09-03"

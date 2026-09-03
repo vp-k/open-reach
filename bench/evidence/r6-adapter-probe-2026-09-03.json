@@ -1,0 +1,114 @@
+{
+  "ua": "open-reach/1.0.0 (+https://github.com/vp-k/open-reach)",
+  "results": {
+    "reddit.comments.json": {
+      "status": 403,
+      "error": "http_error",
+      "head": "<body class=theme-beta><div><style>.theme-light,:root{--rem360:22.5rem;--rem320:20rem;--rem192:12rem;--rem144:9rem;--rem128:8rem;--rem96:6rem;--rem90:5.625rem;--rem88:5.5rem;--rem64:4rem;--rem56:3.5rem;--rem48:3rem;--rem",
+      "url": "https://www.reddit.com/r/programming/comments/1h0abcd/.json",
+      "expect": "JSON 트리"
+    },
+    "reddit.permalink.rss": {
+      "status": 404,
+      "error": "http_error",
+      "head": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\" xmlns:media=\"http://search.yahoo.com/mrss/\"><category term=\"programming\" label=\"r/programming\"/><updated>2026-09-03T02:38:33+00:00</updated>",
+      "url": "https://www.reddit.com/r/programming/comments/1h0abcd/.rss",
+      "expect": "RSS"
+    },
+    "reddit.subreddit.rss": {
+      "status": 429,
+      "error": "http_error",
+      "head": "",
+      "url": "https://www.reddit.com/r/programming/.rss",
+      "expect": "RSS"
+    },
+    "naver.search": {
+      "status": 200,
+      "final_url": "https://search.naver.com/search.naver?query=%EA%B2%80%EC%83%89",
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 200000,
+      "head": "<!doctype html> <html lang=\"ko\"><head> <meta charset=\"utf-8\"> <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">  <meta name=\"format-detection\" content=\"telephone=no,address=no,email=no\"> <meta property=\"og",
+      "url": "https://search.naver.com/search.naver?query=%EA%B2%80%EC%83%89",
+      "expect": "검색 결과 HTML"
+    },
+    "linkedin.pulse": {
+      "status": 404,
+      "error": "http_error",
+      "head": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html lang=\"en\" class=\"ie ie6 lte9 lte8 lte7\"> <![endif]-->\n<!--[if IE 7]> <html lang=\"en\" class=\"ie ie7 lte9 lte8 lte7\"> <![endif]-->\n<!--[if IE 8]> <html lang=\"en\" class=\"ie ie8 lte9 l",
+      "url": "https://www.linkedin.com/pulse/",
+      "expect": "HTML"
+    },
+    "duckduckgo.html": {
+      "status": 202,
+      "final_url": "https://html.duckduckgo.com/html/?q=open+reach",
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 14193,
+      "head": "<!-- <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"> -->\n<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n    <link rel=\"canonical\" href=\"https://duckduckgo.com/\">\n    <meta",
+      "url": "https://html.duckduckgo.com/html/?q=open+reach",
+      "expect": "검색 결과 HTML"
+    },
+    "bing.search": {
+      "status": 200,
+      "final_url": "https://www.bing.com/search?q=open+reach",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 115989,
+      "head": "<!DOCTYPE html><html dir=\"ltr\" lang=\"ja\" xml:lang=\"ja\" xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:Web=\"http://schemas.live.com/Web/\"><script type=\"text/javascript\" nonce=\"4hsKeNl5km0nj2ZYQhdjQ3gCEPz+4IaKRjFf14Orh2M=\" >//",
+      "url": "https://www.bing.com/search?q=open+reach",
+      "expect": "검색 결과 HTML"
+    },
+    "wikipedia.opensearch": {
+      "status": 200,
+      "final_url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=python&format=json",
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 770,
+      "head": "[\"python\",[\"Python\",\"Python (programming language)\",\"Pythonidae\",\"Python syntax and semantics\",\"Python (missile)\",\"Python (genus)\",\"Python brongersmai\",\"Python Lee Jackson\",\"Python (mythology)\",\"Python Software Foundatio",
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=python&format=json",
+      "expect": "JSON 배열"
+    },
+    "arxiv.query": {
+      "status": 200,
+      "final_url": "https://export.arxiv.org/api/query?search_query=all:transformer&max_results=2",
+      "content_type": "application/atom+xml; charset=utf-8",
+      "bytes": 4557,
+      "head": "<?xml version='1.0' encoding='UTF-8'?>\n<feed xmlns:opensearch=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:arxiv=\"http://arxiv.org/schemas/atom\" xmlns=\"http://www.w3.org/2005/Atom\">\n  <id>https://arxiv.org/api/p9J6ediO5Z",
+      "url": "http://export.arxiv.org/api/query?search_query=all:transformer&max_results=2",
+      "expect": "Atom"
+    },
+    "crossref.works": {
+      "status": 200,
+      "final_url": "https://api.crossref.org/works?query=attention&rows=2",
+      "content_type": "application/json",
+      "bytes": 2613,
+      "head": "{\"status\":\"ok\",\"message-type\":\"work-list\",\"message-version\":\"1.0.0\",\"message\":{\"facets\":{},\"total-results\":217627,\"items\":[{\"indexed\":{\"date-parts\":[[2026,2,28]],\"date-time\":\"2026-02-28T09:33:20Z\",\"timestamp\":17722712004",
+      "url": "https://api.crossref.org/works?query=attention&rows=2",
+      "expect": "JSON"
+    },
+    "openalex.works": {
+      "status": 200,
+      "final_url": "https://api.openalex.org/works?search=attention&per-page=2",
+      "content_type": "application/json",
+      "bytes": 32273,
+      "head": "{\"meta\": {\"count\": 14359353, \"db_response_time_ms\": 369, \"page\": 1, \"per_page\": 2, \"groups_count\": null, \"x_query\": {\"oql\": \"works where full text has (attention)\", \"oqo\": {\"get_rows\": \"works\", \"filter_rows\": [{\"column_i",
+      "url": "https://api.openalex.org/works?search=attention&per-page=2",
+      "expect": "JSON"
+    },
+    "stackexchange.search": {
+      "status": 200,
+      "final_url": "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=python&site=stackoverflow",
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 22969,
+      "head": "{\"items\":[{\"tags\":[\"python\",\"iterator\",\"generator\",\"yield\"],\"owner\":{\"account_id\":9828,\"reputation\":148444,\"user_id\":18300,\"user_type\":\"registered\",\"accept_rate\":92,\"profile_image\":\"https://i.sstatic.net/jcyI4.jpg?s=256\"",
+      "url": "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=python&site=stackoverflow",
+      "expect": "JSON"
+    },
+    "github.search.repos": {
+      "status": 200,
+      "final_url": "https://api.github.com/search/repositories?q=open-reach&per_page=2",
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 10887,
+      "head": "{\"total_count\":1025,\"incomplete_results\":false,\"items\":[{\"id\":29518121,\"node_id\":\"MDEwOlJlcG9zaXRvcnkyOTUxODEyMQ==\",\"name\":\"libfacedetection\",\"full_name\":\"ShiqiYu/libfacedetection\",\"private\":false,\"owner\":{\"login\":\"Shiqi",
+      "url": "https://api.github.com/search/repositories?q=open-reach&per_page=2",
+      "expect": "JSON"
+    }
+  }
+}

@@ -14,10 +14,28 @@ import socket
 import sys
 from urllib.parse import urlsplit
 
-from .models import PolicyVerdict
+from .models import ROBOTS_MODES, PolicyVerdict
 
 MAX_URL_LENGTH = 2048
 ALLOWED_SCHEMES = ("http", "https")
+
+# ── robots.txt 모드 (R6) ─────────────────────────────────────────────────
+#
+# R1~R5 는 robots 를 fail-closed 차단으로 강제했다. R1 의 실측(docs/r1-report.md)은
+# 원본 대비 격차 4 건 중 2 건이 **robots 자발 포기**였다고 기록했고, R5 는 어댑터
+# 후보 3 건이 전부 `User-agent: * / Disallow: /` 로 막혀 미등재됐다.
+# 즉 남은 격차는 돌파력이 아니라 정책이었다. R6 에서 사용자 승인 아래 기본값을
+# 뒤집는다 (docs/policy-boundaries.md §6 — 경계 완화는 승인 없이 하지 않는다).
+#
+#   off      기본값. robots.txt 를 **조회하지 않는다** (요청 0 건).
+#   advisory 조회하되 차단하지 않는다. 판정은 남긴다.
+#   enforce  R5 까지의 동작. `--respect-robots` 가 켠다.
+#
+# robots 를 보지 않는 것과 **신원을 속이는 것**은 다른 일이다. 허용 UA 사칭
+# (US-B-013 철회 근거)·프록시 로테이션(NG-6)·인증 우회(NG-1/2/4)는 모드와 무관하게
+# 그대로 금지다.
+# 값의 닫힌 집합은 models.ROBOTS_MODES 가 갖는다 (재수출).
+DEFAULT_ROBOTS_MODE = "off"
 
 # 클라우드 메타데이터 — 픽스처 예외보다 항상 우선한다
 METADATA_HOSTS = frozenset(
@@ -397,6 +415,31 @@ def hop_guard(next_url: str) -> None:
         raise transport.PolicyBlocked(robots.rule or "robots_disallow", robots.detail)
 
 
+def advisory_hop_guard(next_url: str) -> None:
+    """SSRF 는 강제하고 robots 는 보고만 하는 홉 가드 (mode=advisory)."""
+    ssrf_hop_guard(next_url)
+    robots = robots_verdict(next_url, timeout=ROBOTS_HOP_TIMEOUT)
+    if not robots.allowed:
+        _warn_advisory(next_url, robots.detail)
+
+
+def hop_guard_for(mode: str):
+    """모드에 맞는 홉 가드를 **고른다** (R6).
+
+    가드에 모드 인자를 더하는 대신 함수를 고르는 이유: `off` 에서 홉 가드가
+    robots 를 조회할 **경로 자체가 존재하지 않게** 하려는 것이다. 인자로 분기하면
+    "off 인데 조회했다"가 런타임 버그로 가능하지만, 여기서는 `ssrf_hop_guard` 에
+    robots 코드가 아예 없으므로 구조적으로 불가능하다.
+
+    SSRF 는 어느 모드에서도 빠지지 않는다 (NG-11 은 개정 대상이 아니다).
+    """
+    if mode == "enforce":
+        return hop_guard
+    if mode == "advisory":
+        return advisory_hop_guard
+    return ssrf_hop_guard
+
+
 # ── robots.txt ───────────────────────────────────────────────────────────
 
 _robots_cache: dict[str, tuple[list[tuple[bool, str]], str]] = {}
@@ -493,3 +536,41 @@ def robots_verdict(url: str, *, timeout: float) -> PolicyVerdict:
     if best_len >= 0 and not best_allow:
         return PolicyVerdict(False, "robots", f"robots.txt 가 {best_pattern} 를 Disallow 한다")
     return PolicyVerdict(True, None, note)
+
+
+# advisory 경고는 (오리진, 규칙) 당 한 번만 낸다 — 배치·검색이 같은 호스트를 여러 번
+# 두드릴 때 stderr 가 같은 줄로 뒤덮이면 정작 읽어야 할 실패가 묻힌다.
+_advisory_warned: set[str] = set()
+
+
+def _warn_advisory(url: str, detail: str) -> None:
+    origin = origin_of(url) or url
+    if origin in _advisory_warned:
+        return
+    _advisory_warned.add(origin)
+    sys.stderr.write(f"[open-reach] robots advisory: {origin} — {detail} (차단하지 않음)\n")
+
+
+def robots_gate(url: str, *, timeout: float, mode: str) -> PolicyVerdict:
+    """모드를 반영한 robots 판정 (R6).
+
+    `robots_verdict` 는 "robots.txt 가 뭐라고 하는가"라는 **사실**을 그대로 답하고,
+    이 함수가 "그래서 막을 것인가"라는 **정책**을 결정한다. 둘을 섞지 않았기 때문에
+    advisory 모드가 사실을 보고하면서도 차단하지 않을 수 있다.
+
+    반환값의 `allowed=False` 는 오직 `enforce` 에서만 나온다.
+    """
+    if mode not in ROBOTS_MODES:
+        raise ValueError(f"unknown robots mode: {mode}")
+
+    if mode == "off":
+        # 네트워크에 나가지 않는다. `robots_verdict` 를 부르고 결과를 버리는 것은
+        # "조회하지 않는다"가 아니다 — 요청은 이미 나갔고 상대 서버는 그것을 봤다.
+        return PolicyVerdict(True, None, "robots 미조회 (mode=off)")
+
+    verdict = robots_verdict(url, timeout=timeout)
+    if mode == "enforce" or verdict.allowed:
+        return verdict
+
+    _warn_advisory(url, verdict.detail)
+    return PolicyVerdict(True, None, f"advisory: {verdict.detail} — 차단하지 않음")

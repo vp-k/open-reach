@@ -362,13 +362,28 @@ assert_no_evil "dotdot"
 
 # ── 조립은 성립하나 정책이 막아야 하는 것 ───────────────────────────────────
 
-note "AC-B-010-13: 조립된 URL 이 robots Disallow → policy_blocked"
+# AC-B-010-13 은 R6 에서 "robots 를 재검사한다"에서 "**설정된 모드로** 재판정한다"로 개정됐다
+# (사용자 승인 재동결). 조립 URL 은 리디렉션이 아니라 우리가 자발적으로 만든 URL 이라
+# hop_guard 가 보지 않는 자리이므로, 모드가 여기까지 전달되지 않으면 **인덱스 경로에서만**
+# robots 요청이 새거나 반대로 차단이 사라진다. 양쪽을 다 못 박는다.
+
+note "AC-B-010-13: 기본 모드(off)에서는 조립 URL 도 robots 를 조회하지 않는다"
 reset_hits
 run_engine fetch --api-index "$IDX/norobots.yaml" "$BASE/api/origin/ok"
+assert_code 0 "off 인데 조립 URL 이 취득되지 않았다"
+assert_expr "d.get('final_route')" "phase0" "구제 성공인데 final_route 가 phase0 이 아니다"
+assert_hits "/norobots" "1" "off 인데 조립된 2단 URL 이 요청되지 않았다"
+# `api_index._guard` 만 robots_verdict 로 되돌리는 변이는 여기서 죽는다.
+assert_hits "/robots.txt" "0" "AC-B-010-13 off 인데 인덱스 경로에서 robots 요청이 샜다"
+assert_no_evil "norobots-off"
+
+note "AC-B-010-13: --respect-robots 는 조립 URL 의 차단을 정확히 복원한다"
+reset_hits
+run_engine fetch --respect-robots --api-index "$IDX/norobots.yaml" "$BASE/api/origin/ok"
 assert_code 2 "조립 URL 의 정책 차단은 종료 코드 2"
-assert_expr "d.get('failure_reason')" "policy_blocked" "AC-B-010-13 조립 URL robots 재검사"
-assert_hits "/norobots" "0" "AC-B-010-13 robots 재검사 없이 요청이 나감"
-assert_no_evil "norobots"
+assert_expr "d.get('failure_reason')" "policy_blocked" "AC-B-010-13 조립 URL robots 재판정"
+assert_hits "/norobots" "0" "AC-B-010-13 robots 재판정 없이 요청이 나감"
+assert_no_evil "norobots-enforce"
 
 # ── 예산 ────────────────────────────────────────────────────────────────────
 
@@ -419,10 +434,21 @@ assert_expr "sum(1 for a in d['attempts'] if a['route'] == 'phase0')" "2" \
 # 요청되고, 일어나지 않았다면 0 이다. 이 단언이 그 맹점을 닫는다.
 assert_hits "/api/step2/1.0.229" "1" "R2-R7-M1 치환된 버전이 2단 URL 에 실리지 않았다"
 
-# robots 미검사 0건 — 규칙은 오리진당 한 번만 **가져오고**(캐시) 판정은 URL 마다 다시 한다.
-# 그래서 조회 횟수는 1 이다. "판정을 다시 한다"는 쪽은 위 norobots 케이스가 증명한다 —
-# 같은 오리진의 캐시된 규칙으로 2단 조립 URL 이 policy_blocked 되었다.
-assert_hits "/robots.txt" "1" "SC-9 robots 를 아예 보지 않았다"
+# SC-9 의 robots 항목은 R6 에서 "미검사 0건"에서 "**설정된 모드 위반 0건**"으로 개정됐다.
+# 기본 모드에서 성공한 Phase 0 경로는 robots 를 한 번도 조회하지 않아야 한다 — Phase 0 은
+# 조립 URL 마다 판정하던 자리라, 모드가 새면 여기서 1 이상이 된다.
+assert_hits "/robots.txt" "0" "SC-9 off 인데 성공 경로에서 robots 를 조회했다"
 assert_no_evil "ok2hop"
+
+note "SC-9: enforce 에서는 같은 성공 경로가 robots 를 오리진당 정확히 1회 조회한다"
+# 캐시 계약이다. 규칙은 오리진당 한 번만 **가져오고**(1회) 판정은 URL 마다 다시 한다.
+# 2-hop 성공이므로 조립 URL 판정이 2회 일어나지만 조회는 1회여야 한다 — 캐시를 지우는
+# 변이는 2 가 되어 죽고, 모드 전달이 끊기면 0 이 되어 죽는다.
+reset_hits
+run_engine fetch --respect-robots --api-index "$IDX/ok2hop.yaml" "$BASE/api/origin/ok"
+assert_code 0 "enforce 라도 Disallow 대상이 아닌 2-hop 은 성공해야 한다"
+assert_hits "/robots.txt" "1" "SC-9 enforce 의 robots 조회가 오리진당 1회가 아니다"
+assert_hits "/api/step2/1.0.229" "1" "enforce 경로에서 치환된 버전이 2단 URL 에 실리지 않았다"
+assert_no_evil "ok2hop-enforce"
 
 finish

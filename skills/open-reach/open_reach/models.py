@@ -28,11 +28,20 @@ FAILURE_REASONS = (
 # 종료 코드 매핑 (SPEC 실패 사유 분류표)
 BOUNDARY_REASONS = ("auth_wall", "paywall", "policy_blocked")
 
-ROUTES = ("policy", "phase0", "http", "browser")
+# robots.txt 모드 (R6). 정책 판단은 policy.robots_gate 가 하고, 여기에는 값의
+# 닫힌 집합만 둔다 — policy 가 models 를 임포트하는 단방향을 지키기 위해서다.
+ROBOTS_MODES = ("off", "advisory", "enforce")
+
+# "alternate" (R6/W3) — 페이지가 **스스로 선언한** 다른 표현(JSON-LD articleBody·RSS/Atom·
+# amphtml·oEmbed·타 오리진 canonical)을 따라간 경로. HTTP 실패와 Phase 0 사이에 선다.
+ROUTES = ("policy", "phase0", "http", "browser", "alternate")
 # "redirect" 는 최종 응답이 아니라 우리가 실제로 추종한 중간 3xx 홉을 attempts 에
 # 정직하게 남기기 위한 값이다 (감사 완전성 — 나간 요청은 모두 기록한다). 종료 코드나
 # 실패 사유에는 관여하지 않는다: 최종 판정은 마지막 홉의 outcome 이 결정한다.
-OUTCOMES = ("success", "challenge", "wall", "error", "blocked", "redirect")
+# "mismatch" (R6/W3) 는 "200 을 받았지만 그것이 우리가 요청한 문서가 아니다"다 — 피드에
+# 다른 글만 들어 있던 경우. `error` 로 적으면 "못 받았다"로 읽혀서, 같은 호스트의 다른
+# 글을 성공이라 부를 뻔한 자리가 감사에서 사라진다 (NG-10).
+OUTCOMES = ("success", "challenge", "wall", "error", "blocked", "redirect", "mismatch")
 URL_VARIANTS = ("original", "mobile", "rss", "json", "oembed", "amp")
 INTENTS = ("article", "media", "raw")
 
@@ -109,6 +118,16 @@ class FetchRequest:
     # Phase 0 공개 API 인덱스의 대체 경로. 값은 **경로**이고 로드된 항목이 아니다 —
     # FetchRequest 는 frozen dataclass 라 가변 컨테이너를 담으면 불변식이 거짓말이 된다.
     api_index: str | None = None
+    # robots.txt 모드 (R6). 기본 "off" — 조회하지 않는다. 전역 가변 상태로 두지 않고
+    # 요청에 실어 나르는 이유: 배치·검색이 요청마다 다른 모드를 쓸 수 있어야 하고,
+    # 전역 플래그는 테스트 간 누수로 "어떤 모드로 측정했는지"를 불확실하게 만든다.
+    robots_mode: str = "off"
+
+    def __post_init__(self) -> None:
+        # 닫힌 집합 밖의 모드는 조용히 off 로 떨어지면 안 된다 — robots 를 켠 줄 알고
+        # 끈 채로 도는 것이 가장 나쁜 실패다 (NG-10).
+        if self.robots_mode not in ROBOTS_MODES:
+            raise InvariantError(f"unknown robots mode: {self.robots_mode}")
 
 
 @dataclass(frozen=True)
@@ -146,9 +165,12 @@ class Attempt:
                 raise InvariantError(f"rule is only for route=policy: {self.route}")
             if self.rule not in POLICY_RULES:
                 raise InvariantError(f"unknown policy rule: {self.rule}")
-        if self.endpoint is not None and self.route not in ("phase0", "http"):
+        # `endpoint` 는 **실제로 두드린 URL** 을 남기는 감사 필드다. 조립·선언·리디렉트로
+        # 입력 URL 과 달라지는 경로에서만 의미가 있다 — phase0(인덱스 조립)·http(중간 3xx
+        # 홉)·alternate(페이지가 선언한 주소, R6/W3). 나머지 경로는 입력 URL 그대로다.
+        if self.endpoint is not None and self.route not in ("phase0", "http", "alternate"):
             raise InvariantError(
-                f"endpoint is only for route=phase0 or http: {self.route}"
+                f"endpoint is only for route=phase0, http or alternate: {self.route}"
             )
 
 

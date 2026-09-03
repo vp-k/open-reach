@@ -1,0 +1,68 @@
+{
+  "measured_at": "2026-09-03",
+  "what": "R6 W3 자기선언 열린문 티어 라이브 프로브",
+  "how": "engine fetch --max-attempts 1 (브라우저 티어 미사용, robots 기본 off)",
+  "results": [
+    {
+      "url": "https://www.instagram.com/nasa/",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "alternate_attempts": []
+    },
+    {
+      "url": "https://www.quora.com/What-is-Rust-programming-language",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "alternate_attempts": []
+    },
+    {
+      "url": "https://www.tiktok.com/@nasa",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "alternate_attempts": []
+    },
+    {
+      "url": "https://www.pinterest.com/pin/1055599862122123/",
+      "exit": 1,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "alternate_attempts": []
+    },
+    {
+      "url": "https://medium.com/@anthropic",
+      "exit": 1,
+      "ok": false,
+      "final_route": "alternate",
+      "failure_reason": "validation_failed",
+      "content_chars": 0,
+      "alternate_attempts": [
+        {
+          "url_variant": "rss",
+          "outcome": "mismatch",
+          "endpoint": "https://medium.com/feed/@anthropic",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "url": "https://medium.com/rustaceans/youre-doing-async-rust-wrong-in-2026-rust-1-96-proves-it-d4a241455ebb",
+      "exit": 2,
+      "ok": false,
+      "final_route": "http",
+      "failure_reason": "paywall",
+      "content_chars": 0,
+      "alternate_attempts": []
+    }
+  ]
+}

@@ -22,6 +22,20 @@ MIN_PROSE_BLOCK_CHARS = 80
 # **문단이 없어도 양이 압도하면** 본문으로 인정한다. 실측 껍데기는 268자, 짧은 줄로만 된
 # 진짜 본문 중 가장 작은 것은 2,475자였으므로 1,000 은 양쪽에서 2.4배 이상 떨어져 있다.
 NAV_SHELL_MAX_CHARS = 1000
+# 거대한 HTML 에서 **본문이 거의 안 나온** 경우의 하한. R6 실측 계기는 네이버 통합검색이다:
+# HTML 713,695자를 받고 추출 226자가 나왔는데, 그 226자는 검색 결과가 아니라 "AI가 생성한
+# 결과는 정확하지 않을 수 있습니다" 안내문이었다. 문장 형태라 문단 검사(_is_nav_shell)를
+# 통과하고, 200자를 넘겨 성공으로 계상됐다 — 새 돌파 없이 돌파율만 오르는 경로다.
+#
+# 문장부호 밀도나 링크 비율로는 이것을 못 가른다(안내문은 산문이고 링크도 없다). 실제로
+# 가르는 축은 **수확률**이다. 실측 분리도: 네이버 0.03% vs geeksforgeeks 3.3% ·
+# blog.rust-lang.org 17% · blog.cleancoder.com 25% — 100배 떨어져 있다.
+#
+# 두 조건이 함께여야 발동한다. ① 추출이 짧다(NAV_SHELL_MAX_CHARS 미만) — 이미 "짧은 줄로만
+# 된 진짜 본문"을 살리려고 1,000자를 하한으로 뒀으므로 그 위는 건드리지 않는다.
+# ② 문서가 크다 — 작은 문서에서 짧은 본문은 그냥 짧은 글이다.
+MIN_YIELD_RATIO = 0.005
+MIN_YIELD_HTML_CHARS = 50_000
 
 _AUTH_FORM = re.compile(r"""type\s*=\s*["']?password""", re.I)
 _AUTH_WORDS = re.compile(
@@ -260,6 +274,21 @@ def _is_nav_shell(extracted: str) -> bool:
     return True
 
 
+def _is_starved(extracted: str, html: str) -> bool:
+    """거대한 문서에서 부스러기만 건졌는가 — 그것을 본문이라 부르지 않는다 (R6/W6).
+
+    상수 옆에 실측 근거를 적어 뒀다. 여기서 중요한 것은 이 판정이 **길이 하한을 겨우
+    넘긴 짧은 추출**에만 붙는다는 점이다. 1,000자를 넘긴 것은 이미 "짧은 줄로만 이뤄진
+    진짜 본문"(소스 코드 뷰·이슈 목록·블로그 인덱스)으로 인정하기로 실측해 정한 영역이라
+    건드리지 않는다.
+    """
+    if len(extracted) >= NAV_SHELL_MAX_CHARS:
+        return False
+    if len(html) < MIN_YIELD_HTML_CHARS:
+        return False
+    return len(extracted) < MIN_YIELD_RATIO * len(html)
+
+
 def classify(
     status: int, html: str, extracted: str, *, explicit_search: bool = False
 ) -> ContentVerdict:
@@ -292,7 +321,14 @@ def classify(
     substantial = len(extracted) >= MIN_ARTICLE_CHARS and (
         explicit_search or not _is_nav_shell(extracted)
     )
-    if substantial and not _is_js_notice(extracted, html):
+    # 수확률 판정은 R5 검색 면제 **밖**에 둔다 (AC-B-014-3 의 "면제는 nav_shell 하나"를
+    # 그대로 지킨다). 선언된 검색 URL 이라도 70만 자를 받고 226자를 건졌다면 그것은
+    # "결과 목록을 본문으로 인정" 이 아니라 결과 목록을 못 받은 것이다.
+    if (
+        substantial
+        and not _is_js_notice(extracted, html)
+        and not _is_starved(extracted, html)
+    ):
         return ContentVerdict(None, "success", (), False)
 
     if 500 <= status < 600:
